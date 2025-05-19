@@ -5,10 +5,6 @@
     <title>Capstone Website Prototype</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./style.css">
-
-    <!-- ✅ 카카오 지도 API 추가 -->
-    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=0c43dda5249fa5372cb6f65f0320a50f"></script>
-
 </head>
 <body>
 
@@ -37,6 +33,21 @@
         <div id="map"></div>
     </div>
 
+    <!-- ✅ 지도 API (kakao.maps 객체) -->
+    <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=0c43dda5249fa5372cb6f65f0320a50f"></script>
+
+    <!-- ✅ JavaScript SDK (Kakao 객체) -->
+    <script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
+
+    <!-- ✅ Kakao SDK 초기화 (SDK가 로드된 후에 실행되어야 함) -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            Kakao.init("0c43dda5249fa5372cb6f65f0320a50f");
+            console.log("Kakao SDK 초기화 상태:", Kakao.isInitialized()); // true
+        });
+    </script>
+
+    <!-- ✅ 앱 기능 스크립트 -->
     <script>
         const userLogs = {
             '김윤섭': [
@@ -61,7 +72,7 @@
         function initMap() {
             const container = document.getElementById('map');
             const options = {
-                center: new kakao.maps.LatLng(37.5665, 126.9780), // 서울
+                center: new kakao.maps.LatLng(37.5665, 126.9780),
                 level: 3
             };
             map = new kakao.maps.Map(container, options);
@@ -84,7 +95,6 @@
             document.getElementById('userInfo').classList.remove('hidden');
             document.getElementById('mapUser').textContent = `${name}의 지오펜스 화면입니다.`;
 
-            // 사용자 위치 예시 좌표
             const userLocations = {
                 '김윤섭': new kakao.maps.LatLng(37.5665, 126.9780),
                 '김시현': new kakao.maps.LatLng(37.5651, 126.9895),
@@ -93,8 +103,8 @@
             };
 
             if (map && userLocations[name]) {
-                    map.setCenter(userLocations[name]);
-                    new kakao.maps.Marker({
+                map.setCenter(userLocations[name]);
+                new kakao.maps.Marker({
                     map: map,
                     position: userLocations[name]
                 });
@@ -106,6 +116,7 @@
             document.getElementById('infoArea').innerHTML = '';
         }
 
+        // 페이지 로드되면 지도 먼저 초기화
         window.onload = initMap;
     </script>
 
