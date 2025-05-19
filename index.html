@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capstone Website Prototype</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div id="userList">
+        <h2>사용자 목록</h2>
+        <div class="user" onclick="selectUser('김윤섭')">김윤섭</div>
+        <div class="user" onclick="selectUser('김시현')">김시현</div>
+        <div class="user" onclick="selectUser('김현준')">김현준</div>
+        <div class="user" onclick="selectUser('이윤섭')">이윤섭</div>
+        <div class="user" onclick="selectUser('이시현')">이시현</div>
+        <div class="user" onclick="selectUser('이현준')">이현준</div>
+        <div class="user" onclick="selectUser('배윤섭')">배윤섭</div>
+        <div class="user" onclick="selectUser('배시현')">배시현</div>
+        <div class="user" onclick="selectUser('배현준')">배현준</div>
+        <div class="user" onclick="selectUser('최윤섭')">최윤섭</div>
+        <div class="user" onclick="selectUser('최시현')">최시현</div>
+        <div class="user" onclick="selectUser('최현준')">최현준</div>
+        <div class="user" onclick="selectUser('장윤섭')">장윤섭</div>
+        <div class="user" onclick="selectUser('장시현')">장시현</div>
+        <div class="user" onclick="selectUser('장현준')">장현준</div>
+        <div class="user" onclick="selectUser('강윤섭')">강윤섭</div>
+        <div class="user" onclick="selectUser('강시현')">강시현</div>
+        <div class="user" onclick="selectUser('강현준')">강현준</div>
+        <div class="user" onclick="selectUser('한윤섭')">한윤섭</div>
+        <div class="user" onclick="selectUser('한시현')">한시현</div>
+        <div class="user" onclick="selectUser('한현준')">한현준</div>
+    </div>
+    
+    <div id="userInfo" class="hidden">
+        <div class="info-header">
+            <h2>사용자 정보</h2>
+            <button id="closeInfoBtn" onclick="closeUserInfo()">X</button>
+        </div>
+        <div id="infoArea">사용자를 선택해주세요.</div>
+    </div>
+    
+    <div id="mapArea">
+        <h2>지오펜스 화면</h2>
+        <p id="mapUser">사용자를 선택하면 지오펜스가 표시됩니다.</p>
+    </div>
+    
+    <script>
+        const userLogs = {
+            '김윤섭': [
+                '2025-04-12 14:22 - 개방 (BLE)',
+                '2025-04-11 18:00 - 개방 (RFID)',
+                '2025-04-10 09:15 - 개방 (Beacon)',
+                '2025-04-09 08:11 - 개방 (Beacon)',
+                '2025-04-08 22:10 - 개방 (BLE)',
+                '2025-04-07 08:11 - 개방 (Beacon)',
+                '2025-04-06 22:10 - 개방 (BLE)',
+                '2025-04-05 08:11 - 개방 (Beacon)',
+                '2025-04-04 22:10 - 개방 (BLE)',
+                '2025-04-03 08:11 - 개방 (Beacon)',
+                '2025-04-02 22:10 - 개방 (BLE)',
+                '2025-04-01 08:11 - 개방 (Beacon)',
+                '2025-03-31 22:10 - 개방 (BLE)',
+                '2025-03-30 08:11 - 개방 (Beacon)',
+                '2025-03-29 22:10 - 개방 (BLE)',
+                '2025-03-28 08:11 - 개방 (Beacon)',
+                '2025-03-27 22:10 - 개방 (BLE)',
+                '2025-03-26 08:11 - 개방 (Beacon)',
+                '2025-03-25 22:10 - 개방 (BLE)'
+            ],
+            '김시현': [
+                '2025-04-12 08:11 - 개방 (Beacon)',
+                '2025-04-11 22:10 - 개방 (BLE)'
+            ],
+            '김현준': [
+                '2025-04-09 09:50 - 개방 (RFID)'
+            ],
+            '이윤섭': [],
+            '이시현': [
+                '2025-04-10 12:30 - 개방 (BLE)',
+                '2025-04-08 17:15 - 개방 (RFID)',
+                '2025-04-05 07:00 - 개방 (Beacon)'
+            ],
+        };
+
+        let currentUser = null;
+
+        function selectUser(name) {
+            if (currentUser === name) {
+                currentUser = null;
+                closeUserInfo();
+                document.getElementById('mapUser').textContent = '사용자를 선택하면 지오펜스가 표시됩니다.';
+                return;
+            }
+
+            currentUser = name;
+
+            const logs = userLogs[name] || [];
+            const logHtml = logs.length > 0
+                ? logs.map(log => `<div class="log-entry">${log}</div>`).join('')
+                : '<div class="log-entry">출입 기록이 없습니다.</div>';
+
+            const info = `
+                <p><strong>이름:</strong> ${name}</p>
+                <h3>로그 기록</h3>
+                <div class="log-list">
+                    ${logHtml}
+                </div>
+            `;
+            document.getElementById('infoArea').innerHTML = info;
+            document.getElementById('userInfo').classList.remove('hidden');
+            document.getElementById('mapUser').textContent = `${name}의 지오펜스 화면입니다.`;
+        }
+
+        function closeUserInfo() {
+            document.getElementById('userInfo').classList.add('hidden');
+            document.getElementById('infoArea').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
