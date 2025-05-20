@@ -61,16 +61,7 @@
 
   <!-- 카카오 지도 API -->
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0c43dda5249fa5372cb6f65f0320a50f&autoload=false"></script>
-  <!-- 카카오 지도 API -->
-  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0c43dda5249fa5372cb6f65f0320a50f&autoload=false"></script>
-
-  <script>
-    const userLogs = {
-      '김윤석': ['2025-04-12 14:22 - 개방 (BLE)', '2025-04-11 18:00 - 개방 (RFID)'],
-      '김시현': ['2025-04-12 08:11 - 개방 (Beacon)', '2025-04-11 22:10 - 개방 (BLE)'],
-      '김현준': ['2025-04-09 09:50 - 개방 (RFID)'],
-      '이시현': ['2025-04-10 12:30 - 개방 (BLE)', '2025-04-08 17:15 - 개방 (RFID)']
-    };
+  
   <script>
     const userLogs = {
       '김윤석': ['2025-04-12 14:22 - 개방 (BLE)', '2025-04-11 18:00 - 개방 (RFID)'],
@@ -79,7 +70,7 @@
       '이시현': ['2025-04-10 12:30 - 개방 (BLE)', '2025-04-08 17:15 - 개방 (RFID)']
     };
 
-    let map;
+
     let map;
 
     function initMap() {
@@ -103,20 +94,7 @@
       const logHtml = logs.length > 0
         ? logs.map(log => `<div class="log-entry">${log}</div>`).join('')
         : '<div class="log-entry">출입 기록이 없습니다.</div>';
-    function selectUser(name) {
-      const logs = userLogs[name] || [];
-      const logHtml = logs.length > 0
-        ? logs.map(log => `<div class="log-entry">${log}</div>`).join('')
-        : '<div class="log-entry">출입 기록이 없습니다.</div>';
 
-      const info = `
-        <p><strong>이름:</strong> ${name}</p>
-        <h3>로그 기록</h3>
-        <div class="log-list">${logHtml}</div>
-      `;
-      document.getElementById('infoArea').innerHTML = info;
-      document.getElementById('userInfo').classList.remove('hidden');
-      document.getElementById('mapUser').textContent = `${name}의 지오펜스 화면입니다.`;
       const info = `
         <p><strong>이름:</strong> ${name}</p>
         <h3>로그 기록</h3>
@@ -139,10 +117,6 @@
       }
     }
 
-    function closeUserInfo() {
-      document.getElementById('userInfo').classList.add('hidden');
-      document.getElementById('infoArea').innerHTML = '';
-    }
     function closeUserInfo() {
       document.getElementById('userInfo').classList.add('hidden');
       document.getElementById('infoArea').innerHTML = '';
