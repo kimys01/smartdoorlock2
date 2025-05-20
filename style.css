@@ -75,9 +75,3 @@ body {
 #closeInfoBtn:hover {
     background-color: #ff4d4d;
 }
-
-#map {
-    width: 50%;
-    height: 200px;
-    margin-top: 10px;
-}
