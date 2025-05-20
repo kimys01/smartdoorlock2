@@ -5,9 +5,21 @@
   <title>Capstone Website Prototype</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>Capstone Website Prototype</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+  <!-- 사용자 목록 -->
+  <div id="userList">
+    <h2>사용자 목록</h2>
+    <div class="user" data-name="김윤석">김윤석</div>
+    <div class="user" data-name="김시현">김시현</div>
+    <div class="user" data-name="김현준">김현준</div>
+    <div class="user" data-name="이시현">이시현</div>
+  </div>
   <!-- 사용자 목록 -->
   <div id="userList">
     <h2>사용자 목록</h2>
@@ -25,6 +37,14 @@
     </div>
     <div id="infoArea">사용자를 선택해주세요.</div>
   </div>
+  <!-- 사용자 정보 -->
+  <div id="userInfo" class="hidden">
+    <div class="info-header">
+      <h2>사용자 정보</h2>
+      <button id="closeInfoBtn" onclick="closeUserInfo()">X</button>
+    </div>
+    <div id="infoArea">사용자를 선택해주세요.</div>
+  </div>
 
   <!-- 지도 영역 -->
   <div id="mapArea">
@@ -32,7 +52,15 @@
     <p id="mapUser">사용자를 선택하면 지오펜스가 표시됩니다.</p>
     <div id="map"></div>
   </div>
+  <!-- 지도 영역 -->
+  <div id="mapArea">
+    <h2>지오펜스 화면</h2>
+    <p id="mapUser">사용자를 선택하면 지오펜스가 표시됩니다.</p>
+    <div id="map"></div>
+  </div>
 
+  <!-- 카카오 지도 API -->
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0c43dda5249fa5372cb6f65f0320a50f&autoload=false"></script>
   <!-- 카카오 지도 API -->
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0c43dda5249fa5372cb6f65f0320a50f&autoload=false"></script>
 
@@ -43,7 +71,15 @@
       '김현준': ['2025-04-09 09:50 - 개방 (RFID)'],
       '이시현': ['2025-04-10 12:30 - 개방 (BLE)', '2025-04-08 17:15 - 개방 (RFID)']
     };
+  <script>
+    const userLogs = {
+      '김윤석': ['2025-04-12 14:22 - 개방 (BLE)', '2025-04-11 18:00 - 개방 (RFID)'],
+      '김시현': ['2025-04-12 08:11 - 개방 (Beacon)', '2025-04-11 22:10 - 개방 (BLE)'],
+      '김현준': ['2025-04-09 09:50 - 개방 (RFID)'],
+      '이시현': ['2025-04-10 12:30 - 개방 (BLE)', '2025-04-08 17:15 - 개방 (RFID)']
+    };
 
+    let map;
     let map;
 
     function initMap() {
@@ -67,7 +103,20 @@
       const logHtml = logs.length > 0
         ? logs.map(log => `<div class="log-entry">${log}</div>`).join('')
         : '<div class="log-entry">출입 기록이 없습니다.</div>';
+    function selectUser(name) {
+      const logs = userLogs[name] || [];
+      const logHtml = logs.length > 0
+        ? logs.map(log => `<div class="log-entry">${log}</div>`).join('')
+        : '<div class="log-entry">출입 기록이 없습니다.</div>';
 
+      const info = `
+        <p><strong>이름:</strong> ${name}</p>
+        <h3>로그 기록</h3>
+        <div class="log-list">${logHtml}</div>
+      `;
+      document.getElementById('infoArea').innerHTML = info;
+      document.getElementById('userInfo').classList.remove('hidden');
+      document.getElementById('mapUser').textContent = `${name}의 지오펜스 화면입니다.`;
       const info = `
         <p><strong>이름:</strong> ${name}</p>
         <h3>로그 기록</h3>
@@ -90,6 +139,10 @@
       }
     }
 
+    function closeUserInfo() {
+      document.getElementById('userInfo').classList.add('hidden');
+      document.getElementById('infoArea').innerHTML = '';
+    }
     function closeUserInfo() {
       document.getElementById('userInfo').classList.add('hidden');
       document.getElementById('infoArea').innerHTML = '';
