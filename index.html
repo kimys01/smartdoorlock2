@@ -113,8 +113,15 @@
           map: map
         });
 
+        const lat = position.getLat();
+        const lng = position.getLng();
+
         const infowindow = new kakao.maps.InfoWindow({
-          content: `<div style="padding:5px;"><strong>${name}</strong>의 현재 위치</div>`
+          content: `<div style="padding:5px; font-size:13px;">
+            <strong>${name}</strong>의 현재 위치<br/>
+            위도: ${lat.toFixed(6)}<br/>
+            경도: ${lng.toFixed(6)}
+            </div>`
         });
         infowindow.open(map, marker);
 
