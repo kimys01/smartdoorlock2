@@ -102,10 +102,16 @@
         [0.001, 0.0008]
       ];
 
+      const now = new Date();
+
       deltas.forEach((delta, index) => {
         const lat = baseLat + delta[0];
         const lng = baseLng + delta[1];
         const position = new kakao.maps.LatLng(lat, lng);
+
+        // 시간 계산 (5분 간격 이전)
+        const time = new Date(now.getTime() - (index * 5 * 60 * 1000));
+        const timeStr = time.toTimeString().slice(0, 5); // "HH:MM"
 
         const marker = new kakao.maps.Marker({
           position,
@@ -114,7 +120,7 @@
         });
 
         const infowindow = new kakao.maps.InfoWindow({
-          content: `<div style="padding:4px; font-size:12px;">${name}<br>(${lat.toFixed(5)}, ${lng.toFixed(5)})</div>`
+          content: `<div style="padding:4px; font-size:12px;">${name}<br>${timeStr}<br>(${lat.toFixed(5)}, ${lng.toFixed(5)})</div>`
         });
         infowindow.open(map, marker);
 
