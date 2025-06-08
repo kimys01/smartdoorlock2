@@ -5,7 +5,6 @@
   <title>Capstone Website Prototype</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css">
-  <!-- 카카오 지도 API -->
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0c43dda5249fa5372cb6f65f0320a50f&autoload=false"></script>
 </head>
 <body>
@@ -35,7 +34,6 @@
     <div id="map" style="width:100%; height:400px;"></div>
   </div>
 
-  <!-- 스크립트 -->
   <script>
     const userLogs = {
       '김윤석': ['2025-04-12 14:22 - 개방 (BLE)', '2025-04-11 18:00 - 개방 (RFID)'],
@@ -46,30 +44,26 @@
 
     let map;
     let marker;
+    let timeMarkers = [];
 
     function initMap() {
       const container = document.getElementById('map');
       const options = {
         center: new kakao.maps.LatLng(37.5665, 126.9780),
-        level: 3,
-        mapTypeId: kakao.maps.MapTypeId.ROADMAP
+        level: 3
       };
       map = new kakao.maps.Map(container, options);
 
-      // 지도 타입 컨트롤
       const mapTypeControl = new kakao.maps.MapTypeControl();
       map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
 
-      // 확대/축소 컨트롤
       const zoomControl = new kakao.maps.ZoomControl();
       map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
 
-      // 지도 클릭 이벤트
       kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
         console.log('지도 클릭 좌표:', mouseEvent.latLng.toString());
       });
 
-      // 사용자 선택 이벤트 등록
       document.querySelectorAll('.user').forEach(el => {
         el.addEventListener('click', () => {
           const name = el.dataset.name;
@@ -79,6 +73,7 @@
     }
 
     function selectUser(name) {
+      // 사용자 로그 표시
       const logs = userLogs[name] || [];
       const logHtml = logs.length > 0
         ? logs.map(log => `<div class="log-entry">${log}</div>`).join('')
@@ -100,42 +95,70 @@
       };
 
       if (map && userLocations[name]) {
-        const position = userLocations[name];
-        map.setCenter(position);
+        const basePosition = userLocations[name];
+        map.setCenter(basePosition);
 
-        // 기존 마커 제거
+        // 기존 단일 마커 제거
         if (marker) marker.setMap(null);
 
-        // 새 마커 생성
-        marker = new kakao.maps.Marker({
-          position: position,
-          draggable: true,
-          map: map
-        });
+        // 기존 다중 마커 제거
+        timeMarkers.forEach(m => m.setMap(null));
+        timeMarkers = [];
 
-        const lat = position.getLat();
-        const lng = position.getLng();
+        // ➤ 김윤석일 경우 다중 마커 표시
+        if (name === '김윤석') {
+          const now = new Date();
+          const numPoints = 5;
 
-        const infowindow = new kakao.maps.InfoWindow({
-          content: `<div style="padding:5px; font-size:13px;">
-            <strong>${name}</strong>의 현재 위치<br/>
-            위도: ${lat.toFixed(6)}<br/>
-            경도: ${lng.toFixed(6)}
-            </div>`
-        });
-        infowindow.open(map, marker);
+          for (let i = 0; i < numPoints; i++) {
+            const latOffset = i * 0.0036; // 약 400m 위도 이동
+            const newLat = basePosition.getLat() + latOffset;
+            const newLng = basePosition.getLng();
+            const newPos = new kakao.maps.LatLng(newLat, newLng);
 
-        kakao.maps.event.addListener(marker, 'click', function() {
-          alert(`${name}의 위치 마커를 클릭했습니다!`);
-        });
+            const time = new Date(now.getTime() + i * 5 * 60000);
+            const timeStr = time.toTimeString().substring(0, 5);
 
-        kakao.maps.event.addListener(marker, 'dragstart', function() {
-          console.log('마커 dragstart 발생');
-        });
+            const m = new kakao.maps.Marker({
+              position: newPos,
+              map: map
+            });
+            timeMarkers.push(m);
 
-        kakao.maps.event.addListener(marker, 'dragend', function() {
-          console.log('마커 dragend 발생');
-        });
+            const infowindow = new kakao.maps.InfoWindow({
+              content: `
+                <div style="padding:5px; font-size:12px;">
+                  <strong>${name}</strong><br/>
+                  시간: ${timeStr}<br/>
+                  위도: ${newLat.toFixed(6)}<br/>
+                  경도: ${newLng.toFixed(6)}
+                </div>
+              `
+            });
+            infowindow.open(map, m);
+          }
+        } else {
+          // ➤ 다른 사용자: 단일 마커 표시
+          marker = new kakao.maps.Marker({
+            position: basePosition,
+            draggable: true,
+            map: map
+          });
+
+          const lat = basePosition.getLat();
+          const lng = basePosition.getLng();
+
+          const infowindow = new kakao.maps.InfoWindow({
+            content: `
+              <div style="padding:5px; font-size:13px;">
+                <strong>${name}</strong>의 현재 위치<br/>
+                위도: ${lat.toFixed(6)}<br/>
+                경도: ${lng.toFixed(6)}
+              </div>
+            `
+          });
+          infowindow.open(map, marker);
+        }
       }
     }
 
