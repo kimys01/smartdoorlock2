@@ -9,47 +9,42 @@
   </style>
 </head>
 <body>
-  <h1>유저 123456 위치 기록</h1>
+  <h1>유저 12345678 위치 기록</h1>
   <div id="map"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
 
-    // Firebase 설정값 (네 프로젝트 설정으로 변경)
     const firebaseConfig = {
       apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
       authDomain: "smartdoorlock-b4636.firebaseapp.com",
       databaseURL: "https://smartdoorlock-b4636-default-rtdb.firebaseio.com",
       projectId: "smartdoorlock-b4636",
-      storageBucket: "smartdoorlock-b4636.firebasestorage.app",
+      storageBucket: "smartdoorlock-b4636.appspot.com", <!-- 🔧 수정됨 -->
       messagingSenderId: "104489505270",
       appId: "1:104489505270:web:0d663b2ae774b77a2077d7",
       measurementId: "G-YL6TMYN453"
     };
 
-    // Firebase 초기화
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
 
-    // 카카오 지도 초기화
     let map;
     let markers = [];
 
     function initMap() {
       map = new kakao.maps.Map(document.getElementById('map'), {
-        center: new kakao.maps.LatLng(37.5665, 126.9780), // 서울 중심 좌표
+        center: new kakao.maps.LatLng(37.5665, 126.9780),
         level: 7
       });
     }
 
-    // 기존 마커 모두 제거
     function clearMarkers() {
       markers.forEach(marker => marker.setMap(null));
       markers = [];
     }
 
-    // 위치 데이터 받아서 지도에 마커 찍기
     function showLocations(locations) {
       clearMarkers();
 
@@ -65,7 +60,6 @@
         markers.push(marker);
       });
 
-      // 마커 중 첫 위치로 지도 센터 이동
       if (markers.length > 0) {
         map.setCenter(markers[0].getPosition());
         map.setLevel(5);
@@ -75,10 +69,8 @@
     kakao.maps.load(() => {
       initMap();
 
-      // 유저 아이디 지정
-      const userId = "123456";
+      const userId = "12345678";  // ✅ 사용자 ID 수정됨
 
-      // Firebase Realtime DB에서 해당 유저 위치 로그 읽기
       const userLocationsRef = ref(database, `location_logs/${userId}`);
 
       onValue(userLocationsRef, (snapshot) => {
