@@ -2,21 +2,19 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>Capstone Website Prototype</title>
+  <title>Capstone Map – Single User</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css">
-  <!-- 카카오 지도 API -->
+  <!-- Kakao Maps SDK -->
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0c43dda5249fa5372cb6f65f0320a50f&autoload=false"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <!-- 사용자 목록 -->
   <div id="userList">
     <h2>사용자 목록</h2>
-    <div class="user" data-name="김윤석">김윤석</div>
-    <div class="user" data-name="김시현">김시현</div>
-    <div class="user" data-name="김현준">김현준</div>
-    <div class="user" data-name="이시현">이시현</div>
+    <div class="user" data-name="12345678">12345678</div>
   </div>
 
   <!-- 사용자 정보 -->
@@ -32,119 +30,68 @@
   <div id="mapArea">
     <h2>지오펜스 화면</h2>
     <p id="mapUser">사용자를 선택하면 지오펜스가 표시됩니다.</p>
-    <div id="map" style="width:100%; height:400px;"></div>
+    <div id="map"></div>
   </div>
 
-  <!-- 스크립트 -->
   <script>
-    const userLogs = {
-      '김윤석': ['2025-04-12 14:22 - 개방 (BLE)', '2025-04-11 18:00 - 개방 (RFID)'],
-      '김시현': ['2025-04-12 08:11 - 개방 (Beacon)', '2025-04-11 22:10 - 개방 (BLE)'],
-      '김현준': ['2025-04-09 09:50 - 개방 (RFID)'],
-      '이시현': ['2025-04-10 12:30 - 개방 (BLE)', '2025-04-08 17:15 - 개방 (RFID)']
+    // 좌표 데이터 (시간 없음)
+    const userLocations = {
+      '12345678': [
+        { lat: 36.3307729, lng: 127.3364228 },
+        { lat: 36.3306827, lng: 127.3366801 },
+        { lat: 36.3304827, lng: 127.3367801 },
+        { lat: 36.3303827, lng: 127.3368801 },
+        { lat: 36.3301827, lng: 127.3370801 },
+        { lat: 36.3300000, lng: 127.3371801 }
+      ]
     };
 
     let map;
-    let marker;
+    let markers = [];
 
     function initMap() {
-      const container = document.getElementById('map');
-      const options = {
-        center: new kakao.maps.LatLng(37.5665, 126.9780),
-        level: 3,
-        mapTypeId: kakao.maps.MapTypeId.ROADMAP
-      };
-      map = new kakao.maps.Map(container, options);
-
-      // 지도 타입 컨트롤
-      const mapTypeControl = new kakao.maps.MapTypeControl();
-      map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
-
-      // 확대/축소 컨트롤
-      const zoomControl = new kakao.maps.ZoomControl();
-      map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
-
-      // 지도 클릭 이벤트
-      kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
-        console.log('지도 클릭 좌표:', mouseEvent.latLng.toString());
+      map = new kakao.maps.Map(document.getElementById('map'), {
+        center: new kakao.maps.LatLng(36.3307729, 127.3364228),
+        level: 4
       });
 
-      // 사용자 선택 이벤트 등록
-      document.querySelectorAll('.user').forEach(el => {
-        el.addEventListener('click', () => {
-          const name = el.dataset.name;
-          selectUser(name);
-        });
-      });
+      map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
+      map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
+
+      // 목록 클릭 이벤트
+      document.querySelector('.user').addEventListener('click', () => selectUser('12345678'));
     }
 
-    function selectUser(name) {
-      const logs = userLogs[name] || [];
-      const logHtml = logs.length > 0
-        ? logs.map(log => `<div class="log-entry">${log}</div>`).join('')
-        : '<div class="log-entry">출입 기록이 없습니다.</div>';
+    function selectUser(id){
+      // 기존 마커 제거
+      markers.forEach(m => m.setMap(null));
+      markers = [];
 
-      document.getElementById('infoArea').innerHTML = `
-        <p><strong>이름:</strong> ${name}</p>
-        <h3>로그 기록</h3>
-        <div class="log-list">${logHtml}</div>
-      `;
+      const locs = userLocations[id] || [];
+      if(locs.length===0) return;
+
+      // 표 만들기
+      const rows = locs.map((p,i)=>`<div>${i+1}. ( ${p.lat.toFixed(7)} , ${p.lng.toFixed(7)} )</div>`).join('');
+      document.getElementById('infoArea').innerHTML = `<p><strong>아이디:</strong> ${id}</p>${rows}`;
       document.getElementById('userInfo').classList.remove('hidden');
-      document.getElementById('mapUser').textContent = `${name}의 지오펜스 화면입니다.`;
+      document.getElementById('mapUser').textContent = `${id}의 지오펜스 화면입니다.`;
 
-      const userLocations = {
-        '김윤석': new kakao.maps.LatLng(37.5665, 126.9780),
-        '김시현': new kakao.maps.LatLng(37.5651, 126.9895),
-        '김현준': new kakao.maps.LatLng(37.5700, 126.9820),
-        '이시현': new kakao.maps.LatLng(37.5720, 126.9765)
-      };
-
-      if (map && userLocations[name]) {
-        const position = userLocations[name];
-        map.setCenter(position);
-
-        // 기존 마커 제거
-        if (marker) marker.setMap(null);
-
-        // 새 마커 생성
-        marker = new kakao.maps.Marker({
-          position: position,
-          draggable: true,
-          map: map
-        });
-
-        const infowindow = new kakao.maps.InfoWindow({
-          content: '<div style="padding:5px;">사용자 위치</div>'
-        });
-        infowindow.open(map, marker);
-
-        kakao.maps.event.addListener(marker, 'click', function() {
-          alert(`${name}의 위치 마커를 클릭했습니다!`);
-        });
-
-        kakao.maps.event.addListener(marker, 'dragstart', function() {
-          console.log('마커 dragstart 발생');
-        });
-
-        kakao.maps.event.addListener(marker, 'dragend', function() {
-          console.log('마커 dragend 발생');
-        });
-      }
+      // 마커 추가
+      locs.forEach((p,i)=>{
+        const pos = new kakao.maps.LatLng(p.lat,p.lng);
+        const marker = new kakao.maps.Marker({ position: pos, map, draggable: true });
+        markers.push(marker);
+        if(i===0) map.setCenter(pos);
+      });
     }
 
-    function closeUserInfo() {
+    function closeUserInfo(){
       document.getElementById('userInfo').classList.add('hidden');
-      document.getElementById('infoArea').innerHTML = '';
+      document.getElementById('infoArea').textContent = '사용자를 선택해주세요.';
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      if (window.kakao && kakao.maps) {
-        kakao.maps.load(() => {
-          initMap();
-        });
-      } else {
-        console.error("카카오 지도 API 로딩 실패: window.kakao.maps가 정의되지 않았습니다.");
-      }
+    document.addEventListener('DOMContentLoaded', ()=>{
+      kakao.maps.load(initMap);
     });
   </script>
 
