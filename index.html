@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
   <div id="userList">
     <h2>사용자 목록</h2>
     <div class="user" data-name="김윤석">김윤석</div>
@@ -15,7 +14,6 @@
     <div class="user" data-name="김현준">김현준</div>
     <div class="user" data-name="이시현">이시현</div>
   </div>
-
   <div id="userInfo" class="hidden">
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <h2 style="margin:0;">사용자 위치 기록</h2>
@@ -23,13 +21,11 @@
     </div>
     <div id="infoArea"></div>
   </div>
-
   <div id="mapArea">
     <h2>지오펜스 화면</h2>
     <p id="mapUser">사용자를 선택하면 지오펜스가 표시됩니다.</p>
     <div id="map"></div>
   </div>
-
   <script>
     const userBaseLocations = {
       '김윤석': [37.5665, 126.9780],
@@ -38,7 +34,6 @@
       '이시현': [37.5720, 126.9765]
     };
     let map, markerObjects = [];
-
     function initMap() {
       map = new kakao.maps.Map(document.getElementById('map'), {
         center: new kakao.maps.LatLng(37.5665, 126.9780),
@@ -46,37 +41,29 @@
       });
       map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
       map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
-
       const imgSize = new kakao.maps.Size(24, 35);
       const highlightImg = new kakao.maps.MarkerImage(
         'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png', 
         imgSize
       );
-
       document.querySelectorAll('.user').forEach(el => {
         el.addEventListener('click', () => selectUser(el.dataset.name, highlightImg));
       });
     }
-
     function selectUser(name, highlightImg) {
       markerObjects.forEach(mo => mo.marker.setMap(null));
       markerObjects = [];
-
       const base = userBaseLocations[name];
       const deltas = [[0,0],[0.0005,0.0003],[0.001,0.0008]];
       const now = new Date();
       let tableRows = '';
-
       deltas.forEach((d,i) => {
         const lat = base[0] + d[0], lng = base[1] + d[1];
         const pos = new kakao.maps.LatLng(lat, lng);
         const timeStr = new Date(now - i*5*60000).toTimeString().slice(0,5);
-
         const marker = new kakao.maps.Marker({ position: pos, map, draggable: true });
         markerObjects.push({ marker, defaultImg: null }); 
-
         if (i === 0) map.setCenter(pos);
-
         tableRows += `<tr class="loc-entry" data-idx="${i}">
                         <td>${i+1}</td>
                         <td>${timeStr}</td>
@@ -84,7 +71,6 @@
                         <td>${lng.toFixed(5)}</td>
                       </tr>`;
       });
-
       document.getElementById('infoArea').innerHTML = `
         <p><strong>이름:</strong> ${name}</p>
         <table>
@@ -94,7 +80,6 @@
       `;
       document.getElementById('userInfo').classList.remove('hidden');
       document.getElementById('mapUser').textContent = `${name}의 지오펜스 화면입니다.`;
-
       document.querySelectorAll('.loc-entry').forEach(el => {
         el.addEventListener('click', () => {
           const idx = Number(el.dataset.idx);
@@ -112,12 +97,10 @@
         });
       });
     }
-
     function closeUserInfo() {
       document.getElementById('userInfo').classList.add('hidden');
       document.getElementById('infoArea').innerHTML = '';
     }
-
     document.addEventListener('DOMContentLoaded', () => {
       kakao.maps.load(initMap);
     });
