@@ -37,71 +37,92 @@
       '김현준': [37.5700, 126.9820],
       '이시현': [37.5720, 126.9765]
     };
-    let map, markerObjects = [];
+
+    let map;
+    let markerObjects = [];
 
     function initMap() {
-      // – 지도 초기화
       map = new kakao.maps.Map(document.getElementById('map'), {
         center: new kakao.maps.LatLng(37.5665, 126.9780),
         level: 3
       });
+
       map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
       map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
 
-      // – Highlight 이미지
       const imgSize = new kakao.maps.Size(24, 35);
       const highlightImg = new kakao.maps.MarkerImage(
-        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png', 
+        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',
         imgSize
       );
 
       document.querySelectorAll('.user').forEach(el => {
-        el.addEventListener('click', () => selectUser(el.dataset.name, highlightImg));
+        el.addEventListener('click', () => {
+          const name = el.dataset.name;
+          selectUser(name, highlightImg);
+        });
       });
     }
 
     function selectUser(name, highlightImg) {
-      markerObjects.forEach(mo => mo.marker.setMap(null));
+      markerObjects.forEach(obj => obj.marker.setMap(null));
       markerObjects = [];
 
       const base = userBaseLocations[name];
-      const deltas = [[0,0],[0.0005,0.0003],[0.001,0.0008]];
-      const now = new Date(), locHTML = [];
+      const deltas = [[0,0], [0.0005,0.0003], [0.001,0.0008]];
+      const now = new Date();
+      const locHTML = [];
 
-      deltas.forEach((d,i) => {
-        const lat = base[0] + d[0], lng = base[1] + d[1];
+      deltas.forEach((delta, i) => {
+        const lat = base[0] + delta[0];
+        const lng = base[1] + delta[1];
         const pos = new kakao.maps.LatLng(lat, lng);
-        const timeStr = new Date(now - i*5*60000).toTimeString().slice(0,5);
+        const timeStr = new Date(now - i * 5 * 60000).toTimeString().slice(0,5);
 
-        const marker = new kakao.maps.Marker({ position: pos, map, draggable: true });
-        markerObjects.push({ marker, defaultImg: null }); 
+        const marker = new kakao.maps.Marker({
+          position: pos,
+          map: map,
+          draggable: true
+        });
+
+        markerObjects.push({ marker, lat, lng, timeStr });
+
+        locHTML.push(`<div class="loc-entry" data-idx="${i}">${timeStr} - (${lat.toFixed(5)}, ${lng.toFixed(5)})</div>`);
 
         if (i === 0) map.setCenter(pos);
 
-        locHTML.push(`<div class="loc-entry" data-idx="${i}">${timeStr} - (${lat.toFixed(5)},${lng.toFixed(5)})</div>`);
+        kakao.maps.event.addListener(marker, 'dragend', () => {
+          console.log(`${name} 마커 ${i+1} dragend`);
+        });
       });
 
       document.getElementById('infoArea').innerHTML = `
-        <p><strong>이름:</strong> ${name}</p><h3>위치 기록</h3>${locHTML.join('')}
+        <p><strong>이름:</strong> ${name}</p>
+        <h3>위치 기록</h3>
+        ${locHTML.join('')}
       `;
       document.getElementById('userInfo').classList.remove('hidden');
       document.getElementById('mapUser').textContent = `${name}의 지오펜스 화면입니다.`;
 
       document.querySelectorAll('.loc-entry').forEach(el => {
         el.addEventListener('click', () => {
-          const idx = Number(el.dataset.idx);
-          markerObjects.forEach((obj, i) => {
-            if (i === idx) {
-              obj.marker.setImage(highlightImg);
-              obj.marker.setAnimation(kakao.maps.Animation.BOUNCE);
-              map.panTo(obj.marker.getPosition());
-              map.setLevel(4);
-            } else {
-              obj.marker.setImage(null);
-              obj.marker.setAnimation(null);
-            }
-          });
+          const idx = parseInt(el.dataset.idx);
+          highlightMarker(idx, highlightImg);
         });
+      });
+    }
+
+    function highlightMarker(idx, highlightImg) {
+      markerObjects.forEach((obj, i) => {
+        if (i === idx) {
+          obj.marker.setImage(highlightImg);
+          obj.marker.setAnimation(kakao.maps.Animation.BOUNCE);
+          map.panTo(obj.marker.getPosition());
+          setTimeout(() => map.setLevel(4), 300);  // 확대를 약간 딜레이 줘야 반영됨
+        } else {
+          obj.marker.setImage(null);  // 기본 마커로
+          obj.marker.setAnimation(null);
+        }
       });
     }
 
