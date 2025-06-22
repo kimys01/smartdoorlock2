@@ -76,8 +76,14 @@
         const pos = new kakao.maps.LatLng(lat,lng);
         const timeStr = new Date(now - idx*5*60000).toTimeString().slice(0,5);
 
-        const marker = new kakao.maps.Marker({ position: pos, map, image: defaultImg, draggable:true });
-        markerObjects.push({ marker });
+        const marker = new kakao.maps.Marker({
+          position: pos,
+          map,
+          image: defaultImg,
+          draggable: true
+        });
+        markerObjects.push({ marker, idx }); // index 저장
+
 
         if(idx===0) map.setCenter(pos);
 
@@ -94,17 +100,16 @@
     }
 
     // ------------ 하이라이트 ------------
-    function highlightMarker(idx, clickedEl){
-      // 목록 강조 표시
-      document.querySelectorAll('.loc-entry').forEach(el=>el.classList.remove('active'));
-      if(clickedEl) clickedEl.classList.add('active');
-
-      markerObjects.forEach((obj,i)=>{
-        if(i===idx){
+    function highlightMarker(idx, clickedEl) {
+      document.querySelectorAll('.loc-entry').forEach(el => el.classList.remove('active'));
+      if (clickedEl) clickedEl.classList.add('active');
+    
+      markerObjects.forEach(obj => {
+        if (obj.idx === idx) {
           obj.marker.setImage(highlightImg);
           obj.marker.setAnimation(kakao.maps.Animation.BOUNCE);
           map.panTo(obj.marker.getPosition());
-        }else{
+        } else {
           obj.marker.setImage(defaultImg);
           obj.marker.setAnimation(null);
         }
