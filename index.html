@@ -2,85 +2,151 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>특정 유저 위치 표시</title>
+  <title>Capstone Website Prototype</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css">
+  <!-- 카카오 지도 API -->
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0c43dda5249fa5372cb6f65f0320a50f&autoload=false"></script>
-  <style>
-    #map { width: 100%; height: 400px; }
-  </style>
 </head>
 <body>
-  <h1>유저 12345678 위치 기록</h1>
-  <div id="map"></div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+  <!-- 사용자 목록 -->
+  <div id="userList">
+    <h2>사용자 목록</h2>
+    <div class="user" data-name="김윤석">김윤석</div>
+    <div class="user" data-name="김시현">김시현</div>
+    <div class="user" data-name="김현준">김현준</div>
+    <div class="user" data-name="이시현">이시현</div>
+  </div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
-      authDomain: "smartdoorlock-b4636.firebaseapp.com",
-      databaseURL: "https://smartdoorlock-b4636-default-rtdb.firebaseio.com",
-      projectId: "smartdoorlock-b4636",
-      storageBucket: "smartdoorlock-b4636.appspot.com", <!-- 🔧 수정됨 -->
-      messagingSenderId: "104489505270",
-      appId: "1:104489505270:web:0d663b2ae774b77a2077d7",
-      measurementId: "G-YL6TMYN453"
+  <!-- 사용자 정보 -->
+  <div id="userInfo" class="hidden">
+    <div class="info-header">
+      <h2>사용자 정보</h2>
+      <button id="closeInfoBtn" onclick="closeUserInfo()">X</button>
+    </div>
+    <div id="infoArea">사용자를 선택해주세요.</div>
+  </div>
+
+  <!-- 지도 영역 -->
+  <div id="mapArea">
+    <h2>지오펜스 화면</h2>
+    <p id="mapUser">사용자를 선택하면 지오펜스가 표시됩니다.</p>
+    <div id="map" style="width:100%; height:400px;"></div>
+  </div>
+
+  <!-- 스크립트 -->
+  <script>
+    const userLogs = {
+      '김윤석': ['2025-04-12 14:22 - 개방 (BLE)', '2025-04-11 18:00 - 개방 (RFID)'],
+      '김시현': ['2025-04-12 08:11 - 개방 (Beacon)', '2025-04-11 22:10 - 개방 (BLE)'],
+      '김현준': ['2025-04-09 09:50 - 개방 (RFID)'],
+      '이시현': ['2025-04-10 12:30 - 개방 (BLE)', '2025-04-08 17:15 - 개방 (RFID)']
     };
 
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
-
     let map;
-    let markers = [];
+    let marker;
 
     function initMap() {
-      map = new kakao.maps.Map(document.getElementById('map'), {
+      const container = document.getElementById('map');
+      const options = {
         center: new kakao.maps.LatLng(37.5665, 126.9780),
-        level: 7
+        level: 3,
+        mapTypeId: kakao.maps.MapTypeId.ROADMAP
+      };
+      map = new kakao.maps.Map(container, options);
+
+      // 지도 타입 컨트롤
+      const mapTypeControl = new kakao.maps.MapTypeControl();
+      map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
+
+      // 확대/축소 컨트롤
+      const zoomControl = new kakao.maps.ZoomControl();
+      map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+
+      // 지도 클릭 이벤트
+      kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
+        console.log('지도 클릭 좌표:', mouseEvent.latLng.toString());
+      });
+
+      // 사용자 선택 이벤트 등록
+      document.querySelectorAll('.user').forEach(el => {
+        el.addEventListener('click', () => {
+          const name = el.dataset.name;
+          selectUser(name);
+        });
       });
     }
 
-    function clearMarkers() {
-      markers.forEach(marker => marker.setMap(null));
-      markers = [];
-    }
+    function selectUser(name) {
+      const logs = userLogs[name] || [];
+      const logHtml = logs.length > 0
+        ? logs.map(log => `<div class="log-entry">${log}</div>`).join('')
+        : '<div class="log-entry">출입 기록이 없습니다.</div>';
 
-    function showLocations(locations) {
-      clearMarkers();
+      document.getElementById('infoArea').innerHTML = `
+        <p><strong>이름:</strong> ${name}</p>
+        <h3>로그 기록</h3>
+        <div class="log-list">${logHtml}</div>
+      `;
+      document.getElementById('userInfo').classList.remove('hidden');
+      document.getElementById('mapUser').textContent = `${name}의 지오펜스 화면입니다.`;
 
-      if (!locations) return;
+      const userLocations = {
+        '김윤석': new kakao.maps.LatLng(37.5665, 126.9780),
+        '김시현': new kakao.maps.LatLng(37.5651, 126.9895),
+        '김현준': new kakao.maps.LatLng(37.5700, 126.9820),
+        '이시현': new kakao.maps.LatLng(37.5720, 126.9765)
+      };
 
-      Object.values(locations).forEach(loc => {
-        if (!loc.latitude || !loc.longitude) return;
-        const position = new kakao.maps.LatLng(loc.latitude, loc.longitude);
-        const marker = new kakao.maps.Marker({
+      if (map && userLocations[name]) {
+        const position = userLocations[name];
+        map.setCenter(position);
+
+        // 기존 마커 제거
+        if (marker) marker.setMap(null);
+
+        // 새 마커 생성
+        marker = new kakao.maps.Marker({
           position: position,
+          draggable: true,
           map: map
         });
-        markers.push(marker);
-      });
 
-      if (markers.length > 0) {
-        map.setCenter(markers[0].getPosition());
-        map.setLevel(5);
+        const infowindow = new kakao.maps.InfoWindow({
+          content: '<div style="padding:5px;">사용자 위치</div>'
+        });
+        infowindow.open(map, marker);
+
+        kakao.maps.event.addListener(marker, 'click', function() {
+          alert(`${name}의 위치 마커를 클릭했습니다!`);
+        });
+
+        kakao.maps.event.addListener(marker, 'dragstart', function() {
+          console.log('마커 dragstart 발생');
+        });
+
+        kakao.maps.event.addListener(marker, 'dragend', function() {
+          console.log('마커 dragend 발생');
+        });
       }
     }
 
-    kakao.maps.load(() => {
-      initMap();
+    function closeUserInfo() {
+      document.getElementById('userInfo').classList.add('hidden');
+      document.getElementById('infoArea').innerHTML = '';
+    }
 
-      const userId = "12345678";  // ✅ 사용자 ID 수정됨
-
-      const userLocationsRef = ref(database, `location_logs/${userId}`);
-
-      onValue(userLocationsRef, (snapshot) => {
-        const locations = snapshot.val();
-        console.log("읽은 위치 데이터:", locations);
-        showLocations(locations);
-      }, (error) => {
-        console.error("Firebase 읽기 오류:", error);
-      });
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.kakao && kakao.maps) {
+        kakao.maps.load(() => {
+          initMap();
+        });
+      } else {
+        console.error("카카오 지도 API 로딩 실패: window.kakao.maps가 정의되지 않았습니다.");
+      }
     });
   </script>
+
 </body>
 </html>
