@@ -2,31 +2,29 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>Capstone Map – Single User</title>
+  <title>Capstone Website Prototype</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css">
-  <!-- Kakao Maps SDK -->
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0c43dda5249fa5372cb6f65f0320a50f&autoload=false"></script>
-  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <!-- 사용자 목록 -->
   <div id="userList">
     <h2>사용자 목록</h2>
-    <div class="user" data-name="김윤섭">김윤섭</div>
+    <div class="user" data-name="12345678">12345678</div>
   </div>
 
   <!-- 사용자 정보 -->
   <div id="userInfo" class="hidden">
     <div class="info-header">
       <h2>사용자 정보</h2>
-      <button id="closeInfoBtn" onclick="closeUserInfo()">X</button>
+      <button onclick="closeUserInfo()">X</button>
     </div>
     <div id="infoArea">사용자를 선택해주세요.</div>
   </div>
 
-  <!-- 지도 영역 -->
+  <!-- 지도 -->
   <div id="mapArea">
     <h2>지오펜스 화면</h2>
     <p id="mapUser">사용자를 선택하면 지오펜스가 표시됩니다.</p>
@@ -34,9 +32,8 @@
   </div>
 
   <script>
-    // 좌표 데이터 (시간 없음)
-    const userLocations = {
-      '김윤섭': [
+    const userData = {
+      '12345678': [
         { lat: 36.3307729, lng: 127.3364228 },
         { lat: 36.3306827, lng: 127.3366801 },
         { lat: 36.3304827, lng: 127.3367801 },
@@ -50,50 +47,64 @@
     let markers = [];
 
     function initMap() {
-      map = new kakao.maps.Map(document.getElementById('map'), {
+      const container = document.getElementById('map');
+      map = new kakao.maps.Map(container, {
         center: new kakao.maps.LatLng(36.3307729, 127.3364228),
         level: 4
       });
 
-      map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
-      map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
-
-      // 목록 클릭 이벤트
-      document.querySelector('.user').addEventListener('click', () => selectUser('12345678'));
-    }
-
-    function selectUser(id){
-      // 기존 마커 제거
-      markers.forEach(m => m.setMap(null));
-      markers = [];
-
-      const locs = userLocations[id] || [];
-      if(locs.length===0) return;
-
-      // 표 만들기
-      const rows = locs.map((p,i)=>`<div>${i+1}. ( ${p.lat.toFixed(7)} , ${p.lng.toFixed(7)} )</div>`).join('');
-      document.getElementById('infoArea').innerHTML = `<p><strong>아이디:</strong> ${id}</p>${rows}`;
-      document.getElementById('userInfo').classList.remove('hidden');
-      document.getElementById('mapUser').textContent = `${id}의 지오펜스 화면입니다.`;
-
-      // 마커 추가
-      locs.forEach((p,i)=>{
-        const pos = new kakao.maps.LatLng(p.lat,p.lng);
-        const marker = new kakao.maps.Marker({ position: pos, map, draggable: true });
-        markers.push(marker);
-        if(i===0) map.setCenter(pos);
+      document.querySelectorAll('.user').forEach(el => {
+        el.addEventListener('click', () => selectUser(el.dataset.name));
       });
     }
 
-    function closeUserInfo(){
-      document.getElementById('userInfo').classList.add('hidden');
-      document.getElementById('infoArea').textContent = '사용자를 선택해주세요.';
+    function selectUser(userId) {
+      const positions = userData[userId] || [];
+      const infoArea = document.getElementById('infoArea');
+      const logHtml = positions.map(pos => `
+        <div class="log-entry">
+          <strong>위도:</strong> ${pos.lat}<br>
+          <strong>경도:</strong> ${pos.lng}
+        </div>
+      `).join('');
+
+      infoArea.innerHTML = `
+        <p><strong>사용자 ID:</strong> ${userId}</p>
+        <h3>위치 목록</h3>
+        <div class="log-list">${logHtml}</div>
+      `;
+      document.getElementById('userInfo').classList.remove('hidden');
+      document.getElementById('mapUser').textContent = `${userId}의 지오펜스 화면입니다.`;
+
+      // 기존 마커 제거
+      markers.forEach(marker => marker.setMap(null));
+      markers = [];
+
+      // 새 마커 찍기
+      positions.forEach((pos, index) => {
+        const marker = new kakao.maps.Marker({
+          position: new kakao.maps.LatLng(pos.lat, pos.lng),
+          map: map,
+          title: `위치 ${index + 1}`,
+          draggable: true
+        });
+        markers.push(marker);
+      });
+
+      // 첫 번째 마커로 중심 이동
+      if (positions.length > 0) {
+        map.setCenter(new kakao.maps.LatLng(positions[0].lat, positions[0].lng));
+      }
     }
 
-    document.addEventListener('DOMContentLoaded', ()=>{
+    function closeUserInfo() {
+      document.getElementById('userInfo').classList.add('hidden');
+      document.getElementById('infoArea').innerHTML = '사용자를 선택해주세요.';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
       kakao.maps.load(initMap);
     });
   </script>
-
 </body>
 </html>
