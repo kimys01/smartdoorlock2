@@ -134,3 +134,23 @@ input:checked + .slider {
 input:checked + .slider:before { 
     transform: translateX(22px); 
 }
+#infoArea table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 12px;
+}
+#infoArea th, #infoArea td {
+    border: 1px solid #ccc;
+    padding: 4px 6px;
+    text-align: center;
+}
+#infoArea th {
+    background-color: #f0f0f0;
+}
+.loc-entry {
+    cursor: pointer;
+}
+.loc-entry:hover {
+    background-color: #f9f9f9;
+}
