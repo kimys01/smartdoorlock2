@@ -2,37 +2,21 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>Capstone Map Test</title>
+  <title>특정 유저 위치 표시</title>
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0c43dda5249fa5372cb6f65f0320a50f&autoload=false"></script>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    #map { width: 100%; height: 400px; }
+  </style>
 </head>
 <body>
-  <div id="userList">
-    <h2>사용자 목록</h2>
-    <div class="user" data-name="김윤석">김윤석</div>
-    <div class="user" data-name="김시현">김시현</div>
-    <div class="user" data-name="김현준">김현준</div>
-    <div class="user" data-name="이시현">이시현</div>
-  </div>
-  <div id="userInfo" class="hidden">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <h2 style="margin:0;">사용자 위치 기록</h2>
-      <button onclick="closeUserInfo()">X</button>
-    </div>
-    <div id="infoArea"></div>
-  </div>
-  <div id="mapArea">
-    <h2>지오펜스 화면</h2>
-    <p id="mapUser">사용자를 선택하면 지오펜스가 표시됩니다.</p>
-    <div id="map"></div>
-    <button id="saveLocationBtn">내 위치 저장</button>
-  </div>
+  <h1>유저 123456 위치 기록</h1>
+  <div id="map"></div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-    import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-analytics.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
 
-    // Firebase 설정 (원하는 프로젝트 설정값으로 넣기)
+    // Firebase 설정값 (네 프로젝트 설정으로 변경)
     const firebaseConfig = {
       apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
       authDomain: "smartdoorlock-b4636.firebaseapp.com",
@@ -46,54 +30,64 @@
 
     // Firebase 초기화
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
     const database = getDatabase(app);
 
-    // 카카오 지도 변수
-    let map, markers = [];
+    // 카카오 지도 초기화
+    let map;
+    let markers = [];
 
-    // 카카오 지도 초기화 함수
     function initMap() {
       map = new kakao.maps.Map(document.getElementById('map'), {
-        center: new kakao.maps.LatLng(37.5665, 126.9780),
-        level: 3
-      });
-      map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
-      map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
-    }
-
-    // 저장 버튼 없애려면 saveMyLocation 함수와 이벤트 리스너 제거 가능
-
-    // 실시간 위치 데이터 감지 및 지도에 마커 표시
-    function listenLocations() {
-      const locationsRef = ref(database, "locations");
-      onValue(locationsRef, (snapshot) => {
-        const data = snapshot.val();
-
-        // 기존 마커 제거
-        markers.forEach(m => m.setMap(null));
-        markers = [];
-
-        if (data) {
-          Object.entries(data).forEach(([userId, loc]) => {
-            if (!loc.latitude || !loc.longitude) return;
-            const pos = new kakao.maps.LatLng(loc.latitude, loc.longitude);
-            const marker = new kakao.maps.Marker({
-              position: pos,
-              map: map
-            });
-            markers.push(marker);
-          });
-        }
-      }, (error) => {
-        console.error("Firebase DB 읽기 에러:", error);
+        center: new kakao.maps.LatLng(37.5665, 126.9780), // 서울 중심 좌표
+        level: 7
       });
     }
 
-    // 카카오 지도 로딩 후 초기화 및 Firebase 리스너 시작
+    // 기존 마커 모두 제거
+    function clearMarkers() {
+      markers.forEach(marker => marker.setMap(null));
+      markers = [];
+    }
+
+    // 위치 데이터 받아서 지도에 마커 찍기
+    function showLocations(locations) {
+      clearMarkers();
+
+      if (!locations) return;
+
+      Object.values(locations).forEach(loc => {
+        if (!loc.latitude || !loc.longitude) return;
+        const position = new kakao.maps.LatLng(loc.latitude, loc.longitude);
+        const marker = new kakao.maps.Marker({
+          position: position,
+          map: map
+        });
+        markers.push(marker);
+      });
+
+      // 마커 중 첫 위치로 지도 센터 이동
+      if (markers.length > 0) {
+        map.setCenter(markers[0].getPosition());
+        map.setLevel(5);
+      }
+    }
+
     kakao.maps.load(() => {
       initMap();
-      listenLocations();
+
+      // 유저 아이디 지정
+      const userId = "123456";
+
+      // Firebase Realtime DB에서 해당 유저 위치 로그 읽기
+      const userLocationsRef = ref(database, `location_logs/${userId}`);
+
+      onValue(userLocationsRef, (snapshot) => {
+        const locations = snapshot.val();
+        console.log("읽은 위치 데이터:", locations);
+        showLocations(locations);
+      }, (error) => {
+        console.error("Firebase 읽기 오류:", error);
+      });
     });
   </script>
 </body>
