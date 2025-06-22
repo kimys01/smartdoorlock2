@@ -49,92 +49,88 @@
     <div id="map"></div>
   </div>
   <script>
-    const userBaseLocations = {
-      '김윤석': [37.5665, 126.9780],
-      '김시현': [37.5651, 126.9895],
-      '김현준': [37.5700, 126.9820],
-      '이시현': [37.5720, 126.9765]
-    };
-    let map, markerObjects = [];
+    let map, markers = [];
+    
+    // 기존 kakao 지도 초기화 함수
     function initMap() {
       map = new kakao.maps.Map(document.getElementById('map'), {
         center: new kakao.maps.LatLng(37.5665, 126.9780),
         level: 3
       });
-      map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
-      map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
-      const imgSize = new kakao.maps.Size(24, 35);
-      const highlightImg = new kakao.maps.MarkerImage(
-        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png', 
-        imgSize
-      );
-      const defaultImg = new kakao.maps.MarkerImage(
-        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
-        imgSize
-      );
-
-      document.querySelectorAll('.user').forEach(el => {
-        el.addEventListener('click', () => selectUser(el.dataset.name, highlightImg, defaultImg));
+    }
+  
+    kakao.maps.load(initMap);
+  </script>
+  
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+  
+    // Firebase 초기화
+    const firebaseConfig = {
+      apiKey: "AIzaSyDvKyi2EBgmyIY_pix7QLlj0G24qIlIv0k",
+      authDomain: "capstone-smartdoorlock.firebaseapp.com",
+      projectId: "capstone-smartdoorlock",
+      storageBucket: "capstone-smartdoorlock.firebasestorage.app",
+      messagingSenderId: "156309519192",
+      appId: "1:156309519192:web:fd5d97931e5bbf089b432d"
+    };
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+  
+    // 내 위치 저장 함수
+    async function saveMyLocation() {
+      if (!navigator.geolocation) {
+        alert("GPS 지원 안 하는 브라우저예요");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        console.log("내 위치:", lat, lng);
+        // Firebase에 저장 (경로: locations/myUser)
+        await set(ref(database, "locations/myUser"), {
+          latitude: lat,
+          longitude: lng,
+          timestamp: Date.now()
+        });
+        alert("위치가 저장되었습니다!");
+      }, (err) => {
+        alert("위치 정보를 가져올 수 없습니다.");
+        console.error(err);
       });
     }
-    function selectUser(name, highlightImg, defaultImg) {
-      markerObjects.forEach(mo => mo.marker.setMap(null));
-      markerObjects = [];
-      const base = userBaseLocations[name];
-      const deltas = [[0,0],[0.0005,0.0003],[0.001,0.0008]];
-      const now = new Date();
-      let tableRows = '';
-      deltas.forEach((d,i) => {
-        const lat = base[0] + d[0], lng = base[1] + d[1];
-        const pos = new kakao.maps.LatLng(lat, lng);
-        const timeStr = new Date(now - i*5*60000).toTimeString().slice(0,5);
-        const marker = new kakao.maps.Marker({
-          position: pos,
-          map,
-          draggable: true,
-          image: defaultImg
-        });
-        markerObjects.push({ marker });
-        if (i === 0) map.setCenter(pos);
-        tableRows += `<tr class="loc-entry" data-idx="${i}">
-                        <td>${i+1}</td>
-                        <td>${timeStr}</td>
-                        <td>${lat.toFixed(5)}</td>
-                        <td>${lng.toFixed(5)}</td>
-                      </tr>`;
-      });
-      document.getElementById('infoArea').innerHTML = `
-        <p><strong>이름:</strong> ${name}</p>
-        <table>
-          <thead><tr><th>#</th><th>시간</th><th>위도</th><th>경도</th></tr></thead>
-          <tbody>${tableRows}</tbody>
-        </table>
-      `;
-      document.getElementById('userInfo').classList.remove('hidden');
-      document.getElementById('mapUser').textContent = `${name}의 지오펜스 화면입니다.`;
-      document.querySelectorAll('.loc-entry').forEach(el => {
-        el.addEventListener('click', () => {
-          const idx = Number(el.dataset.idx);
-          markerObjects.forEach((obj, i) => {
-            if (i === idx) {
-              obj.marker.setImage(highlightImg);
-              obj.marker.setAnimation(kakao.maps.Animation.BOUNCE);
-              map.panTo(obj.marker.getPosition());
-              map.setLevel(4);
-            } else {
-              obj.marker.setImage(defaultImg);
-              obj.marker.setAnimation(null);
-            }
+  
+    // 저장된 위치 실시간 감지 및 지도에 마커 표시
+    function listenLocations() {
+      const locationsRef = ref(database, "locations");
+      onValue(locationsRef, (snapshot) => {
+        const data = snapshot.val();
+        // 기존 마커 제거
+        markers.forEach(m => m.setMap(null));
+        markers = [];
+      
+        if (data) {
+          Object.entries(data).forEach(([userId, loc]) => {
+            if (!loc.latitude || !loc.longitude) return;
+            const pos = new kakao.maps.LatLng(loc.latitude, loc.longitude);
+            const marker = new kakao.maps.Marker({
+              position: pos,
+              map: map
+            });
+            markers.push(marker);
           });
-        });
+        }
       });
     }
-    function closeUserInfo() {
-      document.getElementById('userInfo').classList.add('hidden');
-      document.getElementById('infoArea').innerHTML = '';
-    }
-    document.addEventListener('DOMContentLoaded', () => {
-      kakao.maps.load(initMap);
+  
+    // 버튼 클릭 이벤트 연결
+    document.getElementById("saveLocationBtn").addEventListener("click", saveMyLocation);
+  
+    // 지도 로딩 후 Firebase 리스너 시작
+    kakao.maps.load(() => {
+      initMap();
+      listenLocations();
     });
   </script>
 </body>
