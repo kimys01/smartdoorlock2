@@ -5,6 +5,27 @@
   <title>Capstone Map Test</title>
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0c43dda5249fa5372cb6f65f0320a50f&autoload=false"></script>
   <link rel="stylesheet" href="style.css">
+  <style>
+    #infoArea table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    #infoArea th, #infoArea td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    #infoArea th {
+      background-color: #f0f0f0;
+    }
+    .loc-entry {
+      cursor: pointer;
+    }
+    .loc-entry:hover {
+      background-color: #f9f9f9;
+    }
+  </style>
 </head>
 <body>
 
@@ -40,7 +61,6 @@
     let map, markerObjects = [];
 
     function initMap() {
-      // – 지도 초기화
       map = new kakao.maps.Map(document.getElementById('map'), {
         center: new kakao.maps.LatLng(37.5665, 126.9780),
         level: 3
@@ -48,7 +68,6 @@
       map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
       map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
 
-      // – Highlight 이미지
       const imgSize = new kakao.maps.Size(24, 35);
       const highlightImg = new kakao.maps.MarkerImage(
         'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png', 
@@ -66,7 +85,8 @@
 
       const base = userBaseLocations[name];
       const deltas = [[0,0],[0.0005,0.0003],[0.001,0.0008]];
-      const now = new Date(), locHTML = [];
+      const now = new Date();
+      let tableRows = '';
 
       deltas.forEach((d,i) => {
         const lat = base[0] + d[0], lng = base[1] + d[1];
@@ -78,11 +98,20 @@
 
         if (i === 0) map.setCenter(pos);
 
-        locHTML.push(`<div class="loc-entry" data-idx="${i}">${timeStr} - (${lat.toFixed(5)},${lng.toFixed(5)})</div>`);
+        tableRows += `<tr class="loc-entry" data-idx="${i}">
+                        <td>${i+1}</td>
+                        <td>${timeStr}</td>
+                        <td>${lat.toFixed(5)}</td>
+                        <td>${lng.toFixed(5)}</td>
+                      </tr>`;
       });
 
       document.getElementById('infoArea').innerHTML = `
-        <p><strong>이름:</strong> ${name}</p><h3>위치 기록</h3>${locHTML.join('')}
+        <p><strong>이름:</strong> ${name}</p>
+        <table>
+          <thead><tr><th>#</th><th>시간</th><th>위도</th><th>경도</th></tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
       `;
       document.getElementById('userInfo').classList.remove('hidden');
       document.getElementById('mapUser').textContent = `${name}의 지오펜스 화면입니다.`;
