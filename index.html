@@ -5,28 +5,6 @@
   <title>Capstone Map Test</title>
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0c43dda5249fa5372cb6f65f0320a50f&autoload=false"></script>
   <link rel="stylesheet" href="style.css">
-  <style>
-    #infoArea table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    font-size: 12px;
-    }
-    #infoArea th, #infoArea td {
-        border: 1px solid #ccc;
-        padding: 4px 6px;
-        text-align: center;
-    }
-    #infoArea th {
-        background-color: #f0f0f0;
-    }
-    .loc-entry {
-        cursor: pointer;
-    }
-    .loc-entry:hover {
-        background-color: #f9f9f9;
-    }
-  </style>
 </head>
 <body>
   <div id="userList">
@@ -47,11 +25,34 @@
     <h2>지오펜스 화면</h2>
     <p id="mapUser">사용자를 선택하면 지오펜스가 표시됩니다.</p>
     <div id="map"></div>
+    <button id="saveLocationBtn">내 위치 저장</button>
   </div>
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-analytics.js";
+
+    // Firebase 설정 (원하는 프로젝트 설정값으로 넣기)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
+      authDomain: "smartdoorlock-b4636.firebaseapp.com",
+      databaseURL: "https://smartdoorlock-b4636-default-rtdb.firebaseio.com",
+      projectId: "smartdoorlock-b4636",
+      storageBucket: "smartdoorlock-b4636.firebasestorage.app",
+      messagingSenderId: "104489505270",
+      appId: "1:104489505270:web:0d663b2ae774b77a2077d7",
+      measurementId: "G-YL6TMYN453"
+    };
+
+    // Firebase 초기화
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const database = getDatabase(app);
+
+    // 카카오 지도 변수
     let map, markers = [];
 
-    // 기존 kakao 지도 초기화 함수
+    // 카카오 지도 초기화 함수
     function initMap() {
       map = new kakao.maps.Map(document.getElementById('map'), {
         center: new kakao.maps.LatLng(37.5665, 126.9780),
@@ -61,53 +62,14 @@
       map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
     }
 
-    kakao.maps.load(initMap);
-  </script>
+    // 저장 버튼 없애려면 saveMyLocation 함수와 이벤트 리스너 제거 가능
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
-
-    // Firebase 초기화
-    const firebaseConfig = {
-      apiKey: "AIzaSyDvKyi2EBgmyIY_pix7QLlj0G24qIlIv0k",
-      authDomain: "capstone-smartdoorlock.firebaseapp.com",
-      projectId: "capstone-smartdoorlock",
-      storageBucket: "capstone-smartdoorlock.firebasestorage.app",
-      messagingSenderId: "156309519192",
-      appId: "1:156309519192:web:fd5d97931e5bbf089b432d"
-    };
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
-
-    // 내 위치 저장 함수
-    async function saveMyLocation() {
-      if (!navigator.geolocation) {
-        alert("GPS 지원 안 하는 브라우저예요");
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(async (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        console.log("내 위치:", lat, lng);
-        // Firebase에 저장 (경로: locations/myUser)
-        await set(ref(database, "locations/myUser"), {
-          latitude: lat,
-          longitude: lng,
-          timestamp: Date.now()
-        });
-        alert("위치가 저장되었습니다!");
-      }, (err) => {
-        alert("위치 정보를 가져올 수 없습니다.");
-        console.error(err);
-      });
-    }
-
-    // 저장된 위치 실시간 감지 및 지도에 마커 표시
+    // 실시간 위치 데이터 감지 및 지도에 마커 표시
     function listenLocations() {
       const locationsRef = ref(database, "locations");
       onValue(locationsRef, (snapshot) => {
         const data = snapshot.val();
+
         // 기존 마커 제거
         markers.forEach(m => m.setMap(null));
         markers = [];
@@ -123,13 +85,12 @@
             markers.push(marker);
           });
         }
+      }, (error) => {
+        console.error("Firebase DB 읽기 에러:", error);
       });
     }
 
-    // 버튼 클릭 이벤트 연결
-    document.getElementById("saveLocationBtn").addEventListener("click", saveMyLocation);
-
-    // 지도 로딩 후 Firebase 리스너 시작
+    // 카카오 지도 로딩 후 초기화 및 Firebase 리스너 시작
     kakao.maps.load(() => {
       initMap();
       listenLocations();
