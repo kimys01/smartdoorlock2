@@ -46,8 +46,13 @@
         'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png', 
         imgSize
       );
+      const defaultImg = new kakao.maps.MarkerImage(
+        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
+        imgSize
+      );
+
       document.querySelectorAll('.user').forEach(el => {
-        el.addEventListener('click', () => selectUser(el.dataset.name, highlightImg));
+        el.addEventListener('click', () => selectUser(el.dataset.name, highlightImg, defaultImg));
       });
     }
     function selectUser(name, highlightImg) {
@@ -61,8 +66,13 @@
         const lat = base[0] + d[0], lng = base[1] + d[1];
         const pos = new kakao.maps.LatLng(lat, lng);
         const timeStr = new Date(now - i*5*60000).toTimeString().slice(0,5);
-        const marker = new kakao.maps.Marker({ position: pos, map, draggable: true });
-        markerObjects.push({ marker, defaultImg: null }); 
+        const marker = new kakao.maps.Marker({
+          position: pos,
+          map,
+          draggable: true,
+          image: defaultImg
+        });
+        markerObjects.push({ marker });
         if (i === 0) map.setCenter(pos);
         tableRows += `<tr class="loc-entry" data-idx="${i}">
                         <td>${i+1}</td>
@@ -90,7 +100,7 @@
               map.panTo(obj.marker.getPosition());
               map.setLevel(4);
             } else {
-              obj.marker.setImage(null);
+              obj.marker.setImage(defaultImg);
               obj.marker.setAnimation(null);
             }
           });
