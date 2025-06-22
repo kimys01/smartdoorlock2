@@ -2,17 +2,91 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>카카오 맵 테스트</title>
+  <title>특정 유저 위치 표시</title>
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0c43dda5249fa5372cb6f65f0320a50f&autoload=false"></script>
-  <style>#map {width:100%; height:400px;}</style>
+  <style>
+    #map { width: 100%; height: 400px; }
+  </style>
 </head>
 <body>
+  <h1>유저 123456 위치 기록</h1>
   <div id="map"></div>
-  <script>
-    kakao.maps.load(function() {
-      var map = new kakao.maps.Map(document.getElementById('map'), {
-        center: new kakao.maps.LatLng(37.5665, 126.9780),
-        level: 3
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+
+    // Firebase 설정값 (네 프로젝트 설정으로 변경)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
+      authDomain: "smartdoorlock-b4636.firebaseapp.com",
+      databaseURL: "https://smartdoorlock-b4636-default-rtdb.firebaseio.com",
+      projectId: "smartdoorlock-b4636",
+      storageBucket: "smartdoorlock-b4636.firebasestorage.app",
+      messagingSenderId: "104489505270",
+      appId: "1:104489505270:web:0d663b2ae774b77a2077d7",
+      measurementId: "G-YL6TMYN453"
+    };
+
+    // Firebase 초기화
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    // 카카오 지도 초기화
+    let map;
+    let markers = [];
+
+    function initMap() {
+      map = new kakao.maps.Map(document.getElementById('map'), {
+        center: new kakao.maps.LatLng(37.5665, 126.9780), // 서울 중심 좌표
+        level: 7
+      });
+    }
+
+    // 기존 마커 모두 제거
+    function clearMarkers() {
+      markers.forEach(marker => marker.setMap(null));
+      markers = [];
+    }
+
+    // 위치 데이터 받아서 지도에 마커 찍기
+    function showLocations(locations) {
+      clearMarkers();
+
+      if (!locations) return;
+
+      Object.values(locations).forEach(loc => {
+        if (!loc.latitude || !loc.longitude) return;
+        const position = new kakao.maps.LatLng(loc.latitude, loc.longitude);
+        const marker = new kakao.maps.Marker({
+          position: position,
+          map: map
+        });
+        markers.push(marker);
+      });
+
+      // 마커 중 첫 위치로 지도 센터 이동
+      if (markers.length > 0) {
+        map.setCenter(markers[0].getPosition());
+        map.setLevel(5);
+      }
+    }
+
+    kakao.maps.load(() => {
+      initMap();
+
+      // 유저 아이디 지정
+      const userId = "123456";
+
+      // Firebase Realtime DB에서 해당 유저 위치 로그 읽기
+      const userLocationsRef = ref(database, `location_logs/${userId}`);
+
+      onValue(userLocationsRef, (snapshot) => {
+        const locations = snapshot.val();
+        console.log("읽은 위치 데이터:", locations);
+        showLocations(locations);
+      }, (error) => {
+        console.error("Firebase 읽기 오류:", error);
       });
     });
   </script>
