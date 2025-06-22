@@ -89,6 +89,12 @@ body {
 
 .log-entry { 
     margin: 5px 0; 
+    cursor: pointer;
+}
+
+.loc-entry:hover { 
+    font-weight: 600; 
+    text-decoration: underline; 
 }
 
 .switch {
