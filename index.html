@@ -2,9 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>Capstone Website Prototype</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css">
+  <title>Capstone Map Test</title>
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0c43dda5249fa5372cb6f65f0320a50f&autoload=false"></script>
 </head>
 <body>
@@ -18,38 +16,30 @@
   </div>
 
   <div id="userInfo" class="hidden">
-    <div class="info-header" style="display:flex;justify-content:space-between;align-items:center;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
       <h2 style="margin:0;">사용자 위치 기록</h2>
-      <button id="closeInfoBtn" onclick="closeUserInfo()">X</button>
+      <button onclick="closeUserInfo()">X</button>
     </div>
-    <div id="infoArea">사용자를 선택해주세요.</div>
+    <div id="infoArea"></div>
   </div>
 
   <div id="mapArea">
     <h2>지오펜스 화면</h2>
     <p id="mapUser">사용자를 선택하면 지오펜스가 표시됩니다.</p>
-    <div id="map" style="width:100%; height:400px;"></div>
+    <div id="map"></div>
   </div>
 
   <script>
-    // (1) 위치 더미 데이터 생성용
     const userBaseLocations = {
       '김윤석': [37.5665, 126.9780],
       '김시현': [37.5651, 126.9895],
       '김현준': [37.5700, 126.9820],
       '이시현': [37.5720, 126.9765]
     };
-
-    // (2) 지도 · 마커 전역 변수
-    let map;
-    let markerObjects = []; // [{marker}] 배열
-
-    // (3) 마커 이미지 (기본/하이라이트)
-    const imgSize = new kakao.maps.Size(24, 35);
-    const highlightImgSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png';
-    const highlightImage = new kakao.maps.MarkerImage(highlightImgSrc, imgSize);
+    let map, markerObjects = [];
 
     function initMap() {
+      // – 지도 초기화
       map = new kakao.maps.Map(document.getElementById('map'), {
         center: new kakao.maps.LatLng(37.5665, 126.9780),
         level: 3
@@ -57,73 +47,70 @@
       map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
       map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
 
-      // 사용자 클릭 시 위치 기록 로딩
-      document.querySelectorAll('.user').forEach(el => el.addEventListener('click', () => selectUser(el.dataset.name)));
+      // – Highlight 이미지
+      const imgSize = new kakao.maps.Size(24, 35);
+      const highlightImg = new kakao.maps.MarkerImage(
+        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png', 
+        imgSize
+      );
+
+      document.querySelectorAll('.user').forEach(el => {
+        el.addEventListener('click', () => selectUser(el.dataset.name, highlightImg));
+      });
     }
 
-    function selectUser(name) {
-      // (a) 이전 마커 제거
-      markerObjects.forEach(o => o.marker.setMap(null));
+    function selectUser(name, highlightImg) {
+      markerObjects.forEach(mo => mo.marker.setMap(null));
       markerObjects = [];
 
-      const [baseLat, baseLng] = userBaseLocations[name];
+      const base = userBaseLocations[name];
       const deltas = [[0,0],[0.0005,0.0003],[0.001,0.0008]];
-      const now = new Date();
-      const locHTML = [];
+      const now = new Date(), locHTML = [];
 
-      deltas.forEach((d, idx) => {
-        const lat = baseLat + d[0];
-        const lng = baseLng + d[1];
+      deltas.forEach((d,i) => {
+        const lat = base[0] + d[0], lng = base[1] + d[1];
         const pos = new kakao.maps.LatLng(lat, lng);
-        const timeStr = new Date(now.getTime() - idx*5*60*1000).toTimeString().slice(0,5);
+        const timeStr = new Date(now - i*5*60000).toTimeString().slice(0,5);
 
-        // 마커 (기본 이미지)
-        const marker = new kakao.maps.Marker({ position: pos, draggable: true, map });
-        markerObjects.push({ marker });
+        const marker = new kakao.maps.Marker({ position: pos, map, draggable: true });
+        markerObjects.push({ marker, defaultImg: null }); 
 
-        if(idx===0) map.setCenter(pos);
+        if (i === 0) map.setCenter(pos);
 
-        locHTML.push(`<div class="loc-entry" data-idx="${idx}">${timeStr} - (${lat.toFixed(5)}, ${lng.toFixed(5)})</div>`);
-
-        kakao.maps.event.addListener(marker, 'dragend', () => console.log(`${name} 마커 ${idx+1} dragend`));
+        locHTML.push(`<div class="loc-entry" data-idx="${i}">${timeStr} - (${lat.toFixed(5)},${lng.toFixed(5)})</div>`);
       });
 
-      // 위치 목록 표시
-      const infoArea = document.getElementById('infoArea');
-      infoArea.innerHTML = `<p><strong>이름:</strong> ${name}</p><h3>위치 기록</h3>${locHTML.join('')}`;
+      document.getElementById('infoArea').innerHTML = `
+        <p><strong>이름:</strong> ${name}</p><h3>위치 기록</h3>${locHTML.join('')}
+      `;
       document.getElementById('userInfo').classList.remove('hidden');
       document.getElementById('mapUser').textContent = `${name}의 지오펜스 화면입니다.`;
 
-      // (b) 위치 항목 클릭 → 해당 마커 하이라이트
-      document.querySelectorAll('.loc-entry').forEach(el => el.addEventListener('click', () => highlightMarker(parseInt(el.dataset.idx))));
-    }
-
-    function highlightMarker(idx){
-      markerObjects.forEach((o,i) => {
-        if(i===idx){
-          // 하이라이트: 이미지 변경 + 애니메이션 + 확대
-          o.marker.setImage(highlightImage);
-          o.marker.setAnimation(kakao.maps.Animation.BOUNCE);
-          map.panTo(o.marker.getPosition());
-          map.setLevel(4); // 좀 더 확대
-        }else{
-          o.marker.setImage(null); // 기본 이미지
-          o.marker.setAnimation(null);
-        }
+      document.querySelectorAll('.loc-entry').forEach(el => {
+        el.addEventListener('click', () => {
+          const idx = Number(el.dataset.idx);
+          markerObjects.forEach((obj, i) => {
+            if (i === idx) {
+              obj.marker.setImage(highlightImg);
+              obj.marker.setAnimation(kakao.maps.Animation.BOUNCE);
+              map.panTo(obj.marker.getPosition());
+              map.setLevel(4);
+            } else {
+              obj.marker.setImage(null);
+              obj.marker.setAnimation(null);
+            }
+          });
+        });
       });
     }
 
-    function closeUserInfo(){
+    function closeUserInfo() {
       document.getElementById('userInfo').classList.add('hidden');
-      document.getElementById('infoArea').innerHTML='';
+      document.getElementById('infoArea').innerHTML = '';
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      if(window.kakao && kakao.maps){
-        kakao.maps.load(initMap);
-      }else{
-        console.error('카카오 지도 API 로딩 실패');
-      }
+      kakao.maps.load(initMap);
     });
   </script>
 </body>
