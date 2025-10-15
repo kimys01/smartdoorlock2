@@ -119,3 +119,107 @@ body {
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     font-size: 14px;
 }
+body { 
+    font-family: sans-serif; 
+    padding-top: 70px; /* 헤더 높이만큼 여백 추가 */
+    margin: 0;
+}
+.hidden { display: none !important; }
+
+/* 로그인 창 스타일 */
+#login-container {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+#login-form {
+    background-color: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    width: 300px;
+    text-align: center;
+}
+#login-form h2 { margin-bottom: 20px; }
+#login-form input {
+    width: calc(100% - 22px);
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+#login-form button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+#login-form button:hover { background-color: #0056b3; }
+/* 헤더 스타일 */
+#header {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    padding: 10px 20px;
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+    z-index: 500;
+}
+#header h1 { margin: 0; font-size: 24px; }
+#logoutBtn {
+    padding: 8px 15px;
+    border: none;
+    background-color: #dc3545;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+#logoutBtn:hover { background-color: #c82333; }
+/* 메인 콘텐츠 레이아웃 */
+#main-content {
+    display: flex;
+    padding: 10px;
+    gap: 20px;
+}
+#userList, #userInfo, #mapArea { 
+    border: 1px solid #ccc; 
+    padding: 15px; 
+    border-radius: 8px; 
+}
+#userList { width: 20%; }
+#userInfo { width: 25%; }
+#mapArea { flex-grow: 1; }
+.user { 
+    padding: 10px; 
+    border-bottom: 1px solid #eee; 
+    cursor: pointer; 
+}
+.user:hover { background-color: #f0f0f0; }
+.info-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+}
+#map {
+    width: 100%;
+    height: 400px;
+    margin-top: 10px;
+}
+.log-entry { 
+    padding: 5px 0; 
+    font-size: 14px; 
+    border-bottom: 1px solid #f0f0f0;
+}
