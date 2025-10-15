@@ -12,45 +12,6 @@
     }
     .hidden { display: none !important; }
 
-    /* 로그인 창 스타일 */
-    #login-container {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    #login-form {
-      background-color: white;
-      padding: 40px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      width: 300px;
-      text-align: center;
-    }
-    #login-form h2 { margin-bottom: 20px; }
-    #login-form input {
-      width: calc(100% - 22px);
-      padding: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    #login-form button {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      background-color: #007bff;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-    #login-form button:hover { background-color: #0056b3; }
-
     /* 헤더 스타일 */
     #header {
       position: fixed;
@@ -66,15 +27,6 @@
       z-index: 500;
     }
     #header h1 { margin: 0; font-size: 24px; }
-    #logoutBtn {
-      padding: 8px 15px;
-      border: none;
-      background-color: #dc3545;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    #logoutBtn:hover { background-color: #c82333; }
 
     /* 메인 콘텐츠 레이아웃 */
     #main-content {
@@ -120,21 +72,11 @@
 </head>
 <body>
 
-  <div id="login-container">
-    <form id="login-form">
-      <h2>로그인</h2>
-      <input type="text" id="username" placeholder="사용자 이름" required>
-      <input type="password" id="password" placeholder="비밀번호">
-      <button type="submit">로그인</button>
-    </form>
-  </div>
-
-  <div id="header" class="hidden">
+  <div id="header">
     <h1>캡스톤 프로젝트</h1>
-    <button id="logoutBtn">로그아웃</button>
   </div>
   
-  <div id="main-content" class="hidden">
+  <div id="main-content">
     <div id="userList">
       <h2>사용자 목록</h2>
       </div>
@@ -155,27 +97,30 @@
   </div>
 
   <script>
+    // ▼▼▼ Firebase 설정 정보 ▼▼▼
     const firebaseConfig = {
         apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
         authDomain: "smartdoorlock-b4636.firebaseapp.com",
         databaseURL: "https://smartdoorlock-b4636-default-rtdb.firebaseio.com",
         projectId: "smartdoorlock-b4636",
-        storageBucket: "smartdoorlock-b4636.firebasestorage.app",
+        storageBucket: "smartdoorlock-b4636.appspot.com",
         messagingSenderId: "104489505270",
         appId: "1:104489505270:web:0d663b2ae774b77a2077d7",
         measurementId: "G-YL6TMYN453"
     };
 
+    // Firebase 앱 초기화
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     
+    // 전역 변수 선언
     let map;
     let markers = [];
     let currentPolyline;
     let currentPath = [];
     let currentLocationListener;
 
-
+    // 지도 초기화 함수
     function initMap() {
       const container = document.getElementById('map');
       map = new kakao.maps.Map(container, {
@@ -185,10 +130,11 @@
       map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
       map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
       
+      // 사용자 목록 로드
       loadUserList();
     }
     
-
+    // 사용자 목록 로드 함수
     function loadUserList() {
         const userListDiv = document.getElementById('userList');
         const usersRef = database.ref('users');
@@ -200,13 +146,13 @@
                 userElement.className = 'user';
                 userElement.dataset.name = userId;
                 userElement.textContent = userId;
-
                 userElement.addEventListener('click', () => selectUser(userId));
                 userListDiv.appendChild(userElement);
             });
         });
     }
 
+    // 지도 및 정보 초기화 함수
     function clearMapAndInfo() {
       markers.forEach(marker => marker.setMap(null));
       markers = [];
@@ -218,6 +164,7 @@
       document.getElementById('infoArea').innerHTML = '';
     }
 
+    // 사용자 선택 함수
     function selectUser(userId) {
       if (currentLocationListener) {
         currentLocationListener.off();
@@ -237,7 +184,6 @@
         strokeStyle: 'solid'
       });
 
- ('location_logs/{userId}')
       const locationsRef = database.ref('location_logs/' + userId);
       currentLocationListener = locationsRef;
 
@@ -264,54 +210,16 @@
       });
     }
 
+    // 사용자 정보창 닫기 함수
     function closeUserInfo() {
       document.getElementById('userInfo').classList.add('hidden');
     }
-
+    
+    // ▼▼▼ 스크립트 실행 부분 수정 ▼▼▼
+    // 페이지 콘텐츠가 로드되면 바로 카카오맵 API를 불러옵니다.
     document.addEventListener('DOMContentLoaded', () => {
-      const loginContainer = document.getElementById('login-container');
-      const mainContent = document.getElementById('main-content');
-      const loginForm = document.getElementById('login-form');
-      const logoutBtn = document.getElementById('logoutBtn');
-      const header = document.getElementById('header');
-
-      loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const username = document.getElementById('username').value;
-        if (username) {
-          loginContainer.classList.add('hidden');
-          mainContent.classList.remove('hidden');
-          header.classList.remove('hidden');
-
-          kakao.maps.load(initMap);
-        } else {
-          alert('사용자 이름을 입력하세요.');
-        }
-      });
-
-      logoutBtn.addEventListener('click', () => {
-        mainContent.classList.add('hidden');
-        header.classList.add('hidden');
-        loginContainer.classList.remove('hidden');
-
-        if (currentLocationListener) {
-          currentLocationListener.off();
-        }
-
-        closeUserInfo();
-        clearMapAndInfo();
-        document.getElementById('mapUser').textContent = '사용자를 선택하면 이동 경로가 표시됩니다.';
-      });
+      kakao.maps.load(initMap);
     });
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
