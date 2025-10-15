@@ -34,7 +34,13 @@ form.addEventListener('submit', function(event) {
 
     // 모든 확인을 통과했다면, 원래 의도대로 form을 서버로 제출합니다.
     // 지금은 서버가 없으므로 성공했다는 메시지만 띄웁니다.
-    alert('로그인 시도! (서버로 전송 준비 완료)');
+    // 모든 확인을 통과했다면, main.html 페이지로 이동시킵니다.
+    // 모든 확인을 통과했다면,
+    // 1. localStorage에 "로그인 됨" 상태를 저장합니다.
+    localStorage.setItem('isLoggedIn', 'true');
+
+    // 2. main.html 페이지로 이동시킵니다.
+    window.location.href = 'main.html';
     
     // 실제 프로젝트에서는 이 아래에 서버로 데이터를 보내는 코드가 들어갑니다.
     // form.submit(); // 이 코드를 실행하면 실제로 form이 제출됩니다.
