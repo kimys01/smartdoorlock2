@@ -4,155 +4,34 @@
   <meta charset="UTF-8" />
   <title>Capstone Website Prototype</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body { 
-      font-family: sans-serif; 
-      padding-top: 70px; /* 헤더 높이만큼 여백 추가 */
-      margin: 0;
-    }
-    .hidden { display: none !important; }
-
-    /* 로그인 창 스타일 */
-    #login-container {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    #login-form {
-      background-color: white;
-      padding: 40px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      width: 300px;
-      text-align: center;
-    }
-    #login-form h2 { margin-bottom: 20px; }
-    #login-form input {
-      width: calc(100% - 22px);
-      padding: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    #login-form button {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      background-color: #007bff;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-    #login-form button:hover { background-color: #0056b3; }
-
-    /* 헤더 스타일 */
-    #header {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      padding: 10px 20px;
-      background-color: #f8f9fa;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-sizing: border-box;
-      z-index: 500;
-    }
-    #header h1 { margin: 0; font-size: 24px; }
-    #logoutBtn {
-      padding: 8px 15px;
-      border: none;
-      background-color: #dc3545;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    #logoutBtn:hover { background-color: #c82333; }
-
-    /* 메인 콘텐츠 레이아웃 */
-    #main-content {
-      display: flex;
-      padding: 10px;
-      gap: 20px;
-    }
-    #userList, #userInfo, #mapArea { 
-      border: 1px solid #ccc; 
-      padding: 15px; 
-      border-radius: 8px; 
-    }
-    #userList { width: 20%; }
-    #userInfo { width: 25%; }
-    #mapArea { flex-grow: 1; }
-    .user { 
-      padding: 10px; 
-      border-bottom: 1px solid #eee; 
-      cursor: pointer; 
-    }
-    .user:hover { background-color: #f0f0f0; }
-    .info-header { 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-    }
-    #map {
-      width: 100%;
-      height: 400px;
-      margin-top: 10px;
-    }
-    .log-entry { 
-      padding: 5px 0; 
-      font-size: 14px; 
-      border-bottom: 1px solid #f0f0f0;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0c43dda5249fa5372cb6f65f0320a50f&autoload=false"></script>
 </head>
 <body>
 
-  <div id="login-container">
-    <form id="login-form">
-      <h2>로그인</h2>
-      <input type="text" id="username" placeholder="사용자 이름" required>
-      <input type="password" id="password" placeholder="비밀번호">
-      <button type="submit">로그인</button>
-    </form>
+  <!-- 사용자 목록 -->
+  <div id="userList">
+    <h2>사용자 목록</h2>
+    <div class="user" data-name="12345678">12345678</div>
   </div>
 
-  <div id="header" class="hidden">
-    <h1>캡스톤 프로젝트</h1>
-    <button id="logoutBtn">로그아웃</button>
+  <!-- 사용자 정보 -->
+  <div id="userInfo" class="hidden">
+    <div class="info-header">
+      <h2>사용자 정보</h2>
+      <button onclick="closeUserInfo()">X</button>
+    </div>
+    <div id="infoArea">사용자를 선택해주세요.</div>
   </div>
-  
-  <div id="main-content" class="hidden">
-    <div id="userList">
-      <h2>사용자 목록</h2>
-      <div class="user" data-name="12345678">12345678</div>
-    </div>
 
-    <div id="userInfo" class="hidden">
-      <div class="info-header">
-        <h2>사용자 정보</h2>
-        <button onclick="closeUserInfo()">X</button>
-      </div>
-      <div id="infoArea">사용자를 선택해주세요.</div>
-    </div>
-
-    <div id="mapArea">
-      <h2>지오펜스 화면</h2>
-      <p id="mapUser">사용자를 선택하면 지오펜스가 표시됩니다.</p>
-      <div id="map"></div>
-    </div>
+  <!-- 지도 -->
+  <div id="mapArea">
+    <h2>지오펜스 화면</h2>
+    <p id="mapUser">사용자를 선택하면 지오펜스가 표시됩니다.</p>
+    <div id="map"></div>
   </div>
 
   <script>
-    // --- 기존 데이터 및 변수 선언 ---
     const userData = {
       '12345678': [
         { lat: 36.3307729, lng: 127.3364228 },
@@ -163,21 +42,23 @@
         { lat: 36.3300000, lng: 127.3371801 }
       ]
     };
+
     let map;
     let markers = [];
-    let currentPolyline;
 
-    // --- 기존 지도 관련 함수들 (내용 동일) ---
     function initMap() {
       const container = document.getElementById('map');
       map = new kakao.maps.Map(container, {
         center: new kakao.maps.LatLng(36.3307729, 127.3364228),
         level: 4
       });
+
       const mapTypeControl = new kakao.maps.MapTypeControl();
       map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
+
       const zoomControl = new kakao.maps.ZoomControl();
       map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+
       document.querySelectorAll('.user').forEach(el => {
         el.addEventListener('click', () => selectUser(el.dataset.name));
       });
@@ -199,38 +80,47 @@
         <div class="log-list">${logHtml}</div>
       `;
       document.getElementById('userInfo').classList.remove('hidden');
-      document.getElementById('mapUser').textContent = `${userId}의 이동 경로입니다.`;
+      document.getElementById('mapUser').textContent = `${userId}의 지오펜스 화면입니다.`;
       
+      // 기존 마커 제거
       markers.forEach(marker => marker.setMap(null));
       markers = [];
       
-      if (currentPolyline) {
-        currentPolyline.setMap(null);
+      // 선도 기존에 있다면 제거
+      if (window.currentPolyline) {
+        window.currentPolyline.setMap(null);
       }
     
-      const path = [];
+      const path = []; // 선을 위한 좌표 배열
     
+      // 마커 찍기 + 경로 누적
       positions.forEach((pos, index) => {
         const latlng = new kakao.maps.LatLng(pos.lat, pos.lng);
         const marker = new kakao.maps.Marker({
-          position: latlng, map: map, title: `위치 ${index + 1}`
+          position: latlng,
+          map: map,
+          title: `위치 ${index + 1}`,
+          draggable: true
         });
         markers.push(marker);
         path.push(latlng);
       });
     
+      // 중심 이동
       if (positions.length > 0) {
         map.setCenter(new kakao.maps.LatLng(positions[0].lat, positions[0].lng));
       }
     
-      currentPolyline = new kakao.maps.Polyline({
-        path: path,
-        strokeWeight: 4,
-        strokeColor: '#007bff',
-        strokeOpacity: 0.8,
-        strokeStyle: 'solid'
+      // ✅ 마커들을 연결하는 선 그리기
+      const polyline = new kakao.maps.Polyline({
+        path: path, // 좌표 배열
+        strokeWeight: 4,       // 선 두께
+        strokeColor: '#007bff', // 선 색상 (파란색)
+        strokeOpacity: 0.8,     // 선 투명도
+        strokeStyle: 'solid'    // 선 스타일
       });
-      currentPolyline.setMap(map);
+      polyline.setMap(map);
+      window.currentPolyline = polyline; // 다음에 제거할 수 있도록 저장
     }
 
     function closeUserInfo() {
@@ -238,49 +128,8 @@
       document.getElementById('infoArea').innerHTML = '사용자를 선택해주세요.';
     }
 
-    // --- 로그인/로그아웃 로직 (새로 추가됨) ---
     document.addEventListener('DOMContentLoaded', () => {
-      const loginContainer = document.getElementById('login-container');
-      const mainContent = document.getElementById('main-content');
-      const loginForm = document.getElementById('login-form');
-      const logoutBtn = document.getElementById('logoutBtn');
-      const header = document.getElementById('header');
-
-      // 로그인 폼 제출 이벤트
-      loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const username = document.getElementById('username').value;
-        
-        // 아이디 입력란에 글자가 있으면 로그인 성공으로 처리
-        if (username) {
-          loginContainer.classList.add('hidden');
-          mainContent.classList.remove('hidden');
-          header.classList.remove('hidden');
-
-          // **로그인 성공 후에 지도 API를 로드하고 초기화합니다.**
-          kakao.maps.load(initMap);
-        } else {
-          alert('사용자 이름을 입력하세요.');
-        }
-      });
-
-      // 로그아웃 버튼 클릭 이벤트
-      logoutBtn.addEventListener('click', () => {
-        mainContent.classList.add('hidden');
-        header.classList.add('hidden');
-        loginContainer.classList.remove('hidden');
-
-        // UI 상태 초기화
-        closeUserInfo();
-        document.getElementById('mapUser').textContent = '사용자를 선택하면 지오펜스가 표시됩니다.';
-        if (markers.length > 0) {
-          markers.forEach(marker => marker.setMap(null));
-          markers = [];
-        }
-        if (currentPolyline) {
-          currentPolyline.setMap(null);
-        }
-      });
+      kakao.maps.load(initMap);
     });
   </script>
 </body>
