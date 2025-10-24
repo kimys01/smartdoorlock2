@@ -384,7 +384,7 @@
     <div id="custom-modal" class="hidden">
         <div class="modal-content">
             <p id="modal-message"></p>
-            <button onclick="document.getElementById('custom-modal').classList.add('hidden')">확인</button>
+            <button onclick="document.getElementById('custom-modal').classList.add('hidden'); this.parentElement.parentElement.style.display='none';">확인</button>
         </div>
     </div>
 
@@ -418,25 +418,29 @@
         let currentPolyline;
         let selectedLogMarker;
         let selectedUserId = null;
-
-        // 카카오맵 마커 이미지 정의 (새로 추가/수정된 부분)
-        // 1. 선택된 로그 위치 마커 (빨간색 핀으로 강조)
-        const selectedMarkerImage = new kakao.maps.MarkerImage(
-            'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png', // 빨간색 핀
-            new kakao.maps.Size(32, 35),
-            { offset: new kakao.maps.Point(16, 35) } // 마커의 중심 좌표
-        );
         
-        // 2. 최근 이동 경로 마커 (작은 빨간색 점으로 경로선과 통일)
-        const pathMarkerImage = new kakao.maps.MarkerImage(
-            'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/red_dot.png', // 작은 빨간색 점
-            new kakao.maps.Size(12, 12),
-            { offset: new kakao.maps.Point(6, 6) }
-        );
+        // 마커 이미지 객체를 initMap에서 초기화하기 위해 전역 변수로만 선언 (초기화 코드 제거)
+        let selectedMarkerImage;
+        let pathMarkerImage;
 
 
         // 지도 초기화
         function initMap() {
+            // 카카오맵 마커 이미지 정의를 initMap 내부로 이동하여 로딩 시점 보장
+            // 1. 선택된 로그 위치 마커 (빨간색 핀으로 강조)
+            selectedMarkerImage = new kakao.maps.MarkerImage(
+                'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png', // 빨간색 핀
+                new kakao.maps.Size(32, 35),
+                { offset: new kakao.maps.Point(16, 35) } // 마커의 중심 좌표
+            );
+            
+            // 2. 최근 이동 경로 마커 (작은 빨간색 점으로 경로선과 통일)
+            pathMarkerImage = new kakao.maps.MarkerImage(
+                'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/red_dot.png', // 작은 빨간색 점
+                new kakao.maps.Size(12, 12),
+                { offset: new kakao.maps.Point(6, 6) }
+            );
+
             const container = document.getElementById('map');
             map = new kakao.maps.Map(container, {
                 center: new kakao.maps.LatLng(37.566826, 126.9786567),
@@ -481,8 +485,22 @@
             document.getElementById('infoArea').innerHTML = '';
         }
 
-        // 목록에서 특정 위치를 클릭했을 때 지도에 마커를 표시하는 함수 (수정됨)
+        // 목록에서 특정 위치를 클릭했을 때 지도에 마커를 표시하는 함수 (디버그 코드 추가 및 유효성 검사 강화)
         function showLocationOnMap(lat, lng) {
+            console.log("showLocationOnMap 호출됨:", { lat, lng, mapDefined: !!map }); // 🌟 디버그 로그
+
+            if (!map) {
+                customAlert("지도가 아직 로드되지 않았습니다. 잠시 후 다시 시도해주세요.");
+                return;
+            }
+            
+            // 좌표 유효성 검사
+            if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) {
+                console.error("잘못된 좌표값입니다:", lat, lng);
+                customAlert("잘못된 위치 정보입니다. 콘솔을 확인해주세요.");
+                return;
+            }
+            
             if (selectedLogMarker) {
                 selectedLogMarker.setMap(null);
             }
@@ -495,7 +513,7 @@
             map.panTo(position);
         }
 
-        // 사용자를 선택했을 때 실행되는 메인 함수 (수정됨)
+        // 사용자를 선택했을 때 실행되는 메인 함수 (좌표를 숫자로 변환하도록 수정)
         function selectUser(userId) {
             clearMapAndInfo();
             selectedUserId = userId;
@@ -518,16 +536,22 @@
                 snapshot.forEach(childSnapshot => logs.push(childSnapshot.val()));
                 logs.reverse().forEach(pos => {
                     if (!pos.latitude || !pos.longitude) return;
+                    
+                    // 🌟 데이터베이스에서 가져온 좌표를 명시적으로 숫자로 변환합니다.
+                    const parsedLat = parseFloat(pos.latitude); 
+                    const parsedLng = parseFloat(pos.longitude);
+                    
                     const logEntry = document.createElement('div');
                     logEntry.className = 'log-entry';
                     
-                    let displayText = `위도: ${pos.latitude.toFixed(6)}<br>경도: ${pos.longitude.toFixed(6)}`;
+                    let displayText = `위도: ${parsedLat.toFixed(6)}<br>경도: ${parsedLng.toFixed(6)}`;
                     if (pos.altitude !== undefined && pos.altitude !== null) {
                         displayText += `<br>고도: ${pos.altitude.toFixed(2)}m`;
                     }
                     logEntry.innerHTML = displayText;
 
-                    logEntry.addEventListener('click', () => showLocationOnMap(pos.latitude, pos.longitude));
+                    // 🌟 숫자로 변환된 좌표를 showLocationOnMap에 전달합니다.
+                    logEntry.addEventListener('click', () => showLocationOnMap(parsedLat, parsedLng));
                     logListDiv.appendChild(logEntry);
                 });
             });
@@ -544,7 +568,7 @@
                 snapshot.forEach((snap) => {
                     const pos = snap.val();
                     if (!pos.latitude || !pos.longitude) return;
-                    const latlng = new kakao.maps.LatLng(pos.latitude, pos.longitude);
+                    const latlng = new kakao.maps.LatLng(parseFloat(pos.latitude), parseFloat(pos.longitude));
                     path.push(latlng);
                     
                     const marker = new kakao.maps.Marker({ 
@@ -694,4 +718,3 @@
     </script>
 </body>
 </html>
-
