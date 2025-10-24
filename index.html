@@ -122,15 +122,30 @@
             z-index: 500;
         }
         #header h1 { margin: 0; font-size: 24px; }
-        #logoutBtn {
+        
+        /* 헤더 버튼 그룹 */
+        #header .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        #logoutBtn, #logBtn {
             padding: 8px 15px;
             border: none;
-            background-color: #dc3545;
             color: white;
             border-radius: 5px;
             cursor: pointer;
         }
+        #logoutBtn { background-color: #dc3545; }
+        #logBtn { background-color: #007bff; }
+
         #logoutBtn:hover { background-color: #c82333; }
+        #logBtn:hover { background-color: #0056b3; }
+        
+        #logBtn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
 
         #main-content {
             display: flex;
@@ -140,15 +155,34 @@
             height: calc(100vh - 70px);
             background-color: #fff;
         }
+
+        #sidebar {
+            display: flex;
+            flex-direction: column;
+            width: 12.5%;
+            gap: 15px;
+            height: 100%;
+        }
+        
         #userList, #userInfo, #mapArea {
             border: 1px solid #ccc;
             padding: 15px;
             border-radius: 8px;
             background-color: #fff;
         }
-        #userList { width: 20%; overflow-y: auto; }
-        #userInfo { width: 25%; overflow-y: auto; }
+
+        #userList {
+            overflow-y: auto;
+            flex-grow: 1;
+            min-height: 0;
+        }
+        #userInfo {
+            overflow-y: auto;
+            height: 45%;
+            flex-shrink: 0;
+        }
         #mapArea { flex-grow: 1; }
+
         .user {
             padding: 10px;
             border-bottom: 1px solid #eee;
@@ -166,7 +200,76 @@
             margin-top: 10px;
         }
         .log-entry {
-            padding: 5px 0;
+            padding: 8px;
+            font-size: 14px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            border-radius: 4px;
+            line-height: 1.5; /* 줄 간격 추가 */
+        }
+        .log-entry:hover {
+            background-color: #e9ecef;
+        }
+
+        /* 로그 페이지 스타일 */
+        #log-content {
+            width: 100%;
+            height: calc(100vh - 70px);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background-color: #fff;
+        }
+
+        .log-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-shrink: 0;
+        }
+
+        #backToMapBtn {
+            padding: 8px 15px;
+            border: 1px solid #ccc;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #backToMapBtn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .log-container {
+            display: flex;
+            gap: 20px;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        .log-section {
+            width: 50%;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .log-section h3 {
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .log-section .log-entries {
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .full-log-entry {
+            padding: 8px 5px;
             font-size: 14px;
             border-bottom: 1px solid #f0f0f0;
         }
@@ -200,25 +303,48 @@
     <!-- 헤더 (처음에는 숨김) -->
     <div id="header" class="hidden">
         <h1>캡스톤 프로젝트</h1>
-        <button id="logoutBtn">로그아웃</button>
+        <div class="button-group">
+            <button id="logBtn" disabled>로그 보기</button>
+            <button id="logoutBtn">로그아웃</button>
+        </div>
     </div>
     
     <!-- 메인 콘텐츠 (처음에는 숨김) -->
     <div id="main-content" class="hidden">
-        <div id="userList">
-            <h2>사용자 목록</h2>
-        </div>
-        <div id="userInfo" class="hidden">
-            <div class="info-header">
-                <h2>사용자 정보</h2>
-                <button onclick="closeUserInfo()">X</button>
+        <div id="sidebar">
+            <div id="userInfo" class="hidden">
+                <div class="info-header">
+                    <h2>사용자 정보</h2>
+                    <button onclick="closeUserInfo()">X</button>
+                </div>
+                <div id="infoArea">사용자를 선택해주세요.</div>
             </div>
-            <div id="infoArea">사용자를 선택해주세요.</div>
+            <div id="userList">
+                <h2>사용자 목록</h2>
+            </div>
         </div>
         <div id="mapArea">
             <h2>위치 추적</h2>
             <p id="mapUser">사용자를 선택하면 이동 경로가 표시됩니다.</p>
             <div id="map" style="height: 80vh;"></div>
+        </div>
+    </div>
+
+    <!-- 로그 콘텐츠 (처음에는 숨김) -->
+    <div id="log-content" class="hidden">
+        <div class="log-header">
+            <button id="backToMapBtn">&larr; 지도로 돌아가기</button>
+            <h2 id="logUserTitle">전체 로그</h2>
+        </div>
+        <div class="log-container">
+            <div id="doorLockLogs" class="log-section">
+                <h3>도어락 로그</h3>
+                <div class="log-entries"></div>
+            </div>
+            <div id="appLogs" class="log-section">
+                <h3>애플리케이션 로그</h3>
+                <div class="log-entries"></div>
+            </div>
         </div>
     </div>
 
@@ -240,10 +366,10 @@
         
         // 전역 변수
         let map;
-        let markers = [];
+        let markers = []; 
         let currentPolyline;
-        let currentPath = [];
-        let currentLocationListener;
+        let selectedLogMarker;
+        let selectedUserId = null;
 
         // 지도 초기화
         function initMap() {
@@ -276,58 +402,149 @@
             });
         }
 
-        // 지도/정보 초기화
+        // 지도와 정보창의 모든 오버레이를 초기화하는 함수
         function clearMapAndInfo() {
-          markers.forEach(marker => marker.setMap(null));
-          markers = [];
-          if (currentPolyline) currentPolyline.setMap(null);
-          currentPolyline = null;
-          currentPath = [];
-          document.getElementById('infoArea').innerHTML = '';
+            markers.forEach(marker => marker.setMap(null));
+            markers = [];
+            if (currentPolyline) {
+                currentPolyline.setMap(null);
+                currentPolyline = null;
+            }
+            if (selectedLogMarker) {
+                selectedLogMarker.setMap(null);
+                selectedLogMarker = null;
+            }
+            document.getElementById('infoArea').innerHTML = '';
         }
 
-        // 사용자 선택
-        function selectUser(userId) {
-          if (currentLocationListener) currentLocationListener.off();
-          clearMapAndInfo();
-          
-          const infoArea = document.getElementById('infoArea');
-          infoArea.innerHTML = `<p><strong>사용자 ID:</strong> ${userId}</p><h3>위치 목록</h3><div class="log-list"></div>`;
-          document.getElementById('userInfo').classList.remove('hidden');
-          
-          const locationsRef = database.ref('location_logs/' + userId);
-          currentLocationListener = locationsRef;
-
-          locationsRef.once('value', (snapshot) => {
-            if (!snapshot.exists()) {
-              document.getElementById('mapUser').textContent = `${userId} 사용자의 위치 기록이 없습니다.`;
-              infoArea.querySelector('.log-list').innerHTML = '표시할 위치 기록이 없습니다.';
-              return;
+        // 목록에서 특정 위치를 클릭했을 때 지도에 마커를 표시하는 함수
+        function showLocationOnMap(lat, lng) {
+            if (selectedLogMarker) {
+                selectedLogMarker.setMap(null);
             }
+            const position = new kakao.maps.LatLng(lat, lng);
+            selectedLogMarker = new kakao.maps.Marker({
+                position: position,
+                map: map
+            });
+            map.panTo(position);
+        }
 
-            document.getElementById('mapUser').textContent = `${userId}의 이동 경로를 표시합니다.`;
-            currentPolyline = new kakao.maps.Polyline({
-              map: map, strokeWeight: 4, strokeColor: '#007bff', strokeOpacity: 0.8, strokeStyle: 'solid'
+        // 사용자를 선택했을 때 실행되는 메인 함수
+        function selectUser(userId) {
+            clearMapAndInfo();
+            selectedUserId = userId;
+            document.getElementById('logBtn').disabled = false;
+            
+            const infoArea = document.getElementById('infoArea');
+            infoArea.innerHTML = `<p><strong>사용자 ID:</strong> ${userId}</p><h3>전체 위치 기록</h3><div class="log-list" style="max-height: 400px; overflow-y: auto;"></div>`;
+            document.getElementById('userInfo').classList.remove('hidden');
+            
+            // --- DB 경로 수정 ---
+            const locationsRef = database.ref('users/' + userId + '/location_logs');
+            
+            locationsRef.once('value', (snapshot) => {
+                const logListDiv = infoArea.querySelector('.log-list');
+                if (!snapshot.exists()) {
+                    logListDiv.innerHTML = '표시할 위치 기록이 없습니다.';
+                    return;
+                }
+                const logs = [];
+                snapshot.forEach(childSnapshot => logs.push(childSnapshot.val()));
+                logs.reverse().forEach(pos => {
+                    if (!pos.latitude || !pos.longitude) return;
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'log-entry';
+                    
+                    let displayText = `위도: ${pos.latitude.toFixed(6)}<br>경도: ${pos.longitude.toFixed(6)}`;
+                    if (pos.altitude !== undefined && pos.altitude !== null) {
+                        displayText += `<br>고도: ${pos.altitude.toFixed(2)}m`;
+                    }
+                    logEntry.innerHTML = displayText;
+
+                    logEntry.addEventListener('click', () => showLocationOnMap(pos.latitude, pos.longitude));
+                    logListDiv.appendChild(logEntry);
+                });
             });
 
-            locationsRef.on('child_added', (snap) => {
-              const pos = snap.val();
-              if (!pos.latitude || !pos.longitude) return;
-              const latlng = new kakao.maps.LatLng(pos.latitude, pos.longitude);
-              infoArea.querySelector('.log-list').innerHTML += `<div class="log-entry"><strong>위도:</strong> ${pos.latitude}<br><strong>경도:</strong> ${pos.longitude}</div>`;
-              const marker = new kakao.maps.Marker({ position: latlng, map: map });
-              markers.push(marker);
-              currentPath.push(latlng);
-              currentPolyline.setPath(currentPath);
-              map.setCenter(latlng);
+            locationsRef.limitToLast(10).once('value', (snapshot) => {
+                if (!snapshot.exists()) {
+                    document.getElementById('mapUser').textContent = `${userId} 사용자의 위치 기록이 없습니다.`;
+                    return;
+                }
+                document.getElementById('mapUser').textContent = `${userId}의 최근 이동 경로 (최대 10개)를 표시합니다.`;
+                let path = [];
+                const bounds = new kakao.maps.LatLngBounds();
+                snapshot.forEach((snap) => {
+                    const pos = snap.val();
+                    if (!pos.latitude || !pos.longitude) return;
+                    const latlng = new kakao.maps.LatLng(pos.latitude, pos.longitude);
+                    path.push(latlng);
+                    const marker = new kakao.maps.Marker({ position: latlng, map: map });
+                    markers.push(marker);
+                    bounds.extend(latlng);
+                });
+                if (path.length > 0) {
+                    currentPolyline = new kakao.maps.Polyline({
+                        path: path, strokeWeight: 4, strokeColor: '#FF0000', strokeOpacity: 0.8, strokeStyle: 'solid', map: map
+                    });
+                    map.setBounds(bounds);
+                }
             });
-          });
         }
 
         function closeUserInfo() {
           document.getElementById('userInfo').classList.add('hidden');
         }
         
+        // 모든 로그를 로드하는 함수
+        function loadAllLogs(userId) {
+            const doorLockLogContainer = document.querySelector('#doorLockLogs .log-entries');
+            const appLogContainer = document.querySelector('#appLogs .log-entries');
+
+            document.getElementById('logUserTitle').textContent = `${userId} 사용자의 전체 로그`;
+            doorLockLogContainer.innerHTML = '<em>로딩 중...</em>';
+            appLogContainer.innerHTML = '<em>로딩 중...</em>';
+
+            // --- DB 경로 수정 ---
+            const doorLockRef = database.ref('users/' + userId + '/door_lock_logs');
+            doorLockRef.once('value', (snapshot) => {
+                doorLockLogContainer.innerHTML = '';
+                if (!snapshot.exists()) {
+                    doorLockLogContainer.innerHTML = '표시할 로그가 없습니다.';
+                    return;
+                }
+                const logs = [];
+                snapshot.forEach(child => logs.push(child.val()));
+                logs.reverse().forEach(log => {
+                    const entry = document.createElement('div');
+                    entry.className = 'full-log-entry';
+                    const formattedTime = new Date(log.timestamp || Date.now()).toLocaleString('ko-KR');
+                    entry.innerHTML = `<strong>[${formattedTime}]</strong>: ${log.action || 'N/A'}`;
+                    doorLockLogContainer.appendChild(entry);
+                });
+            });
+
+            // --- DB 경로 수정 ---
+            const appLogRef = database.ref('users/' + userId + '/app_logs');
+            appLogRef.once('value', (snapshot) => {
+                appLogContainer.innerHTML = '';
+                if (!snapshot.exists()) {
+                    appLogContainer.innerHTML = '표시할 로그가 없습니다.';
+                    return;
+                }
+                const logs = [];
+                snapshot.forEach(child => logs.push(child.val()));
+                logs.reverse().forEach(log => {
+                    const entry = document.createElement('div');
+                    entry.className = 'full-log-entry';
+                    const formattedTime = new Date(log.timestamp || Date.now()).toLocaleString('ko-KR');
+                    entry.innerHTML = `<strong>[${formattedTime}]</strong>: ${log.event || 'N/A'}`;
+                    appLogContainer.appendChild(entry);
+                });
+            });
+        }
+
         // 페이지 로드 시 실행
         document.addEventListener('DOMContentLoaded', () => {
           const loginContainer = document.getElementById('login-container');
@@ -336,42 +553,28 @@
           const logoutBtn = document.getElementById('logoutBtn');
           const header = document.getElementById('header');
           const body = document.querySelector('body');
+          const logBtn = document.getElementById('logBtn');
+          const logContent = document.getElementById('log-content');
+          const backToMapBtn = document.getElementById('backToMapBtn');
 
           // 로그인 폼 제출 이벤트
           loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const usernameInput = document.getElementById('username');
-            const passwordInput = document.getElementById('password');
-
-            const username = usernameInput.value.trim();
-            const password = passwordInput.value.trim();
-            
-            // --- 유효성 검사 로직 추가 ---
-            if (username === '') {
-                alert('아이디를 입력해주세요.');
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            if (username === '' || password === '' || password.length < 6) {
+                alert('아이디와 비밀번호(6자 이상)를 올바르게 입력해주세요.');
                 return;
             }
-            if (password === '') {
-                alert('비밀번호를 입력해주세요.');
-                return;
-            }
-            if (password.length < 6) {
-                alert('비밀번호는 6자 이상이어야 합니다.');
-                return;
-            }
-            // --- 유효성 검사 끝 ---
-
             const userRef = database.ref('users/' + username);
             userRef.once('value', (snapshot) => {
                 if (snapshot.exists() && snapshot.val().password === password) {
-                    // 로그인 성공
                     loginContainer.classList.add('hidden');
                     mainContent.classList.remove('hidden');
                     header.classList.remove('hidden');
-                    body.style.background = '#fff'; // 배경색 변경
+                    body.style.background = '#fff';
                     kakao.maps.load(initMap);
                 } else {
-                    // 로그인 실패
                     alert('아이디 또는 비밀번호가 일치하지 않습니다.');
                 }
             });
@@ -381,21 +584,32 @@
           logoutBtn.addEventListener('click', () => {
             mainContent.classList.add('hidden');
             header.classList.add('hidden');
+            logContent.classList.add('hidden');
             loginContainer.classList.remove('hidden');
-            body.style.background = 'linear-gradient(135deg, #71b7e6, #9b59b6)'; // 배경색 복원
-
-            if (currentLocationListener) currentLocationListener.off();
-
+            body.style.background = 'linear-gradient(135deg, #71b7e6, #9b59b6)';
             closeUserInfo();
             clearMapAndInfo();
-            
-            // --- ★★★ 사용자 목록 초기화 코드 추가 ★★★ ---
+            selectedUserId = null;
+            logBtn.disabled = true;
             const userListDiv = document.getElementById('userList');
             const userElements = userListDiv.querySelectorAll('.user');
             userElements.forEach(el => el.remove());
-            // --- 초기화 코드 끝 ---
-
             document.getElementById('mapUser').textContent = '사용자를 선택하면 이동 경로가 표시됩니다.';
+          });
+
+          // 로그 보기 버튼 이벤트
+          logBtn.addEventListener('click', () => {
+              if (selectedUserId) {
+                  mainContent.classList.add('hidden');
+                  logContent.classList.remove('hidden');
+                  loadAllLogs(selectedUserId);
+              }
+          });
+
+          // 지도로 돌아가기 버튼 이벤트
+          backToMapBtn.addEventListener('click', () => {
+              logContent.classList.add('hidden');
+              mainContent.classList.remove('hidden');
           });
         });
     </script>
