@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스마트 도어락 로그</title>
+    <!-- Tailwind CSS 로드 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter 폰트 사용 -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* 간단한 로딩 스피너 */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #09f;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <div class="container mx-auto max-w-3xl p-4 md:p-8">
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <header class="bg-gradient-to-r from-blue-600 to-blue-800 p-6">
+                <h1 class="text-2xl font-bold text-white">스마트 도어락 실시간 로그</h1>
+                <p class="text-blue-100 text-sm mt-1">Firebase에서 실시간으로 로그를 가져옵니다.</p>
+            </header>
+            
+            <div id="logs-container" class="p-6 space-y-4 min-h-[200px]">
+                <!-- 로딩 상태 -->
+                <div id="loading-state" class="flex flex-col items-center justify-center text-gray-500 py-10">
+                    <div class="spinner mb-4"></div>
+                    <p>Firebase에 연결하고 로그를 불러오는 중...</p>
+                </div>
+
+                <!-- 비어있는 상태 -->
+                <div id="empty-state" class="hidden flex flex-col items-center justify-center text-gray-500 py-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p class="font-medium">표시할 로그가 없습니다.</p>
+                    <p class="text-sm">Firebase 콘솔에서 직접 로그를 추가해 보세요.</p>
+                </div>
+                
+                <!-- 로그 리스트가 렌더링될 곳 -->
+                <ul id="log-list" class="space-y-3">
+                    <!-- 로그 항목 예시 (JS로 동적 생성됨) -->
+                    <!-- 
+                    <li class="p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 flex items-center justify-center rounded-full bg-blue-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 14a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 14a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-800">키패드</p>
+                                <p class="text-sm text-gray-500">2025년 10월 24일 오후 5:30:15</p>
+                            </div>
+                        </div>
+                        <span class="text-sm font-medium text-green-600 bg-green-100 px-3 py-1 rounded-full">
+                            잠금 해제
+                        </span>
+                    </li>
+                    -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Firebase SDK 가져오기
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            query, 
+            onSnapshot,
+            setLogLevel
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // DOM 요소 가져오기
+        const logsContainer = document.getElementById('logs-container');
+        const logList = document.getElementById('log-list');
+        const loadingState = document.getElementById('loading-state');
+        const emptyState = document.getElementById('empty-state');
+
+        // Firebase 설정 (캔버스 환경에서 자동으로 주입됨)
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let db;
+        let auth;
+        let userId = null;
+
+        try {
+            // Firebase 앱 초기화
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            setLogLevel('debug'); // Firestore 디버그 로그 활성화
+
+            // 인증 상태 감시
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    console.log("Authenticated User ID:", userId);
+                    // 인증이 완료되면 로그 리스너 설정
+                    setupLogListener();
+                } else {
+                    console.log("No user signed in, attempting auth...");
+                    try {
+                        // 캔버스 환경의 토큰으로 로그인 시도
+                        if (typeof __initial_auth_token !== 'undefined') {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            // 토큰이 없으면 익명으로 로그인
+                            await signInAnonymously(auth);
+                        }
+                    } catch (authError) {
+                        console.error("Authentication error:", authError);
+                        loadingState.innerHTML = '<p class="text-red-500">인증에 실패했습니다. F12를 눌러 콘솔을 확인하세요.</p>';
+                    }
+                }
+            });
+
+        } catch (e) {
+            console.error("Firebase initialization error:", e);
+            loadingState.innerHTML = '<p class="text-red-500">Firebase 초기화 오류. F12를 눌러 콘솔을 확인하세요.</p>';
+        }
+
+        /**
+         * 로그 데이터를 실시간으로 감시하는 리스너를 설정합니다.
+         */
+        function setupLogListener() {
+            // 테스트를 위한 공용 경로 사용
+            // 하드웨어가 없으므로, 이 웹 앱 사용자가 직접 데이터를 추가하고 볼 수 있는 공용 경로를 사용합니다.
+            const logCollectionPath = `artifacts/${appId}/public/data/door_logs`;
+            console.log(`Listening for logs at: ${logCollectionPath}`);
+            
+            const logsCollectionRef = collection(db, logCollectionPath);
+            
+            // Firestore 쿼리 (orderBy는 인덱싱이 필요할 수 있으므로, 여기서는 사용하지 않고 JS로 정렬합니다)
+            const q = query(logsCollectionRef);
+
+            // onSnapshot을 사용하여 실시간 변경 감지
+            onSnapshot(q, (snapshot) => {
+                loadingState.classList.add('hidden'); // 로딩 숨기기
+                
+                const logs = [];
+                snapshot.forEach((doc) => {
+                    logs.push({ id: doc.id, ...doc.data() });
+                });
+
+                // 자바스크립트 메모리에서 시간순(최신순)으로 정렬
+                // (Firestore의 timestamp 객체는 toMillis()로 변환하여 비교)
+                logs.sort((a, b) => {
+                    const timeA = a.timestamp?.toMillis() || 0;
+                    const timeB = b.timestamp?.toMillis() || 0;
+                    return timeB - timeA; // 내림차순 (최신 항목이 위로)
+                });
+
+                renderLogs(logs);
+
+            }, (error) => {
+                console.error("Error listening to logs:", error);
+                loadingState.innerHTML = `<p class="text-red-500">로그를 불러오는 중 오류가 발생했습니다: ${error.message}</p>`;
+            });
+        }
+
+        /**
+         * 로그 배열을 받아 HTML로 렌더링합니다.
+         * @param {Array} logs - 로그 데이터 배열
+         */
+        function renderLogs(logs) {
+            logList.innerHTML = ''; // 기존 리스트 초기화
+
+            if (logs.length === 0) {
+                emptyState.classList.remove('hidden'); // 로그 없음 표시
+            } else {
+                emptyState.classList.add('hidden'); // 로그 없음 숨기기
+            }
+
+            logs.forEach(log => {
+                const li = document.createElement('li');
+                li.className = 'p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-center animate-pulse-once'; // 간단한 등장 효과
+                
+                const methodText = getMethodText(log.method);
+                const iconSvg = getMethodIcon(log.method);
+                
+                // timestamp가 null이거나 toDate가 없는 경우를 대비
+                let timeString = '시간 정보 없음';
+                if (log.timestamp && typeof log.timestamp.toDate === 'function') {
+                    const date = log.timestamp.toDate();
+                    timeString = date.toLocaleString('ko-KR', {
+                        year: 'numeric', month: '2-digit', day: '2-digit',
+                        hour: '2-digit', minute: '2-digit', second: '2-digit'
+                    });
+                }
+                
+                const statusText = log.status === 'Unlocked' ? '잠금 해제' : '잠김';
+                const statusColorClass = log.status === 'Unlocked' 
+                    ? 'text-green-600 bg-green-100' 
+                    : 'text-red-600 bg-red-100';
+
+                li.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full ${iconSvg.bgColor}">
+                            ${iconSvg.svg}
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">${methodText}</p>
+                            <p class="text-sm text-gray-500">${timeString}</p>
+                        </div>
+                    </div>
+                    <span class="text-sm font-medium ${statusColorClass} px-3 py-1 rounded-full">
+                        ${statusText}
+                    </span>
+                `;
+                logList.appendChild(li);
+            });
+        }
+
+        /**
+         * 로그 메소드(method) 문자열에 따라 적절한 한글 텍스트를 반환합니다.
+         * @param {string} method - 'keypad', 'rfid', 'app', 'gps' 등
+         */
+        function getMethodText(method) {
+            switch(method) {
+                case 'keypad': return '키패드';
+                case 'rfid': return 'RFID';
+                case 'app': return '애플리케이션';
+                case 'gps': return 'GPS 자동 해제';
+                default: return '알 수 없음';
+            }
+        }
+
+        /**
+         * 로그 메소드에 따라 아이콘 SVG와 배경색을 반환합니다.
+         * @param {string} method - 'keypad', 'rfid', 'app', 'gps' 등
+         */
+        function getMethodIcon(method) {
+            const icons = {
+                keypad: {
+                    svg: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 14a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 14a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                          </svg>`,
+                    bgColor: 'bg-blue-100'
+                },
+                rfid: {
+                    svg: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m4 0h1M4 4h16v5H4V4z" />
+                          </svg>`,
+                    bgColor: 'bg-indigo-100'
+                },
+                app: {
+                    svg: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>`,
+                    bgColor: 'bg-green-100'
+                },
+                gps: {
+                    svg: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>`,
+                    bgColor: 'bg-purple-100'
+                },
+                default: {
+                    svg: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>`,
+                    bgColor: 'bg-gray-100'
+                }
+            };
+            return icons[method] || icons.default;
+        }
+
+    </script>
+</body>
+</html>
