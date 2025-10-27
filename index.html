@@ -305,6 +305,17 @@
             cursor: pointer;
             font-size: 16px;
         }
+
+        /* --- 🌟 커스텀 오버레이(정보창) 스타일 추가 --- */
+        .custom-overlay-info {
+            padding: 5px 10px;
+            font-size: 12px;
+            text-align: left;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            border: 1px solid #ccc;
+        }
     </style>
     
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
@@ -546,7 +557,8 @@
                     
                     let displayText = `위도: ${parsedLat.toFixed(6)}<br>경도: ${parsedLng.toFixed(6)}`;
                     if (pos.altitude !== undefined && pos.altitude !== null) {
-                        displayText += `<br>고도: ${pos.altitude.toFixed(2)}m`;
+                        // 고도 값도 숫자로 변환 (값이 문자열일 경우 대비)
+                        displayText += `<br>고도: ${parseFloat(pos.altitude).toFixed(2)}m`;
                     }
                     logEntry.innerHTML = displayText;
 
@@ -568,7 +580,10 @@
                 snapshot.forEach((snap) => {
                     const pos = snap.val();
                     if (!pos.latitude || !pos.longitude) return;
-                    const latlng = new kakao.maps.LatLng(parseFloat(pos.latitude), parseFloat(pos.longitude));
+
+                    const parsedLat = parseFloat(pos.latitude);
+                    const parsedLng = parseFloat(pos.longitude);
+                    const latlng = new kakao.maps.LatLng(parsedLat, parsedLng);
                     path.push(latlng);
                     
                     const marker = new kakao.maps.Marker({ 
@@ -576,17 +591,46 @@
                         map: map,
                         image: pathMarkerImage // 경로 마커 이미지 적용
                     });
+
+                    // --- 🌟 마커 커스텀 오버레이(정보창) 추가 시작 🌟 ---
+
+                    // 1. 오버레이에 표시할 내용
+                    // (앱에서 location_logs 저장 시 timestamp도 함께 저장해야 합니다)
+                    const timestamp = pos.timestamp || Date.now(); // 타임스탬프가 없으면 현재 시간
+                    const formattedTime = new Date(timestamp).toLocaleString('ko-KR');
+                    
+                    const overlayContent = `<div class="custom-overlay-info">
+                                                <strong>${formattedTime}</strong><br>
+                                                위도: ${parsedLat.toFixed(6)}<br>
+                                                경도: ${parsedLng.toFixed(6)}
+                                            </div>`;
+
+                    // 2. 커스텀 오버레이 생성
+                    const customOverlay = new kakao.maps.CustomOverlay({
+                        content: overlayContent,
+                        position: latlng,
+                        xAnchor: 0.5, // x축 (가운데 정렬)
+                        yAnchor: 2.5, // y축 (마커 상단에서 약간 떨어지도록)
+                        zIndex: 3
+                    });
+                    
+                    // 3. 마우스오버 이벤트 리스너 추가
+                    kakao.maps.event.addListener(marker, 'mouseover', function() {
+                        customOverlay.setMap(map);
+                    });
+
+                    // 4. 마우스아웃 이벤트 리스너 추가
+                    kakao.maps.event.addListener(marker, 'mouseout', function() {
+                        customOverlay.setMap(null);
+                    });
+                    
+                    // --- 🌟 마커 커스텀 오버레이 추가 끝 🌟 ---
+
                     markers.push(marker);
                     bounds.extend(latlng);
                     lastPos = latlng; // 마지막 위치 저장
                 });
                 
-                // 경로의 마지막 마커는 더 눈에 띄게 (선택 마커와 동일한 핀 사용 고려 가능)
-                if (markers.length > 0) {
-                        // 선택된 로그 위치 마커와 겹치므로 마지막 마커도 pathMarkerImage를 유지합니다.
-                        // (혹은 필요하다면 여기에만 다른 마커 이미지를 적용할 수 있습니다.)
-                }
-
                 if (path.length > 0) {
                     currentPolyline = new kakao.maps.Polyline({
                         path: path, strokeWeight: 4, strokeColor: '#FF0000', strokeOpacity: 0.8, strokeStyle: 'solid', map: map
@@ -663,22 +707,33 @@
           // 로그인 폼 제출 이벤트 (*** 수정됨 ***)
             loginForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                const username = document.getElementById('username').value.trim();
-                const password = document.getElementById('password').value.trim();
-                if (username === '' || password === '') {
-                    customAlert('아이디와 비밀번호를 올바르게 입력해주세요.'); // alert -> customAlert
+                const usernameInput = document.getElementById('username').value.trim();
+                const passwordInput = document.getElementById('password').value.trim();
+                if (usernameInput === '' || passwordInput === '') {
+                    customAlert('아이디와 비밀번호를 올바르게 입력해주세요.');
                     return;
                 }
 
-                // 'users/' 경로 대신 'admin_account'라는 고정된 경로를 참조합니다.
-                const adminRef = database.ref('admin_account'); 
+                // 'admin_pass' 경로를 참조합니다.
+                const adminRef = database.ref('admin_pass'); 
                 
                 adminRef.once('value', (snapshot) => {
-                    const adminData = snapshot.val();
+                    let loginSuccess = false;
                     
-                    // DB에 저장된 adminData의 username과 password가 
-                    // 입력된 username, password와 모두 일치하는지 확인합니다.
-                    if (snapshot.exists() && adminData.username === username && adminData.password === password) {
+                    if (snapshot.exists()) {
+                        // 'bae', 'kim', 'lee' 등 하위 관리자 노드를 순회합니다.
+                        snapshot.forEach((childSnapshot) => {
+                            const adminData = childSnapshot.val();
+                            
+                            // 스크린샷의 구조('adminId', 'password')와 일치하는지 확인
+                            if (adminData.adminId === usernameInput && adminData.password === passwordInput) {
+                                loginSuccess = true;
+                                return true; // forEach 루프 중단
+                            }
+                        });
+                    }
+
+                    if (loginSuccess) {
                         // 로그인 성공
                         loginContainer.classList.add('hidden');
                         mainContent.classList.remove('hidden');
@@ -687,7 +742,7 @@
                         kakao.maps.load(initMap);
                     } else {
                         // 로그인 실패
-                        customAlert('아이디 또는 비밀번호가 일치하지 않습니다.'); // alert -> customAlert
+                        customAlert('아이디 또는 비밀번호가 일치하지 않습니다.');
                     }
                 });
             });
