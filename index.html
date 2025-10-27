@@ -315,14 +315,14 @@
 
     <!-- 로그인 컨테이너 -->
     <div id="login-container">
-        <h2>Welcome!</h2>
+        <h2>Admin Login</h2> <!-- 제목 변경 -->
         <form id="login-form">
             <div class="input-group">
-                <label for="username">아이디</label>
+                <label for="username">관리자 아이디</label> <!-- 라벨 변경 -->
                 <input type="text" id="username" placeholder="아이디를 입력하세요" required>
             </div>
             <div class="input-group">
-                <label for="password">비밀번호</label>
+                <label for="password">관리자 비밀번호</label> <!-- 라벨 변경 -->
                 <input type="password" id="password" placeholder="비밀번호를 입력하세요" required>
             </div>
             <button type="submit">로그인</button>
@@ -583,8 +583,8 @@
                 
                 // 경로의 마지막 마커는 더 눈에 띄게 (선택 마커와 동일한 핀 사용 고려 가능)
                 if (markers.length > 0) {
-                     // 선택된 로그 위치 마커와 겹치므로 마지막 마커도 pathMarkerImage를 유지합니다.
-                     // (혹은 필요하다면 여기에만 다른 마커 이미지를 적용할 수 있습니다.)
+                        // 선택된 로그 위치 마커와 겹치므로 마지막 마커도 pathMarkerImage를 유지합니다.
+                        // (혹은 필요하다면 여기에만 다른 마커 이미지를 적용할 수 있습니다.)
                 }
 
                 if (path.length > 0) {
@@ -660,30 +660,39 @@
             const logContent = document.getElementById('log-content');
             const backToMapBtn = document.getElementById('backToMapBtn');
 
-          // 로그인 폼 제출 이벤트
+          // 로그인 폼 제출 이벤트 (*** 수정됨 ***)
             loginForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const username = document.getElementById('username').value.trim();
                 const password = document.getElementById('password').value.trim();
-                if (username === '' || password === '' || password.length < 6) {
-                    customAlert('아이디와 비밀번호(6자 이상)를 올바르게 입력해주세요.');
+                if (username === '' || password === '') {
+                    customAlert('아이디와 비밀번호를 올바르게 입력해주세요.'); // alert -> customAlert
                     return;
                 }
-                const userRef = database.ref('users/' + username);
-                userRef.once('value', (snapshot) => {
-                    if (snapshot.exists() && snapshot.val().password === password) {
+
+                // 'users/' 경로 대신 'admin_account'라는 고정된 경로를 참조합니다.
+                const adminRef = database.ref('admin_account'); 
+                
+                adminRef.once('value', (snapshot) => {
+                    const adminData = snapshot.val();
+                    
+                    // DB에 저장된 adminData의 username과 password가 
+                    // 입력된 username, password와 모두 일치하는지 확인합니다.
+                    if (snapshot.exists() && adminData.username === username && adminData.password === password) {
+                        // 로그인 성공
                         loginContainer.classList.add('hidden');
                         mainContent.classList.remove('hidden');
                         header.classList.remove('hidden');
                         body.style.background = '#fff';
                         kakao.maps.load(initMap);
                     } else {
-                        customAlert('아이디 또는 비밀번호가 일치하지 않습니다.');
+                        // 로그인 실패
+                        customAlert('아이디 또는 비밀번호가 일치하지 않습니다.'); // alert -> customAlert
                     }
                 });
             });
 
-          // 로그아웃 버튼 클릭 이벤트
+            // 로그아웃 버튼 클릭 이벤트
             logoutBtn.addEventListener('click', () => {
                 mainContent.classList.add('hidden');
                 header.classList.add('hidden');
@@ -700,7 +709,7 @@
                 document.getElementById('mapUser').textContent = '사용자를 선택하면 이동 경로가 표시됩니다.';
             });
 
-          // 로그 보기 버튼 이벤트
+            // 로그 보기 버튼 이벤트
             logBtn.addEventListener('click', () => {
                 if (selectedUserId) {
                     mainContent.classList.add('hidden');
@@ -709,7 +718,7 @@
                 }
             });
 
-          // 지도로 돌아가기 버튼 이벤트
+            // 지도로 돌아가기 버튼 이벤트
             backToMapBtn.addEventListener('click', () => {
                 logContent.classList.add('hidden');
                 mainContent.classList.remove('hidden');
@@ -718,3 +727,4 @@
     </script>
 </body>
 </html>
+
