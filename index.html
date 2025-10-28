@@ -969,18 +969,24 @@
                  if (currentMainContent) currentMainContent.classList.remove('hidden');
             }
 
+             // --- 🌟 새 버튼 핸들러 추가 ---
+             function handleNewButtonClick() {
+                 console.log("New button clicked.");
+                 // loge.html 파일이 같은 폴더에 있다고 가정합니다.
+                 window.location.href = 'loge.html';
+             }
+
 
             // --- 초기 이벤트 리스너 설정 ---
             function setupInitialEventListeners() {
                  console.log("Setting up initial event listeners...");
                  // Only add login form listener initially
-                 // 🌟 loginForm 변수를 직접 사용 (DOMContentLoaded 범위 내에 있음)
                  if (loginForm) {
                     loginForm.addEventListener('submit', handleLoginSubmit);
                     console.log("Login form listener added initially.");
                  } else {
                     // 이 오류는 이전 단계에서 이미 처리됨
-                    // console.error("loginForm element not found initially.");
+                    console.error("loginForm element not found initially.");
                  }
                  // Add modal close button listener
                  const modalCloseButton = document.querySelector('#custom-modal button');
@@ -995,9 +1001,10 @@
              // --- 로그인 성공 후 호출되는 리스너 설정 ---
             function setupMainUIEventListeners() {
                  console.log("Setting up main UI event listeners after login.");
-                 // 🌟 요소 다시 가져오기 (logoutBtn, logBtn 변수 사용)
-                 const currentLogoutBtn = document.getElementById('logoutBtn'); // 🌟 지역 변수로 다시 찾기
-                 const currentLogBtn = document.getElementById('logBtn'); // 🌟 지역 변수로 다시 찾기
+                 // 🌟 요소 다시 가져오기
+                 const currentLogoutBtn = document.getElementById('logoutBtn');
+                 const currentLogBtn = document.getElementById('logBtn');
+                 const currentNewBtn = document.getElementById('newBtn'); // 🌟 새 버튼 가져오기
 
                  if (currentLogoutBtn) {
                     currentLogoutBtn.addEventListener('click', handleLogout);
@@ -1011,6 +1018,14 @@
                     console.log("Log button listener added.");
                  } else {
                      console.error("logBtn element not found after login.");
+                 }
+
+                 // 🌟 새 버튼 리스너 추가
+                 if (currentNewBtn) {
+                     currentNewBtn.addEventListener('click', handleNewButtonClick);
+                     console.log("New button listener added.");
+                 } else {
+                     console.error("newBtn element not found after login.");
                  }
                  // backToMapBtn listener is added dynamically in handleLogView
             }
