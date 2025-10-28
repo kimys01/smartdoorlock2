@@ -26,8 +26,8 @@
             height: 100vh;
             background: linear-gradient(135deg, #71b7e6, #9b59b6);
             padding-top: 70px; /* 헤더 높이만큼 여백 확보 */
-            /* 🌟 overflow: hidden; 추가하여 스크롤 방지 (로그인 시) */
-            overflow: hidden;
+            /* overflow: hidden; /* 로그인 시 스크롤 방지 */
+            /* 로그인 후 스크롤이 필요하므로 body에서 overflow: hidden 제거 */
         }
 
         .hidden { display: none !important; }
@@ -41,7 +41,10 @@
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
             text-align: center;
-            position: absolute;
+            position: absolute; /* 로그인 화면 중앙 정렬 */
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
             z-index: 1000;
         }
 
@@ -131,8 +134,8 @@
             gap: 10px;
         }
 
-        /* 🌟 모든 헤더 버튼 공통 스타일 */
-        #logoutBtn, #logBtn, #dbBtn {
+        /* 🌟 헤더 버튼 공통 스타일 (DB 버튼 제외) */
+        #logoutBtn, #logBtn {
             padding: 8px 15px;
             border: none;
             color: white;
@@ -144,12 +147,12 @@
         /* 🌟 각 버튼 색상 */
         #logoutBtn { background-color: #dc3545; } /* 로그아웃: 빨간색 */
         #logBtn { background-color: #007bff; } /* 로그 보기: 파란색 */
-        #dbBtn { background-color: #28a745; } /* DB: 초록색 */
+
 
         /* 🌟 각 버튼 hover 효과 */
         #logoutBtn:hover { background-color: #c82333; }
         #logBtn:hover { background-color: #0056b3; }
-        #dbBtn:hover { background-color: #218838; }
+
 
         /* 🌟 로그 버튼 비활성화 스타일 */
         #logBtn:disabled {
@@ -165,8 +168,7 @@
             width: 100%;
             height: calc(100vh - 70px); /* 헤더 높이 제외 */
             background-color: #fff;
-            /* 🌟 overflow: hidden; 추가 (자식 요소들이 넘치지 않도록) */
-            overflow: hidden;
+            overflow: hidden; /* 자식 요소들이 넘치지 않도록 */
         }
 
 
@@ -210,7 +212,6 @@
         }
         #map {
             width: 100%;
-             /* 🌟 mapArea의 제목/설명 높이를 고려하여 height 조정 */
             height: calc(100% - 40px); /* 제목 높이 등을 고려 */
             margin-top: 10px;
         }
@@ -235,7 +236,7 @@
             flex-direction: column;
             gap: 20px;
             background-color: #fff;
-            position: fixed; /* 🌟 메인 컨텐츠 위에 덮어씌우도록 */
+            position: fixed; /* 메인 컨텐츠 위에 덮어씌우도록 */
             top: 70px; /* 헤더 아래 */
             left: 0;
             z-index: 600; /* 메인 컨텐츠보다 위에 오도록 */
@@ -342,7 +343,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <script>
-        // --- 🌟 스크립트 실행 지연을 위해 함수로 래핑 ---
+        // --- 스크립트 실행 지연을 위해 함수로 래핑 ---
         function initializeApp() {
             console.log("initializeApp called."); // 디버그 로그
 
@@ -794,10 +795,10 @@
                 }
             }
 
-            function handleDbButtonClick() {
-                 console.log("DB button clicked.");
-                 window.location.href = 'smart_doorlock_firestore_log.html';
-            }
+            // function handleDbButtonClick() {
+            //      console.log("DB button clicked.");
+            //      window.location.href = 'smart_doorlock_firestore_log.html';
+            // }
 
             function handleBackToMap() {
                  console.log("Back to map clicked.");
@@ -815,7 +816,7 @@
                 const loginForm = document.getElementById('login-form');
                 const logoutBtn = document.getElementById('logoutBtn');
                 const logBtn = document.getElementById('logBtn');
-                const dbBtn = document.getElementById('dbBtn');
+                // const dbBtn = document.getElementById('dbBtn'); // DB 버튼 제거됨
                 // backToMapBtn은 로그 보기 화면에만 존재하므로 여기서 찾지 않습니다.
 
                 // 로그인 폼 이벤트 리스너 추가
@@ -842,13 +843,13 @@
                      console.error("logBtn 요소를 찾을 수 없습니다.");
                 }
 
-                // DB 버튼 이벤트 리스너 추가
-                if (dbBtn) {
-                    dbBtn.addEventListener('click', handleDbButtonClick);
-                     console.log("DB button listener added.");
-                } else {
-                     console.error("dbBtn 요소를 찾을 수 없습니다.");
-                }
+                // DB 버튼 이벤트 리스너 추가 (제거됨)
+                // if (dbBtn) {
+                //     dbBtn.addEventListener('click', handleDbButtonClick);
+                //      console.log("DB button listener added.");
+                // } else {
+                //      console.error("dbBtn 요소를 찾을 수 없습니다.");
+                // }
             }
 
 
