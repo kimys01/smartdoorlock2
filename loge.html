@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스마트 도어락 로그 (Firestore)</title>
+    <title>스마트 도어락 로그 (Realtime DB)</title>
     <!-- Tailwind CSS 로드 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Inter 폰트 사용 -->
@@ -41,7 +41,7 @@
         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
             <header class="bg-gradient-to-r from-blue-600 to-blue-800 p-6">
                 <h1 class="text-2xl font-bold text-white">스마트 도어락 실시간 로그</h1>
-                <p class="text-blue-100 text-sm mt-1">Firestore에서 실시간으로 로그를 가져옵니다.</p>
+                <p class="text-blue-100 text-sm mt-1">Realtime Database에서 실시간으로 로그를 가져옵니다.</p>
             </header>
             
             <div id="logs-container" class="p-6 space-y-4 min-h-[200px]">
@@ -57,30 +57,12 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     <p class="font-medium">표시할 로그가 없습니다.</p>
-                    <p class="text-sm">Firestore 콘솔에서 직접 로그를 추가해 보세요.</p>
+                    <p class="text-sm">Realtime Database 콘솔에서 'doorlock_logs'에 로그를 추가해 보세요.</p>
                 </div>
                 
                 <!-- 로그 리스트가 렌더링될 곳 -->
                 <ul id="log-list" class="space-y-3">
                     <!-- 로그 항목 예시 (JS로 동적 생성됨) -->
-                    <!-- 
-                    <li class="p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-center">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 flex items-center justify-center rounded-full bg-blue-100">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 14a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 14a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="font-semibold text-gray-800">키패드</p>
-                                <p class="text-sm text-gray-500">2025년 10월 24일 오후 5:30:15</p>
-                            </div>
-                        </div>
-                        <span class="text-sm font-medium text-green-600 bg-green-100 px-3 py-1 rounded-full">
-                            잠금 해제
-                        </span>
-                    </li>
-                    -->
                 </ul>
             </div>
         </div>
@@ -96,13 +78,14 @@
             signInWithCustomToken, 
             onAuthStateChanged 
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        
+        // --- Firebase 모듈 (Realtime Database) ---
         import { 
-            getFirestore, 
-            collection, 
-            query, 
-            onSnapshot,
-            setLogLevel
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+            getDatabase,
+            ref,
+            query,
+            onValue
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
         // DOM 요소 가져오기
         const logsContainer = document.getElementById('logs-container');
@@ -110,8 +93,7 @@
         const loadingState = document.getElementById('loading-state');
         const emptyState = document.getElementById('empty-state');
 
-        // --- 🌟 Firebase 연결 1단계: 설정 정보 가져오기 ---
-        // 캔버스 환경에서 자동으로 __firebase_config 변수를 주입합니다.
+        // --- Firebase 연결 1단계: 설정 정보 가져오기 ---
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
@@ -120,15 +102,12 @@
         let userId = null;
 
         try {
-            // --- 🌟 Firebase 연결 2단계: 앱 초기화 ---
-            // 이 코드가 Firebase 프로젝트에 연결합니다.
+            // --- Firebase 연결 2단계: 앱 초기화 ---
             const app = initializeApp(firebaseConfig);
-            db = getFirestore(app); // Firestore 데이터베이스 사용
+            db = getDatabase(app); 
             auth = getAuth(app);
-            setLogLevel('debug'); // Firestore 디버그 로그 활성화
 
-            // --- 🌟 Firebase 연결 3단계: 인증 ---
-            // onAuthStateChanged는 인증 상태를 감시합니다.
+            // --- Firebase 연결 3단계: 인증 ---
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     userId = user.uid;
@@ -138,11 +117,9 @@
                 } else {
                     console.log("No user signed in, attempting auth...");
                     try {
-                        // 캔버스 환경의 토큰(__initial_auth_token)으로 로그인 시도
                         if (typeof __initial_auth_token !== 'undefined') {
                             await signInWithCustomToken(auth, __initial_auth_token);
                         } else {
-                            // 토큰이 없으면 익명으로 로그인 (테스트용)
                             await signInAnonymously(auth);
                         }
                     } catch (authError) {
@@ -158,35 +135,65 @@
         }
 
         /**
+         * 'YYYY-MM-DD HH:MM:SS' 형식의 문자열을 Date 객체로 파싱합니다.
+         * @param {string} timestampString - '2025-10-27 11:16:47'
+         * @returns {Date}
+         */
+        function parseTimestamp(timestampString) {
+            if (!timestampString || typeof timestampString !== 'string') {
+                return new Date(0); // 1970년 1월 1일
+            }
+            try {
+                // 'YYYY-MM-DD HH:MM:SS' 형식을 'YYYY-MM-DDTHH:MM:SS' (ISO 8601 호환)
+                const formattedString = timestampString.replace(' ', 'T');
+                const date = new Date(formattedString);
+                
+                // 유효하지 않은 날짜(Invalid Date)인지 확인
+                if (isNaN(date.getTime())) {
+                    // YYYY, MM, DD, HH, MM, SS를 수동으로 파싱
+                    const parts = timestampString.match(/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/);
+                    if (parts) {
+                        // JavaScript의 Date 생성자는 월(month)을 0부터 11까지로 인식하므로 1을 빼줍니다.
+                        return new Date(parts[1], parts[2] - 1, parts[3], parts[4], parts[5], parts[6]);
+                    }
+                    return new Date(0);
+                }
+                return date;
+            } catch (e) {
+                console.warn(`Could not parse timestamp: ${timestampString}`, e);
+                return new Date(0);
+            }
+        }
+
+        /**
          * 로그 데이터를 실시간으로 감시하는 리스너를 설정합니다.
          */
         function setupLogListener() {
-            // --- 🌟 Firebase 연결 4단계: 데이터 경로 설정 ---
-            // 이 코드가 Firestore의 특정 컬렉션을 가리킵니다.
-            // (이전 코드의 Realtime Database 경로와는 다릅니다!)
-            const logCollectionPath = `artifacts/${appId}/public/data/door_logs`;
-            console.log(`Listening for logs at: ${logCollectionPath}`);
+            // --- Firebase 연결 4단계: 데이터 경로 설정 ---
+            // 🌟 캔버스 Firebase 보안 규칙에 맞는 공용 경로로 수정합니다.
+            const logRefPath = `artifacts/${appId}/public/data/doorlock_logs`;
+            console.log(`Listening for logs at: ${logRefPath}`);
             
-            const logsCollectionRef = collection(db, logCollectionPath);
-            
-            // Firestore 쿼리 (orderBy는 인덱싱이 필요할 수 있으므로, 여기서는 사용하지 않고 JS로 정렬합니다)
-            const q = query(logsCollectionRef);
+            const logsDbRef = ref(db, logRefPath);
+            const q = query(logsDbRef);
 
-            // --- 🌟 Firebase 연결 5단계: 실시간 데이터 수신 ---
-            // onSnapshot을 사용하여 실시간 변경(추가, 수정, 삭제)을 감지합니다.
-            onSnapshot(q, (snapshot) => {
+            // --- Firebase 연결 5단계: 실시간 데이터 수신 ---
+            onValue(q, (snapshot) => {
                 loadingState.classList.add('hidden'); // 로딩 숨기기
                 
+                const logsData = snapshot.val(); 
                 const logs = [];
-                snapshot.forEach((doc) => {
-                    logs.push({ id: doc.id, ...doc.data() });
-                });
 
-                // 자바스크립트 메모리에서 시간순(최신순)으로 정렬
-                // (Firestore의 timestamp 객체는 toMillis()로 변환하여 비교)
+                if (logsData) {
+                    Object.keys(logsData).forEach(key => {
+                        logs.push({ id: key, ...logsData[key] });
+                    });
+                }
+                
+                // --- 🌟 Timestamp 정렬 변경 (문자열 -> Date 객체로 변환하여 비교) ---
                 logs.sort((a, b) => {
-                    const timeA = a.timestamp?.toMillis() || 0;
-                    const timeB = b.timestamp?.toMillis() || 0;
+                    const timeA = parseTimestamp(a.timestamp).getTime();
+                    const timeB = parseTimestamp(b.timestamp).getTime();
                     return timeB - timeA; // 내림차순 (최신 항목이 위로)
                 });
 
@@ -213,19 +220,15 @@
 
             logs.forEach(log => {
                 const li = document.createElement('li');
-                li.className = 'p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-center animate-pulse-once'; // 간단한 등장 효과
+                li.className = 'p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-center animate-pulse-once'; 
                 
                 const methodText = getMethodText(log.method);
                 const iconSvg = getMethodIcon(log.method);
                 
-                // timestamp가 null이거나 toDate가 없는 경우를 대비
+                // --- 🌟 Timestamp 처리 변경 (문자열을 그대로 표시) ---
                 let timeString = '시간 정보 없음';
-                if (log.timestamp && typeof log.timestamp.toDate === 'function') {
-                    const date = log.timestamp.toDate();
-                    timeString = date.toLocaleString('ko-KR', {
-                        year: 'numeric', month: '2-digit', day: '2-digit',
-                        hour: '2-digit', minute: '2-digit', second: '2-digit'
-                    });
+                if (log.timestamp && typeof log.timestamp === 'string') {
+                    timeString = log.timestamp; // 문자열을 그대로 사용
                 }
                 
                 const statusText = log.status === 'Unlocked' ? '잠금 해제' : '잠김';
