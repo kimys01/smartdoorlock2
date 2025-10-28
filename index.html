@@ -347,6 +347,26 @@
         function initializeApp() {
             console.log("initializeApp called."); // 디버그 로그
 
+            // --- 🌟 필수 DOM 요소 확인 ---
+            const loginContainer = document.getElementById('login-container');
+            const mainContent = document.getElementById('main-content');
+            const header = document.getElementById('header');
+            const logContent = document.getElementById('log-content');
+
+            // --- 🌟 초기 UI 상태 설정 ---
+            if (loginContainer) loginContainer.classList.remove('hidden');
+            if (mainContent) mainContent.classList.add('hidden');
+            if (header) header.classList.add('hidden');
+            if (logContent) logContent.classList.add('hidden');
+
+            // --- 🌟 필수 요소 없으면 중단 ---
+            if (!loginContainer || !mainContent || !header || !logContent) {
+                console.error("Critical UI elements not found. Aborting initialization.");
+                alert("페이지 로딩 오류: 필수 UI 요소를 찾을 수 없습니다.");
+                return;
+            }
+
+
             // 커스텀 alert 함수
             function customAlert(message) {
                 const modal = document.getElementById('custom-modal');
@@ -390,7 +410,7 @@
                 console.log("Firebase initialized successfully.");
             } catch (e) {
                 console.error("Firebase 초기화 오류:", e);
-                alert("Firebase 초기화에 실패했습니다. 콘솔을 확인하세요.");
+                customAlert("Firebase 초기화에 실패했습니다. 콘솔을 확인하세요."); // 🌟 customAlert 사용
                 return; // Firebase 초기화 실패 시 더 이상 진행하지 않음
             }
 
@@ -440,6 +460,10 @@
                 const usersRef = database.ref('users');
 
                 usersRef.once('value').then((snapshot) => {
+                    // 기존 목록 초기화 (중복 방지)
+                    const existingUsers = userListDiv.querySelectorAll('.user');
+                    existingUsers.forEach(el => el.remove());
+
                     snapshot.forEach((childSnapshot) => {
                         const userId = childSnapshot.key;
                         const userElement = document.createElement('div');
@@ -476,6 +500,16 @@
                 if (infoArea) {
                     infoArea.innerHTML = '';
                 }
+                 // 사용자 정보 영역 숨기기
+                const userInfoDiv = document.getElementById('userInfo');
+                if (userInfoDiv) userInfoDiv.classList.add('hidden');
+                // 로그 버튼 비활성화
+                const logBtn = document.getElementById('logBtn');
+                if (logBtn) logBtn.disabled = true;
+                // 지도 설명 초기화
+                const mapUserElem = document.getElementById('mapUser');
+                if (mapUserElem) mapUserElem.textContent = '사용자를 선택하면 이동 경로가 표시됩니다.';
+
             }
 
             // 위치 마커 표시 함수
@@ -504,17 +538,19 @@
 
             // 사용자 선택 함수
             function selectUser(userId) {
-                clearMapAndInfo();
+                clearMapAndInfo(); // 먼저 지도와 정보창 클리어
                 selectedUserId = userId;
                 const logBtn = document.getElementById('logBtn');
                 if(logBtn) logBtn.disabled = false;
 
                 const infoArea = document.getElementById('infoArea');
-                if (infoArea) {
+                const userInfoDiv = document.getElementById('userInfo'); // userInfo 요소 가져오기
+
+                if (infoArea && userInfoDiv) { // 두 요소 모두 있는지 확인
                     infoArea.innerHTML = `<p><strong>사용자 ID:</strong> ${userId}</p><h3>전체 위치 기록</h3><div class="log-list" style="max-height: 400px; overflow-y: auto;"></div>`;
-                    document.getElementById('userInfo')?.classList.remove('hidden');
+                    userInfoDiv.classList.remove('hidden'); // userInfo 보이기
                 } else {
-                    console.error("infoArea 요소를 찾을 수 없습니다.");
+                    console.error("infoArea 또는 userInfo 요소를 찾을 수 없습니다.");
                     return;
                 }
 
@@ -532,28 +568,29 @@
                     }
                     if (!snapshot.exists()) {
                         logListDiv.innerHTML = '표시할 위치 기록이 없습니다.';
-                        return;
+                        // return; // 기록이 없어도 최근 10개는 로드 시도
+                    } else {
+                        const logs = [];
+                        snapshot.forEach(childSnapshot => logs.push(childSnapshot.val()));
+                        logs.reverse().forEach(pos => {
+                            if (!pos.latitude || !pos.longitude) return;
+
+                            const parsedLat = parseFloat(pos.latitude);
+                            const parsedLng = parseFloat(pos.longitude);
+
+                            const logEntry = document.createElement('div');
+                            logEntry.className = 'log-entry';
+
+                            let displayText = `위도: ${parsedLat.toFixed(6)}<br>경도: ${parsedLng.toFixed(6)}`;
+                            if (pos.altitude !== undefined && pos.altitude !== null) {
+                                displayText += `<br>고도: ${parseFloat(pos.altitude).toFixed(2)}m`;
+                            }
+                            logEntry.innerHTML = displayText;
+
+                            logEntry.addEventListener('click', () => showLocationOnMap(parsedLat, parsedLng));
+                            logListDiv.appendChild(logEntry);
+                        });
                     }
-                    const logs = [];
-                    snapshot.forEach(childSnapshot => logs.push(childSnapshot.val()));
-                    logs.reverse().forEach(pos => {
-                        if (!pos.latitude || !pos.longitude) return;
-
-                        const parsedLat = parseFloat(pos.latitude);
-                        const parsedLng = parseFloat(pos.longitude);
-
-                        const logEntry = document.createElement('div');
-                        logEntry.className = 'log-entry';
-
-                        let displayText = `위도: ${parsedLat.toFixed(6)}<br>경도: ${parsedLng.toFixed(6)}`;
-                        if (pos.altitude !== undefined && pos.altitude !== null) {
-                            displayText += `<br>고도: ${parseFloat(pos.altitude).toFixed(2)}m`;
-                        }
-                        logEntry.innerHTML = displayText;
-
-                        logEntry.addEventListener('click', () => showLocationOnMap(parsedLat, parsedLng));
-                        logListDiv.appendChild(logEntry);
-                    });
                 }).catch(error => {
                     console.error("위치 기록 로드 오류:", error);
                     customAlert("위치 기록을 불러오는 데 실패했습니다.");
@@ -570,12 +607,15 @@
                     }
                     if (!snapshot.exists()) {
                         mapUserElem.textContent = `${userId} 사용자의 위치 기록이 없습니다.`;
-                        return;
+                        return; // 최근 기록 없으면 여기서 종료
                     }
                     mapUserElem.textContent = `${userId}의 최근 이동 경로 (최대 10개)를 표시합니다.`;
                     let path = [];
                     const bounds = new kakao.maps.LatLngBounds();
-                    let lastPos = null;
+                    // let lastPos = null; // lastPos 사용되지 않음
+
+                     // 기존 마커 및 폴리라인 제거 (selectUser 시작 시 clearMapAndInfo에서 처리됨)
+
                     snapshot.forEach((snap) => {
                         const pos = snap.val();
                         if (!pos.latitude || !pos.longitude) return;
@@ -612,7 +652,7 @@
                             zIndex: 3
                         });
 
-                        marker.customOverlay = customOverlay;
+                        marker.customOverlay = customOverlay; // 오버레이 참조 저장
 
                         kakao.maps.event.addListener(marker, 'mouseover', function() {
                             customOverlay.setMap(map);
@@ -624,12 +664,13 @@
 
                         // --- 마커 커스텀 오버레이 추가 끝 ---
 
-                        markers.push(marker);
+                        markers.push(marker); // 새로 생성된 마커 배열에 추가
                         bounds.extend(latlng);
-                        lastPos = latlng;
+                        // lastPos = latlng; // lastPos 사용되지 않음
                     });
 
                     if (path.length > 0 && map) {
+                        // 기존 폴리라인 제거 (selectUser 시작 시 clearMapAndInfo에서 처리됨)
                         currentPolyline = new kakao.maps.Polyline({
                             path: path, strokeWeight: 4, strokeColor: '#FF0000', strokeOpacity: 0.8, strokeStyle: 'solid', map: map
                         });
@@ -643,7 +684,8 @@
 
             // 사용자 정보 닫기 함수
             function closeUserInfo() {
-                document.getElementById('userInfo')?.classList.add('hidden');
+                const userInfoDiv = document.getElementById('userInfo');
+                if (userInfoDiv) userInfoDiv.classList.add('hidden');
             }
 
             // 모든 로그 로드 함수
@@ -713,9 +755,9 @@
             function handleLoginSubmit(e) {
                 e.preventDefault();
                 console.log("Login submitted.");
-                const loginContainer = document.getElementById('login-container');
-                const mainContent = document.getElementById('main-content');
-                const header = document.getElementById('header');
+                // const loginContainer = document.getElementById('login-container'); // 이미 전역에서 가져옴
+                // const mainContent = document.getElementById('main-content');
+                // const header = document.getElementById('header');
                 const body = document.querySelector('body');
                 const usernameInput = document.getElementById('username')?.value.trim();
                 const passwordInput = document.getElementById('password')?.value.trim();
@@ -746,9 +788,9 @@
 
                     if (loginSuccess) {
                         console.log("Login successful.");
-                        loginContainer?.classList.add('hidden');
-                        mainContent?.classList.remove('hidden');
-                        header?.classList.remove('hidden');
+                        if (loginContainer) loginContainer.classList.add('hidden');
+                        if (mainContent) mainContent.classList.remove('hidden');
+                        if (header) header.classList.remove('hidden');
                         if(body) {
                             body.style.background = '#fff';
                             body.style.overflow = 'auto';
@@ -772,26 +814,30 @@
 
             function handleLogout() {
                 console.log("Logout clicked.");
+                // 간단하게 페이지 새로고침으로 로그아웃 처리
                 window.location.reload();
             }
 
             function handleLogView() {
                 console.log("Log view clicked.");
-                const mainContent = document.getElementById('main-content');
-                const logContent = document.getElementById('log-content');
+                // const mainContent = document.getElementById('main-content'); // 이미 전역에서 가져옴
+                // const logContent = document.getElementById('log-content');
                 if (selectedUserId) {
-                    mainContent?.classList.add('hidden');
-                    logContent?.classList.remove('hidden');
-                    // 🌟 로그 페이지 표시 후 backToMapBtn 리스너 추가
+                    if (mainContent) mainContent.classList.add('hidden');
+                    if (logContent) logContent.classList.remove('hidden');
+                    // 로그 페이지 표시 후 backToMapBtn 리스너 추가
                     const backToMapBtn = document.getElementById('backToMapBtn');
                     if (backToMapBtn) {
                         // 기존 리스너 제거 후 추가 (중복 방지)
                         backToMapBtn.removeEventListener('click', handleBackToMap);
                         backToMapBtn.addEventListener('click', handleBackToMap);
+                         console.log("Back to Map listener added/updated."); // 디버그 로그
                     } else {
                         console.error("backToMapBtn 요소를 찾을 수 없습니다. (handleLogView)");
                     }
                     loadAllLogs(selectedUserId);
+                } else {
+                    customAlert("사용자를 먼저 선택해주세요.");
                 }
             }
 
@@ -802,10 +848,10 @@
 
             function handleBackToMap() {
                  console.log("Back to map clicked.");
-                 const mainContent = document.getElementById('main-content');
-                 const logContent = document.getElementById('log-content');
-                 logContent?.classList.add('hidden');
-                 mainContent?.classList.remove('hidden');
+                 // const mainContent = document.getElementById('main-content'); // 이미 전역에서 가져옴
+                 // const logContent = document.getElementById('log-content');
+                 if (logContent) logContent.classList.add('hidden');
+                 if (mainContent) mainContent.classList.remove('hidden');
             }
 
 
@@ -817,7 +863,6 @@
                 const logoutBtn = document.getElementById('logoutBtn');
                 const logBtn = document.getElementById('logBtn');
                 // const dbBtn = document.getElementById('dbBtn'); // DB 버튼 제거됨
-                // backToMapBtn은 로그 보기 화면에만 존재하므로 여기서 찾지 않습니다.
 
                 // 로그인 폼 이벤트 리스너 추가
                 if (loginForm) {
@@ -850,6 +895,8 @@
                 // } else {
                 //      console.error("dbBtn 요소를 찾을 수 없습니다.");
                 // }
+
+                // 🌟 backToMapBtn 리스너는 handleLogView에서 동적으로 추가/관리
             }
 
 
