@@ -57,7 +57,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     <p class="font-medium">표시할 로그가 없습니다.</p>
-                    <p class="text-sm">Realtime Database 콘솔에서 'doorlock_logs'에 로그를 추가해 보세요.</p>
+                    <p class="text-sm">Realtime Database 콘솔에서 'artifacts/{appId}/public/data/doorlock_logs'에 로그를 추가해 보세요.</p>
                 </div>
                 
                 <!-- 로그 리스트가 렌더링될 곳 -->
@@ -95,7 +95,12 @@
 
         // --- Firebase 연결 1단계: 설정 정보 가져오기 ---
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        // 🌟 [오류 수정]
+        // Realtime Database 경로에는 '.', '#', '$', '[', ']'와 같은 특수 문자가 포함될 수 없습니다.
+        // __app_id (파일 이름)에 포함된 '.'를 '_'로 대체하여 유효한 경로를 만듭니다.
+        const rawAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const appId = rawAppId.replace(/[\.#$\[\]]/g, '_'); 
 
         let db;
         let auth;
