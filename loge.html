@@ -31,12 +31,12 @@
             border: 1px solid #e0e0e0;
             border-radius: 8px;
             padding: 1rem;
-            white-space: pre-wrap; /* 자동 줄바꿈 */
-            word-wrap: break-word; /* 긴 단어 줄바꿈 */
-            font-family: monospace; /* 고정폭 글꼴 */
-            font-size: 0.875rem; /* 14px */
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: monospace;
+            font-size: 0.875rem;
             line-height: 1.5;
-            max-height: 50vh; /* 편집 UI 추가로 높이 약간 줄임 */
+            max-height: 45vh; /* 높이 조정 */
             overflow-y: auto;
         }
         /* 입력 필드 스타일 */
@@ -55,7 +55,7 @@
             font-weight: 500;
             cursor: pointer;
             transition: background-color 0.2s ease;
-            font-size: 0.875rem; /* 버튼 폰트 크기 조정 */
+            font-size: 0.875rem;
         }
         .action-button:hover {
             opacity: 0.9;
@@ -65,16 +65,23 @@
             cursor: not-allowed;
             opacity: 0.7;
         }
-        .set-button { background-color: #007bff; } /* 파란색 */
-        .update-button { background-color: #ffc107; } /* 노란색 */
-        .delete-button { background-color: #dc3545; } /* 빨간색 */
+        .set-button { background-color: #007bff; }
+        .update-button { background-color: #ffc107; }
+        .delete-button { background-color: #dc3545; }
+        .add-field-button { background-color: #17a2b8; } /* 청록색 */
+        .remove-field-button {
+            background-color: #6c757d; /* 회색 */
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            line-height: 1;
+        }
 
-         /* 커스텀 모달 스타일 (기존 유지) */
+         /* 커스텀 모달 스타일 */
          #custom-modal {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.5);
-            display: none; /* 초기 상태 숨김 */
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 2000;
@@ -99,6 +106,22 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
+        }
+        /* 🌟 동적 필드 스타일 */
+        .field-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* 8px */
+            margin-bottom: 0.5rem;
+        }
+        .field-row input {
+            flex: 1; /* 입력 필드가 남은 공간 차지 */
+        }
+        .field-row label {
+             width: 40px; /* '키:', '값:' 라벨 너비 고정 */
+             text-align: right;
+             font-size: 0.875rem;
+             color: #4A5568; /* gray-700 */
         }
     </style>
 </head>
@@ -140,18 +163,22 @@
                 <div id="edit-controls" class="hidden p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-3">
                     <h2 class="text-lg font-semibold text-gray-700">데이터 편집</h2>
                     <div>
-                        <label for="edit-path" class="block text-sm font-medium text-gray-600 mb-1">경로 (예: users/123456/name)</label>
+                        <label for="edit-path" class="block text-sm font-medium text-gray-600 mb-1">경로 (예: users/123456)</label>
                         <input type="text" id="edit-path" class="form-input" placeholder="/">
                     </div>
+                    <!-- 🌟 값 입력 영역 변경 -->
                     <div>
-                        <label for="edit-value" class="block text-sm font-medium text-gray-600 mb-1">값 (JSON 형식, 문자열은 "" 사용)</label>
-                        <textarea id="edit-value" class="form-input" rows="3" placeholder='"새 값" 또는 {"key": "value", "enabled": true}'></textarea>
-                        <p id="json-error" class="text-red-500 text-xs mt-1 hidden">유효하지 않은 JSON 형식입니다.</p>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">필드 (Key-Value)</label>
+                        <div id="fields-container" class="space-y-2 border p-3 rounded-md bg-white min-h-[50px]">
+                            <!-- 동적 필드 추가 영역 -->
+                             <p id="no-fields-msg" class="text-sm text-gray-400 italic">추가할 필드가 없습니다. '+ 필드 추가' 버튼을 누르세요.</p>
+                        </div>
+                        <button id="add-field-button" class="mt-2 action-button add-field-button">+ 필드 추가</button>
                     </div>
                     <div class="flex space-x-2">
-                        <button id="set-button" class="action-button set-button flex-1">Set (추가/덮어쓰기)</button> <!-- 버튼 이름 변경 -->
-                        <button id="update-button" class="action-button update-button flex-1">Update (수정)</button> <!-- 새 버튼 추가 -->
-                        <button id="delete-button" class="action-button delete-button flex-1">Delete (삭제)</button>
+                        <button id="set-button" class="action-button set-button flex-1">Set (추가/덮어쓰기)</button>
+                        <button id="update-button" class="action-button update-button flex-1">Update (수정)</button>
+                        <button id="delete-button" class="action-button delete-button flex-1">Delete (경로 삭제)</button> <!-- 버튼 이름 명확화 -->
                     </div>
                 </div>
 
@@ -168,7 +195,6 @@
     <script type="module">
         // Firebase SDK 가져오기
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        // 🌟 update 함수 추가
         import { getDatabase, ref, onValue, set, remove, child, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
         // DOM 요소 가져오기
@@ -179,11 +205,13 @@
         const emptyState = document.getElementById('empty-state');
         const editControls = document.getElementById('edit-controls');
         const editPathInput = document.getElementById('edit-path');
-        const editValueInput = document.getElementById('edit-value');
+        const fieldsContainer = document.getElementById('fields-container'); // 🌟 필드 컨테이너
+        const addFieldButton = document.getElementById('add-field-button'); // 🌟 필드 추가 버튼
+        const noFieldsMsg = document.getElementById('no-fields-msg'); // 🌟 필드 없음 메시지
         const setButton = document.getElementById('set-button');
-        const updateButton = document.getElementById('update-button'); // 🌟 Update 버튼 요소
+        const updateButton = document.getElementById('update-button');
         const deleteButton = document.getElementById('delete-button');
-        const jsonErrorMsg = document.getElementById('json-error');
+        // const jsonErrorMsg = document.getElementById('json-error'); // 🌟 제거 (개별 필드 처리)
 
         // 커스텀 alert 함수
         function customAlert(message, isError = false) {
@@ -263,72 +291,129 @@
             });
         }
 
-        // --- 편집 기능 함수 ---
+        // --- 🌟 편집 기능 함수 ---
 
         /**
-         * 입력된 값이 유효한 JSON인지 확인하고 파싱합니다.
-         * @param {boolean} requireObject - update를 위해 객체여야 하는지 여부
-         * @returns {any} 파싱된 JSON 값 또는 null (오류 시)
+         * 🌟 새 필드 입력 행을 추가하는 함수
          */
-        function parseJsonValue(requireObject = false) { // 🌟 requireObject 파라미터 추가
-            const valueString = editValueInput.value.trim();
-            jsonErrorMsg.classList.add('hidden');
-            if (valueString === '') {
-                customAlert('값을 입력해주세요.', true);
-                return null;
-            }
-            try {
-                const parsedValue = JSON.parse(valueString);
-                 // 🌟 update는 객체만 받으므로 타입 체크 추가
-                 if (requireObject && (typeof parsedValue !== 'object' || parsedValue === null || Array.isArray(parsedValue))) {
-                      jsonErrorMsg.textContent = 'Update를 위해서는 값은 반드시 {"key": "value"} 형태의 JSON 객체여야 합니다.';
-                      jsonErrorMsg.classList.remove('hidden');
-                      customAlert('Update 값은 JSON 객체 형식이어야 합니다.', true);
-                      return null;
+        function addField() {
+             noFieldsMsg.classList.add('hidden'); // '필드 없음' 메시지 숨기기
+             const fieldRow = document.createElement('div');
+             fieldRow.className = 'field-row';
+
+             fieldRow.innerHTML = `
+                 <label>키:</label>
+                 <input type="text" class="form-input field-key" placeholder="필드 이름">
+                 <label>값:</label>
+                 <input type="text" class="form-input field-value" placeholder="값 (숫자, true/false, null 가능)">
+                 <button class="action-button remove-field-button">X</button>
+             `;
+
+             // 삭제 버튼 이벤트 리스너 추가
+             const removeButton = fieldRow.querySelector('.remove-field-button');
+             removeButton.addEventListener('click', () => {
+                 fieldRow.remove();
+                 // 필드가 하나도 없으면 메시지 다시 표시
+                 if (fieldsContainer.querySelectorAll('.field-row').length === 0) {
+                     noFieldsMsg.classList.remove('hidden');
                  }
-                return parsedValue;
-            } catch (e) {
-                // 문자열인데 따옴표가 없는 경우 처리 시도 (Set에만 해당)
-                if (!requireObject && !valueString.startsWith('"') && !valueString.startsWith('{') && !valueString.startsWith('[')) {
-                     if (!isNaN(valueString) && valueString !== '') return parseFloat(valueString);
-                     if (valueString === 'true') return true;
-                     if (valueString === 'false') return false;
-                     if (valueString === 'null') return null;
-                    try {
-                         return JSON.parse(`"${valueString.replace(/"/g, '\\"')}"`);
-                    } catch (e2) {
-                         // Fall through to general error
-                    }
-                }
-                // 최종 오류 처리
-                jsonErrorMsg.textContent = '유효하지 않은 JSON 형식입니다. 문자열은 ""로 감싸세요.';
-                jsonErrorMsg.classList.remove('hidden');
-                customAlert('값을 JSON 형식으로 올바르게 입력해주세요.', true);
+             });
+
+             fieldsContainer.appendChild(fieldRow);
+        }
+
+        /**
+         * 🌟 입력 필드의 값을 타입에 맞게 변환하는 함수
+         * @param {string} valueString - 입력된 문자열
+         * @returns {any} 변환된 값 (string, number, boolean, null)
+         */
+        function getValueFromInput(valueString) {
+            const trimmedValue = valueString.trim();
+            // 숫자 확인
+            if (!isNaN(trimmedValue) && trimmedValue !== '') {
+                return parseFloat(trimmedValue);
+            }
+            // 불리언 확인
+            if (trimmedValue.toLowerCase() === 'true') {
+                return true;
+            }
+            if (trimmedValue.toLowerCase() === 'false') {
+                return false;
+            }
+            // null 확인
+            if (trimmedValue.toLowerCase() === 'null') {
                 return null;
             }
+            // 그 외에는 문자열로 처리
+            return trimmedValue;
         }
+
+        /**
+         * 🌟 동적 필드에서 데이터를 수집하여 객체로 만드는 함수
+         * @returns {object | null} 생성된 데이터 객체 또는 오류 시 null
+         */
+        function collectDataFromFields() {
+            const dataObject = {};
+            const fieldRows = fieldsContainer.querySelectorAll('.field-row');
+            let hasError = false;
+
+            if (fieldRows.length === 0) {
+                 customAlert('추가/수정할 필드가 없습니다. 먼저 필드를 추가해주세요.', true);
+                 return null;
+            }
+
+            fieldRows.forEach(row => {
+                const keyInput = row.querySelector('.field-key');
+                const valueInput = row.querySelector('.field-value');
+                const key = keyInput.value.trim();
+
+                if (!key) {
+                    customAlert('모든 필드의 키(이름)를 입력해주세요.', true);
+                    keyInput.focus();
+                    hasError = true;
+                    return; // forEach 다음 요소로
+                }
+                 // Firebase 키 유효성 검사 (간단 버전)
+                 if (/[.#$\[\]]/.test(key)) {
+                     customAlert(`키 "${key}"에 유효하지 않은 문자(. # $ [ ])가 포함되어 있습니다.`, true);
+                     keyInput.focus();
+                     hasError = true;
+                     return;
+                 }
+
+                const value = getValueFromInput(valueInput.value);
+                dataObject[key] = value;
+            });
+
+            return hasError ? null : dataObject;
+        }
+
 
         /**
          * 'Set (추가/덮어쓰기)' 버튼 클릭 핸들러
          */
         function handleSet() {
             const path = editPathInput.value.trim();
-            if (path === '') {
-                customAlert('경로를 입력해주세요.', true);
-                return;
-            }
-            const value = parseJsonValue(false); // Set은 객체가 아니어도 됨
-            if (value === null) return;
+            // 🌟 Set은 루트 경로에도 가능하도록 변경
+            // if (path === '') {
+            //     customAlert('경로를 입력해주세요.', true);
+            //     return;
+            // }
+            const dataToSet = collectDataFromFields();
+            if (dataToSet === null) return;
 
-            console.log(`Setting path '${path}' with value:`, value);
+            console.log(`Setting path '${path || '/'}' with value:`, dataToSet);
             setButton.disabled = true;
-            set(ref(db, path), value)
+            set(ref(db, path || '/'), dataToSet) // 경로가 비면 루트(/)에 설정
                 .then(() => {
-                    customAlert(`경로 '${path}'에 데이터 추가/덮어쓰기 성공!`);
+                    customAlert(`경로 '${path || '/'}'에 데이터 추가/덮어쓰기 성공!`);
+                     // 성공 후 필드 초기화
+                     fieldsContainer.innerHTML = '';
+                     noFieldsMsg.classList.remove('hidden');
                 })
                 .catch((error) => {
                     console.error("Error setting data:", error);
-                    customAlert(`데이터 추가/수정 실패: ${error.message}`, true);
+                    customAlert(`데이터 추가/덮어쓰기 실패: ${error.message}`, true);
                 })
                 .finally(() => {
                     setButton.disabled = false;
@@ -336,37 +421,38 @@
         }
 
         /**
-         * 🌟 'Update (수정)' 버튼 클릭 핸들러
+         * 'Update (수정)' 버튼 클릭 핸들러
          */
         function handleUpdate() {
             const path = editPathInput.value.trim();
-            if (path === '' || path === '/') { // 루트 업데이트 방지
+            if (path === '' || path === '/') {
                 customAlert('수정할 경로를 입력해주세요. 루트(/) 경로는 수정할 수 없습니다.', true);
                 return;
             }
-            // Update는 반드시 객체 형태의 값이어야 함
-            const value = parseJsonValue(true);
-            if (value === null) return;
+            const dataToUpdate = collectDataFromFields();
+            if (dataToUpdate === null) return;
 
-            console.log(`Updating path '${path}' with value:`, value);
-            updateButton.disabled = true; // 중복 클릭 방지
-            update(ref(db, path), value) // 🌟 update 함수 사용
+            console.log(`Updating path '${path}' with value:`, dataToUpdate);
+            updateButton.disabled = true;
+            update(ref(db, path), dataToUpdate)
                 .then(() => {
                     customAlert(`경로 '${path}'의 데이터 수정 성공!`);
+                     // 성공 후 필드 초기화
+                     fieldsContainer.innerHTML = '';
+                     noFieldsMsg.classList.remove('hidden');
                 })
                 .catch((error) => {
                     console.error("Error updating data:", error);
-                     // 경로가 없을 때 발생하는 오류 처리 등
                     customAlert(`데이터 수정 실패: ${error.message}`, true);
                 })
                 .finally(() => {
-                    updateButton.disabled = false; // 버튼 활성화
+                    updateButton.disabled = false;
                 });
         }
 
 
         /**
-         * 'Delete (삭제)' 버튼 클릭 핸들러
+         * 'Delete (경로 삭제)' 버튼 클릭 핸들러
          */
         function handleDelete() {
             const path = editPathInput.value.trim();
@@ -380,6 +466,10 @@
             remove(ref(db, path))
                 .then(() => {
                     customAlert(`경로 '${path}'의 데이터 삭제 성공!`);
+                     // 성공 후 필드 초기화
+                     fieldsContainer.innerHTML = '';
+                     noFieldsMsg.classList.remove('hidden');
+                     editPathInput.value = ''; // 경로 입력도 초기화
                 })
                 .catch((error) => {
                     console.error("Error removing data:", error);
@@ -391,13 +481,18 @@
         }
 
         // --- 이벤트 리스너 연결 ---
+        if (addFieldButton) {
+             addFieldButton.addEventListener('click', addField);
+        } else {
+             console.error("Add Field button not found.");
+        }
+
         if (setButton) {
-            setButton.addEventListener('click', handleSet); // handleAddUpdate -> handleSet
+            setButton.addEventListener('click', handleSet);
         } else {
             console.error("Set button not found.");
         }
 
-        // 🌟 Update 버튼 리스너 추가
         if (updateButton) {
              updateButton.addEventListener('click', handleUpdate);
         } else {
