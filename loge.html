@@ -358,7 +358,7 @@
             let hasError = false;
 
             if (fieldRows.length === 0) {
-                 customAlert('추가/수정할 필드가 없습니다. 먼저 필드를 추가해주세요.', true);
+                 customAlert('수정할 필드가 없습니다. 먼저 필드를 추가해주세요.', true);
                  return null;
             }
 
@@ -390,7 +390,7 @@
 
 
         /**
-         * 'Set (추가/덮어쓰기)' 버튼 클릭 핸들러
+         * 'Set (덮어쓰기)' 버튼 클릭 핸들러
          */
         function handleSet() {
             const path = editPathInput.value.trim();
@@ -406,14 +406,14 @@
             setButton.disabled = true;
             set(ref(db, path || '/'), dataToSet) // 경로가 비면 루트(/)에 설정
                 .then(() => {
-                    customAlert(`경로 '${path || '/'}'에 데이터 추가/덮어쓰기 성공!`);
+                    customAlert(`경로 '${path || '/'}'에 데이터 덮어쓰기 성공!`);
                      // 성공 후 필드 초기화
                      fieldsContainer.innerHTML = '';
                      noFieldsMsg.classList.remove('hidden');
                 })
                 .catch((error) => {
                     console.error("Error setting data:", error);
-                    customAlert(`데이터 추가/덮어쓰기 실패: ${error.message}`, true);
+                    customAlert(`데이터 덮어쓰기 실패: ${error.message}`, true);
                 })
                 .finally(() => {
                     setButton.disabled = false;
@@ -421,12 +421,12 @@
         }
 
         /**
-         * 'Update (수정)' 버튼 클릭 핸들러
+         * 'Update (추가)' 버튼 클릭 핸들러
          */
         function handleUpdate() {
             const path = editPathInput.value.trim();
             if (path === '' || path === '/') {
-                customAlert('수정할 경로를 입력해주세요. 루트(/) 경로는 수정할 수 없습니다.', true);
+                customAlert('추가할 경로를 입력해주세요. 루트(/) 경로는 수정할 수 없습니다.', true);
                 return;
             }
             const dataToUpdate = collectDataFromFields();
@@ -436,14 +436,14 @@
             updateButton.disabled = true;
             update(ref(db, path), dataToUpdate)
                 .then(() => {
-                    customAlert(`경로 '${path}'의 데이터 수정 성공!`);
+                    customAlert(`경로 '${path}'의 데이터 추가 성공!`);
                      // 성공 후 필드 초기화
                      fieldsContainer.innerHTML = '';
                      noFieldsMsg.classList.remove('hidden');
                 })
                 .catch((error) => {
                     console.error("Error updating data:", error);
-                    customAlert(`데이터 수정 실패: ${error.message}`, true);
+                    customAlert(`데이터 추가 실패: ${error.message}`, true);
                 })
                 .finally(() => {
                     updateButton.disabled = false;
@@ -517,5 +517,6 @@
     </script>
 </body>
 </html>
+
 
 
