@@ -57,7 +57,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     <p class="font-medium">표시할 로그가 없습니다.</p>
-                    <p class="text-sm">Realtime Database 콘솔에서 'artifacts/{appId}/public/data/doorlock_logs'에 로그를 추가해 보세요.</p>
+                    <p class="text-sm">Realtime Database 콘솔에서 'doorlock_logs'에 로그를 추가해 보세요.</p>
                 </div>
                 
                 <!-- 로그 리스트가 렌더링될 곳 -->
@@ -75,7 +75,7 @@
         import { 
             getAuth, 
             signInAnonymously, 
-            signInWithCustomToken, 
+            // 캔버스 환경이 아니므로 signInWithCustomToken 제거
             onAuthStateChanged 
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         
@@ -93,15 +93,18 @@
         const loadingState = document.getElementById('loading-state');
         const emptyState = document.getElementById('empty-state');
 
-        // --- Firebase 연결 1단계: 설정 정보 가져오기 ---
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        // --- Firebase 연결 1단계: 설정 정보 (사용자 제공) ---
+        const firebaseConfig = {
+          apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
+          authDomain: "smartdoorlock-b4636.firebaseapp.com",
+          databaseURL: "https://smartdoorlock-b4636-default-rtdb.firebaseio.com",
+          projectId: "smartdoorlock-b4636",
+          storageBucket: "smartdoorlock-b4636.firebasestorage.app", // .appspot.com -> .firebasestorage.app (사용자 제공값)
+          messagingSenderId: "104489505270",
+          appId: "1:104489505270:web:eb385c8f9c5dfd512077d7",
+          measurementId: "G-4TH9MB9WPM"
+        };
         
-        // 🌟 [오류 수정]
-        // Realtime Database 경로에는 '.', '#', '$', '[', ']'와 같은 특수 문자가 포함될 수 없습니다.
-        // __app_id (파일 이름)에 포함된 '.'를 '_'로 대체하여 유효한 경로를 만듭니다.
-        const rawAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const appId = rawAppId.replace(/[\.#$\[\]]/g, '_'); 
-
         let db;
         let auth;
         let userId = null;
@@ -120,50 +123,54 @@
                     // 인증이 완료되면 로그 리스너 설정
                     setupLogListener();
                 } else {
-                    console.log("No user signed in, attempting auth...");
+                    console.log("No user signed in, attempting anonymous auth...");
                     try {
-                        if (typeof __initial_auth_token !== 'undefined') {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
+                        await signInAnonymously(auth);
+                        console.log("Signed in anonymously.");
                     } catch (authError) {
                         console.error("Authentication error:", authError);
-                        loadingState.innerHTML = '<p class="text-red-500">인증에 실패했습니다. F12를 눌러 콘솔을 확인하세요.</p>';
+                        // API 키가 유효하지 않으면 이 오류가 발생합니다.
+                        if (authError.code === 'auth/api-key-not-valid') {
+                             loadingState.innerHTML = '<p class="text-red-500">Firebase API 키가 유효하지 않습니다. firebaseConfig를 다시 확인하세요.</p>';
+                        
+                        // 🌟 [오류 수정] 'auth/admin-restricted-operation' 오류를 구체적으로 안내
+                        } else if (authError.code === 'auth/admin-restricted-operation') {
+                             loadingState.innerHTML = '<p class="text-red-500">인증 오류: Firebase 콘솔에서 \'익명\' 로그인 방법이 활성화되었는지 확인하세요.</p>';
+
+                        } else {
+                             // 🌟 다른 오류들도 코드를 함께 표시
+                             loadingState.innerHTML = `<p class="text-red-500">인증에 실패했습니다. (${authError.code}) F12를 눌러 콘솔을 확인하세요.</p>`;
+                        }
                     }
                 }
             });
 
         } catch (e) {
             console.error("Firebase initialization error:", e);
-            loadingState.innerHTML = '<p class="text-red-500">Firebase 초기화 오류. F12를 눌러 콘솔을 확인하세요.</p>';
+            loadingState.innerHTML = `<p class="text-red-500">Firebase 초기화 오류. F12를 눌러 콘솔을 확인하세요. (firebaseConfig 값을 확인하세요)</p>`;
         }
 
         /**
          * 'YYYY-MM-DD HH:MM:SS' 형식의 문자열을 Date 객체로 파싱합니다.
-         * @param {string} timestampString - '2025-10-27 11:16:47'
-         * @returns {Date}
          */
         function parseTimestamp(timestampString) {
             if (!timestampString || typeof timestampString !== 'string') {
                 return new Date(0); // 1970년 1월 1일
             }
             try {
-                // 'YYYY-MM-DD HH:MM:SS' 형식을 'YYYY-MM-DDTHH:MM:SS' (ISO 8601 호환)
+                // ' '를 'T'로 바꾸면 ISO 8601 형식과 유사해져 new Date()가 더 잘 인식합니다.
                 const formattedString = timestampString.replace(' ', 'T');
                 const date = new Date(formattedString);
-                
-                // 유효하지 않은 날짜(Invalid Date)인지 확인
+                // 만약 T로 바꿨는데도 NaN(Invalid Date)이 나오면, 수동으로 파싱합니다.
                 if (isNaN(date.getTime())) {
-                    // YYYY, MM, DD, HH, MM, SS를 수동으로 파싱
                     const parts = timestampString.match(/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/);
                     if (parts) {
-                        // JavaScript의 Date 생성자는 월(month)을 0부터 11까지로 인식하므로 1을 빼줍니다.
+                        // new Date(year, monthIndex(0-11), day, hour, minute, second)
                         return new Date(parts[1], parts[2] - 1, parts[3], parts[4], parts[5], parts[6]);
                     }
-                    return new Date(0);
+                    return new Date(0); // 파싱 실패
                 }
-                return date;
+                return date; // 파싱 성공
             } catch (e) {
                 console.warn(`Could not parse timestamp: ${timestampString}`, e);
                 return new Date(0);
@@ -175,8 +182,8 @@
          */
         function setupLogListener() {
             // --- Firebase 연결 4단계: 데이터 경로 설정 ---
-            // 🌟 캔버스 Firebase 보안 규칙에 맞는 공용 경로로 수정합니다.
-            const logRefPath = `artifacts/${appId}/public/data/doorlock_logs`;
+            // 🌟 님의 스크린샷에 보이는 실제 경로('doorlock_logs')를 직접 참조합니다.
+            const logRefPath = `doorlock_logs`;
             console.log(`Listening for logs at: ${logRefPath}`);
             
             const logsDbRef = ref(db, logRefPath);
@@ -195,7 +202,7 @@
                     });
                 }
                 
-                // --- 🌟 Timestamp 정렬 변경 (문자열 -> Date 객체로 변환하여 비교) ---
+                // 자바스크립트 메모리에서 시간순(최신순)으로 정렬
                 logs.sort((a, b) => {
                     const timeA = parseTimestamp(a.timestamp).getTime();
                     const timeB = parseTimestamp(b.timestamp).getTime();
@@ -206,13 +213,16 @@
 
             }, (error) => {
                 console.error("Error listening to logs:", error);
-                loadingState.innerHTML = `<p class="text-red-500">로그를 불러오는 중 오류가 발생했습니다: ${error.message}</p>`;
+                if (error.code === 'PERMISSION_DENIED') {
+                     loadingState.innerHTML = `<p class="text-red-500">데이터 접근 권한이 없습니다 (PERMISSION_DENIED).<br>Firebase Realtime Database의 '규칙' 탭에서 '.read'가 true로 설정되어 있는지 확인하세요.</p>`;
+                } else {
+                    loadingState.innerHTML = `<p class="text-red-500">로그를 불러오는 중 오류가 발생했습니다: ${error.message}</p>`;
+                }
             });
         }
 
         /**
          * 로그 배열을 받아 HTML로 렌더링합니다.
-         * @param {Array} logs - 로그 데이터 배열
          */
         function renderLogs(logs) {
             logList.innerHTML = ''; // 기존 리스트 초기화
@@ -230,7 +240,6 @@
                 const methodText = getMethodText(log.method);
                 const iconSvg = getMethodIcon(log.method);
                 
-                // --- 🌟 Timestamp 처리 변경 (문자열을 그대로 표시) ---
                 let timeString = '시간 정보 없음';
                 if (log.timestamp && typeof log.timestamp === 'string') {
                     timeString = log.timestamp; // 문자열을 그대로 사용
@@ -261,7 +270,6 @@
 
         /**
          * 로그 메소드(method) 문자열에 따라 적절한 한글 텍스트를 반환합니다.
-         * @param {string} method - 'keypad', 'rfid', 'app', 'gps' 등
          */
         function getMethodText(method) {
             switch(method) {
@@ -275,7 +283,6 @@
 
         /**
          * 로그 메소드에 따라 아이콘 SVG와 배경색을 반환합니다.
-         * @param {string} method - 'keypad', 'rfid', 'app', 'gps' 등
          */
         function getMethodIcon(method) {
             const icons = {
@@ -306,7 +313,7 @@
                 },
                 default: {
                     svg: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.65 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>`,
                     bgColor: 'bg-gray-100'
                 }
