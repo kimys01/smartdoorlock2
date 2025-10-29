@@ -540,7 +540,7 @@
                         { offset: new kakao.maps.Point(16, 35) }
                     );
                     pathMarkerImage = new kakao.maps.MarkerImage(
-                        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_dot.png', // 🌟 [수정] 마커 이미지 파란색 점으로 변경
+                        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_dot.png', // 경로 마커 파란색 점
                         new kakao.maps.Size(12, 12),
                         { offset: new kakao.maps.Point(6, 6) }
                     );
@@ -677,7 +677,8 @@
                 const userInfoDiv = document.getElementById('userInfo');
 
                 if (infoArea && userInfoDiv) {
-                    infoArea.innerHTML = `<p><strong>사용자 ID:</strong> ${userId}</p><h3>전체 위치 기록</h3><div class="log-list" style="max-height: 400px; overflow-y: auto;"></div>`;
+                     // 🌟 [수정] .log-list div에서 인라인 스타일 제거
+                    infoArea.innerHTML = `<p><strong>사용자 ID:</strong> ${userId}</p><h3>전체 위치 기록</h3><div class="log-list"></div>`;
                     userInfoDiv.classList.remove('hidden');
                 } else {
                     console.error("infoArea or userInfo element not found in selectUser.");
@@ -695,11 +696,13 @@
                     const logListDiv = infoArea.querySelector('.log-list');
                     if (!logListDiv) return;
                     logListDiv.innerHTML = ''; // 목록 초기화
+                    console.log(`Snapshot exists for ${userId}:`, snapshot.exists()); // 🌟 디버그 로그 추가
                     if (!snapshot.exists()) {
                         logListDiv.innerHTML = '표시할 위치 기록이 없습니다.';
                     } else {
                         const logs = [];
                         snapshot.forEach(childSnapshot => logs.push(childSnapshot.val()));
+                        console.log(`Total logs fetched for ${userId}:`, logs.length); // 🌟 디버그 로그 추가
                         logs.reverse().forEach(pos => { // 최신순으로 표시
                             if (!pos.latitude || !pos.longitude) return;
                             const parsedLat = parseFloat(pos.latitude);
@@ -754,7 +757,7 @@
                         const marker = new kakao.maps.Marker({
                             position: latlng,
                             map: map,
-                            image: pathMarkerImage // 🌟 [수정] 경로 마커 이미지 사용 (파란색 점)
+                            image: pathMarkerImage // 경로 마커 이미지 사용 (파란색 점)
                         });
 
                         // 오버레이 내용 생성
@@ -795,7 +798,7 @@
                         currentPolyline = new kakao.maps.Polyline({
                             path: path,
                             strokeWeight: 4,
-                            strokeColor: '#0000FF', // 🌟 [수정] 선 색상 파란색으로 변경
+                            strokeColor: '#0000FF', // 선 색상 파란색
                             strokeOpacity: 0.8,
                             strokeStyle: 'solid',
                             map: map
@@ -1015,7 +1018,7 @@
                          if(modal) modal.style.display = 'none';
                     });
                  }
-                 // 🌟 [수정] userInfo 닫기 버튼 리스너도 여기서 추가
+                 // [수정] userInfo 닫기 버튼 리스너도 여기서 추가
                  if (closeUserInfoButton) {
                       closeUserInfoButton.addEventListener('click', closeUserInfo);
                       console.log("Close User Info button listener added initially.");
@@ -1027,7 +1030,7 @@
              // --- 로그인 성공 후 호출되는 리스너 설정 ---
             function setupMainUIEventListeners() {
                  console.log("Setting up main UI event listeners after login.");
-                 // 🌟 요소 다시 가져오기
+                 // 요소 다시 가져오기
                  const currentLogoutBtn = document.getElementById('logoutBtn');
                  const currentLogBtn = document.getElementById('logBtn');
                  const currentNewBtn = document.getElementById('newBtn'); // 새 버튼 가져오기
