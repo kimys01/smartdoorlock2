@@ -131,7 +131,7 @@
             gap: 10px;
         }
 
-        /* 🌟 헤더 버튼 공통 스타일 (새 버튼 포함) */
+        /* 헤더 버튼 공통 스타일 (새 버튼 포함) */
         #logoutBtn, #logBtn, #newBtn {
             padding: 8px 15px;
             border: none;
@@ -141,19 +141,19 @@
             transition: background-color 0.2s ease;
         }
 
-        /* 🌟 각 버튼 색상 */
+        /* 각 버튼 색상 */
         #logoutBtn { background-color: #dc3545; } /* 로그아웃: 빨간색 */
         #logBtn { background-color: #007bff; } /* 로그 보기: 파란색 */
         #newBtn { background-color: #ffc107; } /* 새 버튼: 주황색 */
 
 
-        /* 🌟 각 버튼 hover 효과 */
+        /* 각 버튼 hover 효과 */
         #logoutBtn:hover { background-color: #c82333; }
         #logBtn:hover { background-color: #0056b3; }
         #newBtn:hover { background-color: #e0a800; }
 
 
-        /* 🌟 로그 버튼 비활성화 스타일 */
+        /* 로그 버튼 비활성화 스타일 */
         #logBtn:disabled {
             background-color: #ccc;
             cursor: not-allowed;
@@ -209,7 +209,21 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 10px; /* 헤더 아래 여백 */
         }
+         /* 🌟 닫기 버튼 스타일 */
+         #closeUserInfoBtn {
+             background: none;
+             border: none;
+             font-size: 1.2rem;
+             cursor: pointer;
+             color: #6c757d; /* 회색 */
+             padding: 0 5px; /* 클릭 영역 확보 */
+         }
+         #closeUserInfoBtn:hover {
+             color: #dc3545; /* 빨간색 */
+         }
+
         #map {
             width: 100%;
             height: calc(100% - 40px); /* 제목 높이 등을 고려 */
@@ -371,7 +385,7 @@
         <h1>캡스톤 프로젝트</h1>
         <div class="button-group">
             <button id="logBtn" disabled>로그 보기</button>
-            <button id="newBtn">새 버튼</button> <!-- 🌟 새 버튼 추가 -->
+            <button id="newBtn">DB 편집</button> <!-- 🌟 버튼 이름 변경 -->
             <button id="logoutBtn">로그아웃</button>
         </div>
     </div>
@@ -382,7 +396,8 @@
             <div id="userInfo" class="hidden">
                 <div class="info-header">
                     <h2>사용자 정보</h2>
-                    <button id="closeBtn">X</button>
+                     <!-- 🌟 [수정] onclick 제거하고 id 부여 -->
+                    <button id="closeUserInfoBtn">X</button>
                 </div>
                 <div id="infoArea">사용자를 선택해주세요.</div>
             </div>
@@ -437,16 +452,8 @@
             const loginForm = document.getElementById('login-form');
             // logoutBtn, logBtn 등은 나중에 필요할 때 찾음
             const body = document.querySelector('body');
+            const closeUserInfoButton = document.getElementById('closeUserInfoBtn'); // 🌟 닫기 버튼 가져오기
 
-            // 🌟 [추가 시작] 1단계에서 만든 'closeUserInfoBtn' 버튼을 찾습니다.
-            const closeUserInfoButton = document.getElementById('closeUserInfoBtn'); 
-            // 🌟 [추가] 찾은 버튼에 'click' 이벤트를 직접 연결해줍니다.
-            if (closeUserInfoButton) {
-                // 🌟 'closeUserInfo' 함수는 원래 있던 자리에 그대로 두면 됩니다.
-                closeUserInfoButton.addEventListener('click', closeUserInfo);
-            } else {
-                console.error("closeUserInfoButton not found.");
-            }
             // --- 초기 UI 상태 설정 (요소 존재 여부 확인 후 적용) ---
              if (loginContainer) {
                  loginContainer.classList.remove('hidden');
@@ -464,7 +471,7 @@
                 alert("페이지 로딩 오류: 로그인 폼을 찾을 수 없습니다.");
                 return;
             } else {
-                 console.log("loginForm found."); // 🌟 로그인 폼 찾기 성공 로그
+                 console.log("loginForm found."); // 로그인 폼 찾기 성공 로그
             }
 
 
@@ -505,7 +512,7 @@
 
             // --- Firebase 앱 초기화 ---
             try {
-                // 🌟 Firebase SDK 로드 확인
+                // Firebase SDK 로드 확인
                 if (typeof firebase === 'undefined' || !firebase.initializeApp) {
                      throw new Error("Firebase SDK not loaded correctly.");
                 }
@@ -514,14 +521,14 @@
                 console.log("Firebase initialized successfully.");
             } catch (e) {
                 console.error("Firebase 초기화 오류:", e);
-                customAlert("Firebase 초기화에 실패했습니다. 콘솔을 확인하세요."); // 🌟 customAlert 사용
+                customAlert("Firebase 초기화에 실패했습니다. 콘솔을 확인하세요."); // customAlert 사용
                 return; // 초기화 실패 시 중단
             }
 
             // --- 지도 초기화 함수 ---
             function initMap() {
                  console.log("initMap called.");
-                 // 🌟 Kakao SDK 로드 확인
+                 // Kakao SDK 로드 확인
                  if (typeof kakao === 'undefined' || !kakao.maps || !kakao.maps.Map) {
                      console.error("Kakao Maps SDK not loaded correctly.");
                      customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
@@ -797,11 +804,13 @@
                  });
             }
 
-            // --- 사용자 정보 닫기 함수 ---
+            // --- 🌟 [수정] 사용자 정보 닫기 함수 ---
             function closeUserInfo() {
                  console.log("closeUserInfo called.");
                 const userInfoDiv = document.getElementById('userInfo');
                 if (userInfoDiv) userInfoDiv.classList.add('hidden');
+                // 닫기 버튼 클릭 시 지도 초기화나 사용자 선택 해제는 불필요할 수 있음
+                // 필요하다면 clearMapAndInfo(); 호출 추가
             }
 
             // --- 모든 로그 로드 함수 ---
@@ -978,10 +987,9 @@
                  if (currentMainContent) currentMainContent.classList.remove('hidden');
             }
 
-             // --- 🌟 새 버튼 핸들러 추가 ---
+             // --- 새 버튼 핸들러 ---
              function handleNewButtonClick() {
                  console.log("New button clicked.");
-                 // loge.html 파일이 같은 폴더에 있다고 가정합니다.
                  window.location.href = 'loge.html';
              }
 
@@ -994,7 +1002,7 @@
                     loginForm.addEventListener('submit', handleLoginSubmit);
                     console.log("Login form listener added initially.");
                  } else {
-                    // 이 오류는 이전 단계에서 이미 처리됨
+                    // 이 오류는 발생하지 않아야 함 (DOMContentLoaded 후 실행되므로)
                     console.error("loginForm element not found initially.");
                  }
                  // Add modal close button listener
@@ -1005,6 +1013,13 @@
                          if(modal) modal.style.display = 'none';
                     });
                  }
+                 // 🌟 [수정] userInfo 닫기 버튼 리스너도 여기서 추가
+                 if (closeUserInfoButton) {
+                      closeUserInfoButton.addEventListener('click', closeUserInfo);
+                      console.log("Close User Info button listener added initially.");
+                 } else {
+                      console.error("closeUserInfoButton not found initially.");
+                 }
             }
 
              // --- 로그인 성공 후 호출되는 리스너 설정 ---
@@ -1013,7 +1028,7 @@
                  // 🌟 요소 다시 가져오기
                  const currentLogoutBtn = document.getElementById('logoutBtn');
                  const currentLogBtn = document.getElementById('logBtn');
-                 const currentNewBtn = document.getElementById('newBtn'); // 🌟 새 버튼 가져오기
+                 const currentNewBtn = document.getElementById('newBtn'); // 새 버튼 가져오기
 
                  if (currentLogoutBtn) {
                     currentLogoutBtn.addEventListener('click', handleLogout);
@@ -1029,7 +1044,7 @@
                      console.error("logBtn element not found after login.");
                  }
 
-                 // 🌟 새 버튼 리스너 추가
+                 // 새 버튼 리스너 추가
                  if (currentNewBtn) {
                      currentNewBtn.addEventListener('click', handleNewButtonClick);
                      console.log("New button listener added.");
@@ -1046,3 +1061,4 @@
     </script>
 </body>
 </html>
+
