@@ -382,7 +382,7 @@
             <div id="userInfo" class="hidden">
                 <div class="info-header">
                     <h2>사용자 정보</h2>
-                    <button onclick="closeUserInfo()">X</button>
+                    <button id="closeBtn">X</button>
                 </div>
                 <div id="infoArea">사용자를 선택해주세요.</div>
             </div>
@@ -438,6 +438,15 @@
             // logoutBtn, logBtn 등은 나중에 필요할 때 찾음
             const body = document.querySelector('body');
 
+            // 🌟 [추가 시작] 1단계에서 만든 'closeUserInfoBtn' 버튼을 찾습니다.
+            const closeUserInfoButton = document.getElementById('closeUserInfoBtn'); 
+            // 🌟 [추가] 찾은 버튼에 'click' 이벤트를 직접 연결해줍니다.
+            if (closeUserInfoButton) {
+                // 🌟 'closeUserInfo' 함수는 원래 있던 자리에 그대로 두면 됩니다.
+                closeUserInfoButton.addEventListener('click', closeUserInfo);
+            } else {
+                console.error("closeUserInfoButton not found.");
+            }
             // --- 초기 UI 상태 설정 (요소 존재 여부 확인 후 적용) ---
              if (loginContainer) {
                  loginContainer.classList.remove('hidden');
@@ -1037,4 +1046,3 @@
     </script>
 </body>
 </html>
-
