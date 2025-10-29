@@ -453,25 +453,57 @@
             const body = document.querySelector('body');
             const closeUserInfoButton = document.getElementById('closeUserInfoBtn'); // 닫기 버튼 가져오기
 
-            // --- 초기 UI 상태 설정 (요소 존재 여부 확인 후 적용) ---
-             if (loginContainer) {
-                 loginContainer.classList.remove('hidden');
-                 console.log("Login container shown.");
-             } else { console.error("loginContainer not found for initial setup."); }
+            // --- 🌟 [수정 시작] sessionStorage 확인 및 초기 화면 설정 ---
+            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
 
-             if (mainContent) mainContent.classList.add('hidden'); else console.error("mainContent not found for initial setup.");
-             if (header) header.classList.add('hidden'); else console.error("header not found for initial setup.");
-             if (logContent) logContent.classList.add('hidden'); else console.error("logContent not found for initial setup.");
-
-
-            // --- 필수 요소 없으면 중단 (로그인 폼만 확인)---
-            if (!loginForm) {
-                console.error("loginForm element not found. Aborting initialization.");
-                alert("페이지 로딩 오류: 로그인 폼을 찾을 수 없습니다.");
-                return;
+            if (isLoggedIn) {
+                // 이미 로그인 상태일 경우
+                console.log("Already logged in (sessionStorage). Showing main content.");
+                if (loginContainer) loginContainer.classList.add('hidden'); // 로그인 화면 숨기기
+                if (mainContent) mainContent.classList.remove('hidden'); // 메인 화면 보이기
+                if (header) header.classList.remove('hidden'); // 헤더 보이기
+                if (body) {
+                    body.style.background = '#fff'; // 배경 흰색으로
+                    body.style.overflow = 'auto'; // 스크롤 허용
+                }
+                // 메인 UI 리스너 설정 및 지도 로드
+                setupMainUIEventListeners();
+                if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
+                     kakao.maps.load(initMap);
+                } else {
+                     console.error("Kakao Maps SDK not ready on initial load (logged in state).");
+                     // SDK 로드를 기다리거나 사용자에게 새로고침 안내
+                     setTimeout(() => { // 잠시 후 다시 시도
+                         if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
+                             kakao.maps.load(initMap);
+                         } else {
+                             customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
+                         }
+                     }, 1000); // 1초 후 시도
+                }
+                 // 초기 리스너 설정 (모달 닫기 등)도 필요
+                 setupInitialEventListeners(false); // 로그인 폼 리스너는 추가 안 함
             } else {
-                 console.log("loginForm found."); // 로그인 폼 찾기 성공 로그
+                // 로그인 상태가 아닐 경우
+                console.log("Not logged in. Showing login screen.");
+                if (loginContainer) loginContainer.classList.remove('hidden'); // 로그인 화면 보이기
+                if (mainContent) mainContent.classList.add('hidden');
+                if (header) header.classList.add('hidden');
+                if (logContent) logContent.classList.add('hidden');
+                 if (body) body.style.overflow = 'hidden'; // 로그인 화면에서 스크롤 방지
+
+                 // 초기 리스너 설정 (로그인 폼 리스너 포함)
+                 setupInitialEventListeners(true);
             }
+            // --- 🌟 [수정 끝] sessionStorage 확인 및 초기 화면 설정 ---
+
+
+            // --- 필수 요소 없으면 중단 (isLoggedIn 확인 후 실행되므로 loginForm 확인은 불필요)---
+            // if (!loginForm && !isLoggedIn) { // 로그인 폼도 없고 로그인 상태도 아니면 오류
+            //     console.error("loginForm element not found and not logged in. Aborting initialization.");
+            //     alert("페이지 로딩 오류: 로그인 폼을 찾을 수 없습니다.");
+            //     return;
+            // }
 
 
             // 커스텀 alert 함수
@@ -823,14 +855,12 @@
                  });
             }
 
-            // --- 🌟 [수정] 사용자 정보 닫기 함수 ---
+            // --- 사용자 정보 닫기 함수 ---
             function closeUserInfo() {
                  console.log("closeUserInfo called.");
-                 // 지도 및 관련 정보 초기화
+                 // 🌟 [수정] 지도 및 관련 정보 초기화 함수 호출 추가
                  clearMapAndInfo();
-                 // userInfo 요소 자체는 숨길 필요 없음 (clearMapAndInfo에서 처리)
-                 // const userInfoDiv = document.getElementById('userInfo');
-                 // if (userInfoDiv) userInfoDiv.classList.add('hidden');
+                 // userInfo 요소 자체는 숨길 필요 없음 (clearMapAndInfo에서 처리됨)
             }
 
             // --- 모든 로그 로드 함수 ---
@@ -939,6 +969,9 @@
 
                     if (loginSuccess) {
                         console.log("Login successful.");
+                        // 🌟 [수정] 로그인 성공 시 sessionStorage에 상태 저장
+                        sessionStorage.setItem('isLoggedIn', 'true');
+
                         if (loginContainer) loginContainer.classList.add('hidden');
                         if (mainContent) mainContent.classList.remove('hidden');
                         if (header) header.classList.remove('hidden');
@@ -969,6 +1002,8 @@
 
             function handleLogout() {
                 console.log("Logout clicked.");
+                // 🌟 [수정] 로그아웃 시 sessionStorage 클리어
+                sessionStorage.removeItem('isLoggedIn');
                 window.location.reload(); // Simple reload for logout
             }
 
@@ -1015,15 +1050,16 @@
 
 
             // --- 초기 이벤트 리스너 설정 ---
-            function setupInitialEventListeners() {
+            // 🌟 [수정] 로그인 상태에 따라 로그인 폼 리스너 추가 여부 결정
+            function setupInitialEventListeners(addLoginFormListener = true) {
                  console.log("Setting up initial event listeners...");
-                 // Only add login form listener initially
-                 if (loginForm) {
-                    loginForm.addEventListener('submit', handleLoginSubmit);
-                    console.log("Login form listener added initially.");
-                 } else {
-                    // 이 오류는 발생하지 않아야 함 (DOMContentLoaded 후 실행되므로)
-                    console.error("loginForm element not found initially.");
+                 if (addLoginFormListener) {
+                     if (loginForm) {
+                        loginForm.addEventListener('submit', handleLoginSubmit);
+                        console.log("Login form listener added initially.");
+                     } else {
+                        console.error("loginForm element not found initially.");
+                     }
                  }
                  // Add modal close button listener
                  const modalCloseButton = document.querySelector('#custom-modal button');
@@ -1033,7 +1069,7 @@
                          if(modal) modal.style.display = 'none';
                     });
                  }
-                 // [수정] userInfo 닫기 버튼 리스너도 여기서 추가
+                 // userInfo 닫기 버튼 리스너도 여기서 추가
                  if (closeUserInfoButton) {
                       closeUserInfoButton.addEventListener('click', closeUserInfo);
                       console.log("Close User Info button listener added initially.");
@@ -1042,7 +1078,7 @@
                  }
             }
 
-             // --- 로그인 성공 후 호출되는 리스너 설정 ---
+             // --- 로그인 성공/세션 유지 시 호출되는 리스너 설정 ---
             function setupMainUIEventListeners() {
                  console.log("Setting up main UI event listeners after login.");
                  // 요소 다시 가져오기
@@ -1074,8 +1110,8 @@
                  // backToMapBtn listener is added dynamically in handleLogView
             }
 
-            // --- 초기 리스너 설정 실행 ---
-            setupInitialEventListeners();
+            // --- 초기 리스너 설정 실행 (로그인 상태에 따라 분기) ---
+            // 🌟 이 로직은 파일 상단 DOMContentLoaded 시작 부분으로 이동함
 
         }); // DOMContentLoaded 닫기
     </script>
