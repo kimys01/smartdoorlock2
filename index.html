@@ -677,7 +677,7 @@
                 const userInfoDiv = document.getElementById('userInfo');
 
                 if (infoArea && userInfoDiv) {
-                     // 🌟 [수정] .log-list div에 스타일 적용 (부모 요소가 스크롤 처리)
+                     // .log-list div에 스타일 적용 (부모 요소가 스크롤 처리)
                     infoArea.innerHTML = `<p><strong>사용자 ID:</strong> ${userId}</p><h3>전체 위치 기록</h3><div class="log-list"></div>`;
                     userInfoDiv.classList.remove('hidden');
                 } else {
@@ -696,27 +696,27 @@
                     const logListDiv = infoArea.querySelector('.log-list');
                     if (!logListDiv) return;
                     logListDiv.innerHTML = ''; // 목록 초기화
-                    console.log(`Snapshot exists for ${userId}:`, snapshot.exists()); // 🌟 디버그 로그 추가
+                    console.log(`Snapshot exists for ${userId}:`, snapshot.exists()); // 디버그 로그 추가
                     if (!snapshot.exists()) {
                         logListDiv.innerHTML = '표시할 위치 기록이 없습니다.';
                     } else {
                         const logs = [];
                         snapshot.forEach(childSnapshot => {
-                             // 🌟 [디버깅] 개별 로그 데이터 확인
+                             // [디버깅] 개별 로그 데이터 확인
                              console.log("Processing log:", childSnapshot.key, childSnapshot.val());
                              logs.push(childSnapshot.val());
                         });
-                        console.log(`Total logs fetched for ${userId}:`, logs.length); // 🌟 디버그 로그 추가
+                        console.log(`Total logs fetched for ${userId}:`, logs.length); // 디버그 로그 추가
                         logs.reverse().forEach((pos, index) => { // 최신순으로 표시
-                             console.log(`Rendering log index ${index}:`, pos); // 🌟 [디버깅] 렌더링 로그 추가
+                             console.log(`Rendering log index ${index}:`, pos); // [디버깅] 렌더링 로그 추가
                             if (!pos || typeof pos !== 'object' || !pos.latitude || !pos.longitude) {
-                                 console.warn("Skipping invalid log entry:", pos); // 🌟 [디버깅] 잘못된 데이터 경고
+                                 console.warn("Skipping invalid log entry:", pos); // [디버깅] 잘못된 데이터 경고
                                  return; // 잘못된 데이터 건너뛰기
                             }
                             const parsedLat = parseFloat(pos.latitude);
                             const parsedLng = parseFloat(pos.longitude);
                             if (isNaN(parsedLat) || isNaN(parsedLng)) {
-                                 console.warn("Skipping log with invalid coordinates:", pos); // 🌟 [디버깅] 잘못된 좌표 경고
+                                 console.warn("Skipping log with invalid coordinates:", pos); // [디버깅] 잘못된 좌표 경고
                                  return;
                             }
 
@@ -733,7 +733,7 @@
                             logEntry.addEventListener('click', () => showLocationOnMap(parsedLat, parsedLng));
                             logListDiv.appendChild(logEntry);
                         });
-                         console.log(`Finished rendering ${logListDiv.children.length} logs for ${userId}`); // 🌟 [디버깅] 렌더링 완료 로그
+                         console.log(`Finished rendering ${logListDiv.children.length} logs for ${userId}`); // [디버깅] 렌더링 완료 로그
                     }
                 }).catch(error => {
                     console.error("Error loading location logs:", error);
@@ -757,7 +757,7 @@
 
                     snapshot.forEach((snap) => {
                         const pos = snap.val();
-                         if (!pos || typeof pos !== 'object' || !pos.latitude || !pos.longitude) return; // 🌟 데이터 유효성 검사 추가
+                         if (!pos || typeof pos !== 'object' || !pos.latitude || !pos.longitude) return; // 데이터 유효성 검사 추가
 
                         const parsedLat = parseFloat(pos.latitude);
                         const parsedLng = parseFloat(pos.longitude);
@@ -823,11 +823,14 @@
                  });
             }
 
-            // --- 사용자 정보 닫기 함수 ---
+            // --- 🌟 [수정] 사용자 정보 닫기 함수 ---
             function closeUserInfo() {
                  console.log("closeUserInfo called.");
-                const userInfoDiv = document.getElementById('userInfo');
-                if (userInfoDiv) userInfoDiv.classList.add('hidden');
+                 // 지도 및 관련 정보 초기화
+                 clearMapAndInfo();
+                 // userInfo 요소 자체는 숨길 필요 없음 (clearMapAndInfo에서 처리)
+                 // const userInfoDiv = document.getElementById('userInfo');
+                 // if (userInfoDiv) userInfoDiv.classList.add('hidden');
             }
 
             // --- 모든 로그 로드 함수 ---
