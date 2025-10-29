@@ -453,7 +453,7 @@
             const body = document.querySelector('body');
             const closeUserInfoButton = document.getElementById('closeUserInfoBtn'); // 닫기 버튼 가져오기
 
-            // --- 🌟 [수정 시작] sessionStorage 확인 및 초기 화면 설정 ---
+            // --- sessionStorage 확인 및 초기 화면 설정 ---
             const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
 
             if (isLoggedIn) {
@@ -495,15 +495,9 @@
                  // 초기 리스너 설정 (로그인 폼 리스너 포함)
                  setupInitialEventListeners(true);
             }
-            // --- 🌟 [수정 끝] sessionStorage 확인 및 초기 화면 설정 ---
 
 
             // --- 필수 요소 없으면 중단 (isLoggedIn 확인 후 실행되므로 loginForm 확인은 불필요)---
-            // if (!loginForm && !isLoggedIn) { // 로그인 폼도 없고 로그인 상태도 아니면 오류
-            //     console.error("loginForm element not found and not logged in. Aborting initialization.");
-            //     alert("페이지 로딩 오류: 로그인 폼을 찾을 수 없습니다.");
-            //     return;
-            // }
 
 
             // 커스텀 alert 함수
@@ -969,7 +963,7 @@
 
                     if (loginSuccess) {
                         console.log("Login successful.");
-                        // 🌟 [수정] 로그인 성공 시 sessionStorage에 상태 저장
+                        // [수정] 로그인 성공 시 sessionStorage에 상태 저장
                         sessionStorage.setItem('isLoggedIn', 'true');
 
                         if (loginContainer) loginContainer.classList.add('hidden');
@@ -1002,7 +996,7 @@
 
             function handleLogout() {
                 console.log("Logout clicked.");
-                // 🌟 [수정] 로그아웃 시 sessionStorage 클리어
+                // [수정] 로그아웃 시 sessionStorage 클리어
                 sessionStorage.removeItem('isLoggedIn');
                 window.location.reload(); // Simple reload for logout
             }
@@ -1050,7 +1044,7 @@
 
 
             // --- 초기 이벤트 리스너 설정 ---
-            // 🌟 [수정] 로그인 상태에 따라 로그인 폼 리스너 추가 여부 결정
+            // [수정] 로그인 상태에 따라 로그인 폼 리스너 추가 여부 결정
             function setupInitialEventListeners(addLoginFormListener = true) {
                  console.log("Setting up initial event listeners...");
                  if (addLoginFormListener) {
@@ -1111,7 +1105,7 @@
             }
 
             // --- 초기 리스너 설정 실행 (로그인 상태에 따라 분기) ---
-            // 🌟 이 로직은 파일 상단 DOMContentLoaded 시작 부분으로 이동함
+            // 이 로직은 파일 상단 DOMContentLoaded 시작 부분으로 이동함
 
         }); // DOMContentLoaded 닫기
     </script>
