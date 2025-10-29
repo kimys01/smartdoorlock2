@@ -211,7 +211,7 @@
             align-items: center;
             margin-bottom: 10px; /* 헤더 아래 여백 */
         }
-         /* 🌟 닫기 버튼 스타일 */
+         /* 닫기 버튼 스타일 */
          #closeUserInfoBtn {
              background: none;
              border: none;
@@ -353,7 +353,7 @@
         }
     </style>
 
-    <!-- 🌟 스크립트 로드 순서 변경: SDK들을 <head>로 이동 -->
+    <!-- 스크립트 로드 순서 변경: SDK들을 <head>로 이동 -->
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -385,7 +385,7 @@
         <h1>캡스톤 프로젝트</h1>
         <div class="button-group">
             <button id="logBtn" disabled>로그 보기</button>
-            <button id="newBtn">DB 편집</button> <!-- 🌟 버튼 이름 변경 -->
+            <button id="newBtn">DB 편집</button> <!-- 버튼 이름 변경 -->
             <button id="logoutBtn">로그아웃</button>
         </div>
     </div>
@@ -396,7 +396,6 @@
             <div id="userInfo" class="hidden">
                 <div class="info-header">
                     <h2>사용자 정보</h2>
-                     <!-- 🌟 [수정] onclick 제거하고 id 부여 -->
                     <button id="closeUserInfoBtn">X</button>
                 </div>
                 <div id="infoArea">사용자를 선택해주세요.</div>
@@ -438,7 +437,7 @@
         </div>
     </div>
 
-    <!-- 🌟 메인 스크립트: <body> 맨 끝으로 이동 -->
+    <!-- 메인 스크립트: <body> 맨 끝으로 이동 -->
     <script>
         // --- DOMContentLoaded 사용 ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -452,7 +451,7 @@
             const loginForm = document.getElementById('login-form');
             // logoutBtn, logBtn 등은 나중에 필요할 때 찾음
             const body = document.querySelector('body');
-            const closeUserInfoButton = document.getElementById('closeUserInfoBtn'); // 🌟 닫기 버튼 가져오기
+            const closeUserInfoButton = document.getElementById('closeUserInfoBtn'); // 닫기 버튼 가져오기
 
             // --- 초기 UI 상태 설정 (요소 존재 여부 확인 후 적용) ---
              if (loginContainer) {
@@ -541,7 +540,7 @@
                         { offset: new kakao.maps.Point(16, 35) }
                     );
                     pathMarkerImage = new kakao.maps.MarkerImage(
-                        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/red_dot.png',
+                        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_dot.png', // 🌟 [수정] 마커 이미지 파란색 점으로 변경
                         new kakao.maps.Size(12, 12),
                         { offset: new kakao.maps.Point(6, 6) }
                     );
@@ -661,7 +660,7 @@
                 selectedLogMarker = new kakao.maps.Marker({
                     position: position,
                     map: map,
-                    image: selectedMarkerImage
+                    image: selectedMarkerImage // 목록 클릭 시에는 빨간색 핀 사용
                 });
                 map.panTo(position); // 부드럽게 이동
             }
@@ -755,7 +754,7 @@
                         const marker = new kakao.maps.Marker({
                             position: latlng,
                             map: map,
-                            image: pathMarkerImage
+                            image: pathMarkerImage // 🌟 [수정] 경로 마커 이미지 사용 (파란색 점)
                         });
 
                         // 오버레이 내용 생성
@@ -794,7 +793,12 @@
                     // 경로선 생성 및 지도 범위 조정
                     if (path.length > 0 && map) {
                         currentPolyline = new kakao.maps.Polyline({
-                            path: path, strokeWeight: 4, strokeColor: '#FF0000', strokeOpacity: 0.8, strokeStyle: 'solid', map: map
+                            path: path,
+                            strokeWeight: 4,
+                            strokeColor: '#0000FF', // 🌟 [수정] 선 색상 파란색으로 변경
+                            strokeOpacity: 0.8,
+                            strokeStyle: 'solid',
+                            map: map
                         });
                         map.setBounds(bounds);
                     }
@@ -804,13 +808,11 @@
                  });
             }
 
-            // --- 🌟 [수정] 사용자 정보 닫기 함수 ---
+            // --- 사용자 정보 닫기 함수 ---
             function closeUserInfo() {
                  console.log("closeUserInfo called.");
                 const userInfoDiv = document.getElementById('userInfo');
                 if (userInfoDiv) userInfoDiv.classList.add('hidden');
-                // 닫기 버튼 클릭 시 지도 초기화나 사용자 선택 해제는 불필요할 수 있음
-                // 필요하다면 clearMapAndInfo(); 호출 추가
             }
 
             // --- 모든 로그 로드 함수 ---
@@ -935,7 +937,7 @@
                              console.error("Kakao Maps SDK not loaded or load function unavailable.");
                              customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
                         }
-                         // 🌟 로그인 성공 후 메인 UI 리스너 설정
+                         // 로그인 성공 후 메인 UI 리스너 설정
                         setupMainUIEventListeners();
                     } else {
                         console.log("Login failed.");
@@ -954,7 +956,7 @@
 
             function handleLogView() {
                 console.log("Log view clicked.");
-                 // 🌟 필요한 요소들을 이 함수 내에서 다시 찾음
+                 // 필요한 요소들을 이 함수 내에서 다시 찾음
                 const currentMainContent = document.getElementById('main-content');
                 const currentLogContent = document.getElementById('log-content');
 
@@ -980,7 +982,7 @@
 
             function handleBackToMap() {
                  console.log("Back to map clicked.");
-                  // 🌟 필요한 요소들을 이 함수 내에서 다시 찾음
+                  // 필요한 요소들을 이 함수 내에서 다시 찾음
                  const currentMainContent = document.getElementById('main-content');
                  const currentLogContent = document.getElementById('log-content');
                  if (currentLogContent) currentLogContent.classList.add('hidden');
