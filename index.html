@@ -957,7 +957,7 @@
                 appLogContainer.innerHTML = '<em>로딩 중...</em>';
 
                 // 도어락 로그 로드
-                const doorLockRef = database.ref('users/' + userId + '/doorlock_logs');
+                const doorLockRef = database.ref('users/' + userId + '/door_lock_logs');
                 doorLockRef.once('value').then((snapshot) => {
                     doorLockLogContainer.innerHTML = ''; // 초기화
                     if (!snapshot.exists()) {
