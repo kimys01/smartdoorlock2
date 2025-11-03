@@ -351,6 +351,21 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
             border: 1px solid #ccc;
         }
+
+        /* --- [추가] 커스텀 마커 오버레이 스타일 --- */
+        .custom-marker-pin {
+            width: 32px; /* 원본 이미지 크기 */
+            height: 35px; /* 원본 이미지 크기 */
+            transform: scale(1.5); /* 50% 크게 */
+            transform-origin: bottom center; /* 핀의 하단을 기준으로 확대 */
+        }
+
+        .custom-marker-dot {
+            width: 12px; /* 원본 이미지 크기 */
+            height: 12px; /* 원본 이미지 크기 */
+            transform: scale(1.8); /* 80% 크게 */
+            transform-origin: center center; /* 점의 중심을 기준으로 확대 */
+        }
     </style>
 
     <!-- 스크립트 로드 순서 변경: SDK들을 <head>로 이동 -->
@@ -532,8 +547,8 @@
             let currentPolyline;
             let selectedLogMarker;
             let selectedUserId = null;
-            let selectedMarkerImage;
-            let pathMarkerImage;
+            /* [삭제] let selectedMarkerImage; */
+            /* [삭제] let pathMarkerImage; */
 
             // --- Firebase 앱 초기화 ---
             try {
@@ -560,17 +575,10 @@
                      return;
                  }
                 try {
-                    // ▼▼▼ [수정됨] 마커 크기를 원본 이미지 크기로 복구 ▼▼▼
-                    selectedMarkerImage = new kakao.maps.MarkerImage(
-                        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
-                        new kakao.maps.Size(32, 35), // 원본 크기
-                        { offset: new kakao.maps.Point(16, 35) } // 원본 오프셋
-                    );
-                    pathMarkerImage = new kakao.maps.MarkerImage(
-                        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_dot.png', // 경로 마커 파란색 점
-                        new kakao.maps.Size(12, 12), // 원본 크기
-                        { offset: new kakao.maps.Point(6, 6) } // 원본 오프셋
-                    );
+                    // ▼▼▼ [수정됨] 마커 이미지 변수 초기화 제거 ▼▼▼
+                    /* selectedMarkerImage = new kakao.maps.MarkerImage( ... );
+                    pathMarkerImage = new kakao.maps.MarkerImage( ... );
+                    */
                     // ▲▲▲ [수정 완료] ▲▲▲
 
                     const container = document.getElementById('map');
@@ -686,11 +694,18 @@
                     selectedLogMarker.setMap(null);
                 }
                 const position = new kakao.maps.LatLng(lat, lng);
-                selectedLogMarker = new kakao.maps.Marker({
+
+                // ▼▼▼ [수정] Marker 대신 CustomOverlay 사용 ▼▼▼
+                const content = '<img src="https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png" class="custom-marker-pin">';
+                
+                selectedLogMarker = new kakao.maps.CustomOverlay({
                     position: position,
-                    map: map,
-                    image: selectedMarkerImage // 목록 클릭 시에는 빨간색 핀 사용
+                    content: content,
+                    yAnchor: 1 // 핀의 하단(y)을 좌표에 맞춤
                 });
+                selectedLogMarker.setMap(map);
+                // ▲▲▲ [수정 완료] ▲▲▲
+
                 map.panTo(position); // 부드럽게 이동
             }
 
@@ -795,11 +810,18 @@
                         const latlng = new kakao.maps.LatLng(parsedLat, parsedLng);
                         path.push(latlng);
 
-                        const marker = new kakao.maps.Marker({
+                        // ▼▼▼ [수정] Marker 대신 CustomOverlay 사용 (파란 점) ▼▼▼
+                        const dotContent = '<img src="https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_dot.png" class="custom-marker-dot">';
+                        
+                        const pathPointOverlay = new kakao.maps.CustomOverlay({
                             position: latlng,
-                            map: map,
-                            image: pathMarkerImage // 경로 마커 이미지 사용 (파란색 점)
+                            content: dotContent,
+                            xAnchor: 0.5, // 점의 x축 중앙
+                            yAnchor: 0.5  // 점의 y축 중앙
                         });
+                        pathPointOverlay.setMap(map);
+                        // ▲▲▲ [수정 완료] ▲▲▲
+
 
                         // 오버레이 내용 생성
                         const timestamp = pos.timestamp || Date.now();
@@ -825,12 +847,15 @@
                             position: latlng,
                             xAnchor: 0.5, yAnchor: 2.5, zIndex: 3
                         });
-                        marker.customOverlay = customOverlay; // 참조 저장
+                        
+                        // ▼▼▼ [수정] 이벤트 리스너를 marker 대신 pathPointOverlay에 연결 ▼▼▼
+                        kakao.maps.event.addListener(pathPointOverlay, 'mouseover', () => customOverlay.setMap(map));
+                        kakao.maps.event.addListener(pathPointOverlay, 'mouseout', () => customOverlay.setMap(null));
 
-                        kakao.maps.event.addListener(marker, 'mouseover', () => customOverlay.setMap(map));
-                        kakao.maps.event.addListener(marker, 'mouseout', () => customOverlay.setMap(null));
+                        pathPointOverlay.customOverlay = customOverlay; // 참조 저장 (clearMapAndInfo에서는 사용 안 함)
+                        markers.push(pathPointOverlay); // 마커 배열에 [pathPointOverlay] 추가
+                        // ▲▲▲ [수정 완료] ▲▲▲
 
-                        markers.push(marker); // 마커 배열에 추가
                         bounds.extend(latlng);
                     });
 
@@ -1114,4 +1139,5 @@
     </script>
 </body>
 </html>
+
 
