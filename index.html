@@ -560,16 +560,19 @@
                      return;
                  }
                 try {
+                    // ▼▼▼ [수정됨] 마커 크기 및 오프셋 변경 ▼▼▼
                     selectedMarkerImage = new kakao.maps.MarkerImage(
                         'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
-                        new kakao.maps.Size(32, 35),
-                        { offset: new kakao.maps.Point(16, 35) }
+                        new kakao.maps.Size(48, 52), // 크기 증가
+                        { offset: new kakao.maps.Point(24, 52) } // 오프셋 조정
                     );
                     pathMarkerImage = new kakao.maps.MarkerImage(
                         'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_dot.png', // 경로 마커 파란색 점
-                        new kakao.maps.Size(12, 12),
-                        { offset: new kakao.maps.Point(6, 6) }
+                        new kakao.maps.Size(20, 20), // 크기 증가
+                        { offset: new kakao.maps.Point(10, 10) } // 오프셋 조정
                     );
+                    // ▲▲▲ [수정 완료] ▲▲▲
+
                     const container = document.getElementById('map');
                     if (!container) {
                         console.error("Map container not found!");
@@ -812,10 +815,10 @@
                         });
 
                         const overlayContent = `<div class="custom-overlay-info">
-                                                    <strong>${formattedTime}</strong><br>
-                                                    위도: ${parsedLat.toFixed(6)}<br>
-                                                    경도: ${parsedLng.toFixed(6)}
-                                                </div>`;
+                                                     <strong>${formattedTime}</strong><br>
+                                                     위도: ${parsedLat.toFixed(6)}<br>
+                                                     경도: ${parsedLng.toFixed(6)}
+                                                 </div>`;
 
                         const customOverlay = new kakao.maps.CustomOverlay({
                             content: overlayContent,
@@ -1049,19 +1052,19 @@
                  console.log("Setting up initial event listeners...");
                  if (addLoginFormListener) {
                      if (loginForm) {
-                        loginForm.addEventListener('submit', handleLoginSubmit);
-                        console.log("Login form listener added initially.");
+                         loginForm.addEventListener('submit', handleLoginSubmit);
+                         console.log("Login form listener added initially.");
                      } else {
-                        console.error("loginForm element not found initially.");
+                         console.error("loginForm element not found initially.");
                      }
                  }
                  // Add modal close button listener
                  const modalCloseButton = document.querySelector('#custom-modal button');
                  if (modalCloseButton) {
-                    modalCloseButton.addEventListener('click', () => {
+                     modalCloseButton.addEventListener('click', () => {
                          const modal = document.getElementById('custom-modal');
                          if(modal) modal.style.display = 'none';
-                    });
+                     });
                  }
                  // userInfo 닫기 버튼 리스너도 여기서 추가
                  if (closeUserInfoButton) {
@@ -1081,25 +1084,25 @@
                  const currentNewBtn = document.getElementById('newBtn'); // 새 버튼 가져오기
 
                  if (currentLogoutBtn) {
-                    currentLogoutBtn.addEventListener('click', handleLogout);
-                    console.log("Logout button listener added.");
+                     currentLogoutBtn.addEventListener('click', handleLogout);
+                     console.log("Logout button listener added.");
                  } else {
-                     console.error("logoutBtn element not found after login.");
+                      console.error("logoutBtn element not found after login.");
                  }
 
                  if (currentLogBtn) {
-                    currentLogBtn.addEventListener('click', handleLogView);
-                    console.log("Log button listener added.");
+                     currentLogBtn.addEventListener('click', handleLogView);
+                     console.log("Log button listener added.");
                  } else {
-                     console.error("logBtn element not found after login.");
+                      console.error("logBtn element not found after login.");
                  }
 
                  // 새 버튼 리스너 추가
                  if (currentNewBtn) {
-                     currentNewBtn.addEventListener('click', handleNewButtonClick);
-                     console.log("New button listener added.");
+                      currentNewBtn.addEventListener('click', handleNewButtonClick);
+                      console.log("New button listener added.");
                  } else {
-                     console.error("newBtn element not found after login.");
+                      console.error("newBtn element not found after login.");
                  }
                  // backToMapBtn listener is added dynamically in handleLogView
             }
@@ -1111,4 +1114,3 @@
     </script>
 </body>
 </html>
-
