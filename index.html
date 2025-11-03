@@ -642,9 +642,9 @@
                 // 마커 및 오버레이 제거
                 markers.forEach(marker => {
                     if (marker.customOverlay) {
-                        marker.customOverlay.setMap(null);
+                        marker.customOverlay.setMap(null); // 연결된 정보창 제거
                     }
-                    marker.setMap(null);
+                    marker.setMap(null); // 마커(CustomOverlay) 제거
                 });
                 markers = []; // 배열 초기화
 
@@ -657,6 +657,11 @@
                 // 선택된 로그 마커 제거
                 if (selectedLogMarker) {
                     selectedLogMarker.setMap(null);
+                    // ▼▼▼ [추가] infoBox도 함께 제거 ▼▼▼
+                    if (selectedLogMarker.infoBox) {
+                        selectedLogMarker.infoBox.setMap(null);
+                    }
+                    // ▲▲▲ [추가 완료] ▲▲▲
                     selectedLogMarker = null;
                 }
 
@@ -692,17 +697,54 @@
                 }
                 if (selectedLogMarker) {
                     selectedLogMarker.setMap(null);
+                    // ▼▼▼ [추가] 이전 마커의 infoBox도 제거 ▼▼▼
+                    if (selectedLogMarker.infoBox) {
+                        selectedLogMarker.infoBox.setMap(null);
+                    }
+                    // ▲▲▲ [추가 완료] ▲▲▲
                 }
                 const position = new kakao.maps.LatLng(lat, lng);
 
-                // ▼▼▼ [수정] Marker 대신 CustomOverlay 사용 ▼▼▼
-                const content = '<img src="https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png" class="custom-marker-pin">';
+                // ▼▼▼ [수정] Marker 대신 CustomOverlay 사용 (정보창 포함) ▼▼▼
+
+                // 1. 정보창 오버레이 생성 (초기에는 숨김)
+                const overlayContent = `<div class="custom-overlay-info">
+                                  <strong>로그 위치</strong><br>
+                                  위도: ${lat.toFixed(6)}<br>
+                                  경도: ${lng.toFixed(6)}
+                                </div>`;
+        
+                const infoOverlay = new kakao.maps.CustomOverlay({
+                    content: overlayContent,
+                    position: position,
+                    xAnchor: 0.5, yAnchor: 2.5, // 핀 이미지 위쪽으로 위치 조정
+                    zIndex: 3
+                });
+
+                // 2. 마커로 사용할 DOM 요소(이미지) 생성
+                const markerImg = document.createElement('img');
+                markerImg.src = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png';
+                markerImg.className = 'custom-marker-pin';
+                markerImg.style.cursor = 'pointer'; // 마우스 커서 변경
+
+                // 3. 이미지에 이벤트 리스너 추가
+                markerImg.addEventListener('mouseover', () => {
+                    infoOverlay.setMap(map);
+                });
+                markerImg.addEventListener('mouseout', () => {
+                    infoOverlay.setMap(null);
+                });
                 
+                // 4. 마커 CustomOverlay 생성 (이미지 DOM 요소 사용)
                 selectedLogMarker = new kakao.maps.CustomOverlay({
                     position: position,
-                    content: content,
+                    content: markerImg, // 문자열 대신 HTML 요소를 전달
                     yAnchor: 1 // 핀의 하단(y)을 좌표에 맞춤
                 });
+
+                // 5. 정보창 참조 저장 (clearMapAndInfo에서 사용)
+                selectedLogMarker.infoBox = infoOverlay; 
+                
                 selectedLogMarker.setMap(map);
                 // ▲▲▲ [수정 완료] ▲▲▲
 
@@ -748,7 +790,7 @@
                         snapshot.forEach(childSnapshot => {
                              // [디버깅] 개별 로그 데이터 확인
                              console.log("Processing log:", childSnapshot.key, childSnapshot.val());
-                             logs.push(childSnapshot.val());
+                            logs.push(childSnapshot.val());
                         });
                         console.log(`Total logs fetched for ${userId}:`, logs.length); // 디버그 로그 추가
                         logs.reverse().forEach((pos, index) => { // 최신순으로 표시
@@ -810,20 +852,9 @@
                         const latlng = new kakao.maps.LatLng(parsedLat, parsedLng);
                         path.push(latlng);
 
-                        // ▼▼▼ [수정] Marker 대신 CustomOverlay 사용 (파란 점) ▼▼▼
-                        const dotContent = '<img src="https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_dot.png" class="custom-marker-dot">';
-                        
-                        const pathPointOverlay = new kakao.maps.CustomOverlay({
-                            position: latlng,
-                            content: dotContent,
-                            xAnchor: 0.5, // 점의 x축 중앙
-                            yAnchor: 0.5  // 점의 y축 중앙
-                        });
-                        pathPointOverlay.setMap(map);
-                        // ▲▲▲ [수정 완료] ▲▲▲
+                        // ▼▼▼ [수정] Marker 대신 CustomOverlay 사용 (파란 점) + 이벤트 리스너 수정 ▼▼▼
 
-
-                        // 오버레이 내용 생성
+                        // 1. 정보창 오버레이 생성 (초기에는 숨김)
                         const timestamp = pos.timestamp || Date.now();
                          // timestamp가 숫자 형태가 아닐 경우 Date 객체 생성 시도
                         let dateObj = new Date(timestamp);
@@ -837,23 +868,43 @@
                         });
 
                         const overlayContent = `<div class="custom-overlay-info">
-                                                     <strong>${formattedTime}</strong><br>
-                                                     위도: ${parsedLat.toFixed(6)}<br>
-                                                     경도: ${parsedLng.toFixed(6)}
-                                                 </div>`;
+                                                  <strong>${formattedTime}</strong><br>
+                                                  위도: ${parsedLat.toFixed(6)}<br>
+                                                  경도: ${parsedLng.toFixed(6)}
+                                                </div>`;
 
-                        const customOverlay = new kakao.maps.CustomOverlay({
+                        const infoOverlay = new kakao.maps.CustomOverlay({
                             content: overlayContent,
                             position: latlng,
                             xAnchor: 0.5, yAnchor: 2.5, zIndex: 3
                         });
                         
-                        // ▼▼▼ [수정] 이벤트 리스너를 marker 대신 pathPointOverlay에 연결 ▼▼▼
-                        kakao.maps.event.addListener(pathPointOverlay, 'mouseover', () => customOverlay.setMap(map));
-                        kakao.maps.event.addListener(pathPointOverlay, 'mouseout', () => customOverlay.setMap(null));
+                        // 2. 마커로 사용할 DOM 요소(이미지) 생성
+                        const dotImg = document.createElement('img');
+                        dotImg.src = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_dot.png';
+                        dotImg.className = 'custom-marker-dot';
+                        dotImg.style.cursor = 'pointer';
 
-                        pathPointOverlay.customOverlay = customOverlay; // 참조 저장 (clearMapAndInfo에서는 사용 안 함)
-                        markers.push(pathPointOverlay); // 마커 배열에 [pathPointOverlay] 추가
+                        // 3. 이미지에 이벤트 리스너 추가
+                        dotImg.addEventListener('mouseover', () => {
+                            infoOverlay.setMap(map);
+                        });
+                        dotImg.addEventListener('mouseout', () => {
+                            infoOverlay.setMap(null);
+                        });
+
+                        // 4. 마커 CustomOverlay 생성
+                        const pathPointOverlay = new kakao.maps.CustomOverlay({
+                            position: latlng,
+                            content: dotImg, // HTML 요소를 content로 전달
+                            xAnchor: 0.5, // 점의 x축 중앙
+                            yAnchor: 0.5  // 점의 y축 중앙
+                        });
+                        pathPointOverlay.setMap(map);
+                        
+                        // 5. 정보창 참조 저장 (clearMapAndInfo에서 사용)
+                        pathPointOverlay.customOverlay = infoOverlay; 
+                        markers.push(pathPointOverlay); // 마커 배열에 추가
                         // ▲▲▲ [수정 완료] ▲▲▲
 
                         bounds.extend(latlng);
@@ -1011,7 +1062,7 @@
                              customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
                         }
                          // 로그인 성공 후 메인 UI 리스너 설정
-                        setupMainUIEventListeners();
+                         setupMainUIEventListeners();
                     } else {
                         console.log("Login failed.");
                         customAlert('아이디 또는 비밀번호가 일치하지 않습니다.');
@@ -1057,7 +1108,7 @@
 
             function handleBackToMap() {
                  console.log("Back to map clicked.");
-                  // 필요한 요소들을 이 함수 내에서 다시 찾음
+                 // 필요한 요소들을 이 함수 내에서 다시 찾음
                  const currentMainContent = document.getElementById('main-content');
                  const currentLogContent = document.getElementById('log-content');
                  if (currentLogContent) currentLogContent.classList.add('hidden');
@@ -1109,15 +1160,15 @@
                  const currentNewBtn = document.getElementById('newBtn'); // 새 버튼 가져오기
 
                  if (currentLogoutBtn) {
-                     currentLogoutBtn.addEventListener('click', handleLogout);
-                     console.log("Logout button listener added.");
+                      currentLogoutBtn.addEventListener('click', handleLogout);
+                      console.log("Logout button listener added.");
                  } else {
                       console.error("logoutBtn element not found after login.");
                  }
 
                  if (currentLogBtn) {
-                     currentLogBtn.addEventListener('click', handleLogView);
-                     console.log("Log button listener added.");
+                      currentLogBtn.addEventListener('click', handleLogView);
+                      console.log("Log button listener added.");
                  } else {
                       console.error("logBtn element not found after login.");
                  }
@@ -1139,5 +1190,4 @@
     </script>
 </body>
 </html>
-
 
