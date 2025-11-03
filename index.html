@@ -560,16 +560,28 @@
                      return;
                  }
                 try {
-                    // ▼▼▼ [수정됨] 마커 크기 및 오프셋 변경 ▼▼▼
+                    // ▼▼▼ [수정됨] 마커 크기 및 오프셋 변경 (스프라이트 이미지 사용) ▼▼▼
+
+                    // 1. selectedMarkerImage (빨간색 핀) - 2x 스프라이트에서 큰 핀(58x84) 사용
                     selectedMarkerImage = new kakao.maps.MarkerImage(
-                        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
-                        new kakao.maps.Size(48, 52), // 크기 증가
-                        { offset: new kakao.maps.Point(24, 52) } // 오프셋 조정
+                        'http://t1.daumcdn.net/mapjsapi/images/2x/marker.png',
+                        new kakao.maps.Size(58, 84), // 2x 스프라이트의 마커 1개 크기
+                        {
+                            offset: new kakao.maps.Point(29, 84), // 마커 하단 중앙
+                            spriteOrigin: new kakao.maps.Point(58 * 9, 0), // 10번째 마커 (빨간색)
+                            spriteSize: new kakao.maps.Size(580, 168) // 2x10 전체 스프라이트 크기
+                        }
                     );
+
+                    // 2. pathMarkerImage (파란색 점) - 2x 스프라이트에서 큰 점(24x24) 사용
                     pathMarkerImage = new kakao.maps.MarkerImage(
-                        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_dot.png', // 경로 마커 파란색 점
-                        new kakao.maps.Size(20, 20), // 크기 증가
-                        { offset: new kakao.maps.Point(10, 10) } // 오프셋 조정
+                        'http://t1.daumcdn.net/mapjsapi/images/2x/marker.png',
+                        new kakao.maps.Size(24, 24), // 2x 스프라이트의 점 크기
+                        {
+                            offset: new kakao.maps.Point(12, 12), // 점 중앙
+                            spriteOrigin: new kakao.maps.Point(58 * 8, 84), // 9번째 점 (파란색)
+                            spriteSize: new kakao.maps.Size(580, 168) // 2x10 전체 스프라이트 크기
+                        }
                     );
                     // ▲▲▲ [수정 완료] ▲▲▲
 
@@ -1114,3 +1126,4 @@
     </script>
 </body>
 </html>
+
