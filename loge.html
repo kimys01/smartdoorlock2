@@ -245,7 +245,7 @@
              deleteButton = document.getElementById('delete-button');
              backBtn = document.getElementById('backBtn'); // 뒤로가기 버튼
 
-            // --- 이벤트 리스너 연결 ---
+             // --- 이벤트 리스너 연결 ---
              if (addFieldButton) addFieldButton.addEventListener('click', addField);
              if (setButton) setButton.addEventListener('click', handleSet);
              if (updateButton) updateButton.addEventListener('click', handleUpdate);
@@ -257,15 +257,15 @@
              // 모달 닫기 버튼 리스너
              const modalCloseButton = document.querySelector('#custom-modal button');
              if (modalCloseButton) {
-                modalCloseButton.addEventListener('click', () => {
+                 modalCloseButton.addEventListener('click', () => {
                      const modal = document.getElementById('custom-modal');
                      if(modal) modal.style.display = 'none';
-                });
+                 });
              }
 
              // Firebase 초기화 및 리스너 설정 호출
              initializeFirebase();
-        });
+         });
 
 
         // 커스텀 alert 함수
@@ -296,6 +296,38 @@
         };
 
         let db;
+
+        // --- [추가] 민감한 데이터 마스킹 함수 ---
+        /**
+         * 재귀적으로 객체를 순회하며 'admin_pass' 또는 'password' 키를 숨깁니다.
+         * 원본 객체를 수정하지 않고 새 객체를 반환합니다.
+         * @param {object} obj - 마스킹할 객체
+         * @returns {object} - 마스킹된 새 객체
+         */
+        function censorSensitiveData(obj) {
+            if (typeof obj !== 'object' || obj === null) {
+                return obj;
+            }
+
+            // 배열인 경우, 각 항목에 대해 재귀적으로 처리
+            if (Array.isArray(obj)) {
+                return obj.map(item => censorSensitiveData(item));
+            }
+
+            // 객체인 경우, 키를 순회하며 복제
+            const newObj = {};
+            for (const key in obj) {
+                if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                    // ▼▼▼ [수정] admin_pass 또는 password 키가 아닌 경우에만 새 객체에 추가 ▼▼▼
+                    if (key !== 'admin_pass' && key !== 'password') {
+                        newObj[key] = censorSensitiveData(obj[key]); // 재귀 호출
+                    }
+                    // 'admin_pass' 또는 'password' 키는 newObj에 추가하지 않아 숨김 처리됩니다.
+                    // ▲▲▲ [수정 완료] ▲▲▲
+                }
+            }
+            return newObj;
+        }
 
         // --- Firebase 초기화 및 리스너 설정 함수 ---
         function initializeFirebase() {
@@ -333,7 +365,12 @@
                 if (data) {
                     if (emptyState) emptyState.classList.add('hidden');
                     if (jsonViewerContainer) jsonViewerContainer.classList.remove('hidden');
-                    if (jsonViewer) jsonViewer.textContent = JSON.stringify(data, null, 2);
+                    
+                    // ▼▼▼ [수정] 데이터를 화면에 표시하기 전 마스킹 함수 호출 ▼▼▼
+                    const censoredData = censorSensitiveData(data);
+                    if (jsonViewer) jsonViewer.textContent = JSON.stringify(censoredData, null, 2);
+                    // ▲▲▲ [수정 완료] ▲▲▲
+
                 } else {
                     if (jsonViewerContainer) jsonViewerContainer.classList.add('hidden');
                     if (emptyState) emptyState.classList.remove('hidden');
@@ -383,7 +420,7 @@
              });
 
              if (fieldsContainer) fieldsContainer.appendChild(fieldRow);
-        }
+         }
 
         /**
          * 입력 필드의 값을 타입에 맞게 변환하는 함수
@@ -425,10 +462,10 @@
                     return;
                 }
                  if (/[.#$\[\]]/.test(key)) {
-                     customAlert(`키 "${key}"에 유효하지 않은 문자(. # $ [ ])가 포함되어 있습니다.`, true);
-                     keyInput.focus();
-                     hasError = true;
-                     return;
+                      customAlert(`키 "${key}"에 유효하지 않은 문자(. # $ [ ])가 포함되어 있습니다.`, true);
+                      keyInput.focus();
+                      hasError = true;
+                      return;
                  }
 
                 const value = getValueFromInput(valueInput.value);
