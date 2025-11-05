@@ -973,15 +973,27 @@
                             const entry = document.createElement('div');
                             entry.className = 'full-log-entry';
                             
-                            // [수정] log.timestamp가 "2025-10-27 11:16:45" 같은 문자열이라고 가정합니다.
-                            const timestampStr = log.timestamp || '시간 없음';
-                            
-                            // [추가] 이미지에서 확인된 method와 status 필드를 가져옵니다.
+                            // ▼▼▼ [수정] "수정 전" 코드의 날짜/시간 변환 로직을 다시 적용 ▼▼▼
+                            let formattedTime;
+                            if (typeof log.timestamp === 'number') {
+                                // 숫자인 경우 (예: 1678886400000)
+                                formattedTime = new Date(log.timestamp).toLocaleString('ko-KR');
+                            } else if (typeof log.timestamp === 'string') {
+                                // 문자열인 경우 (예: "2025-10-27 11:16:45")
+                                // " "를 "T"로 바꿔야 Safari 등에서 호환됩니다.
+                                formattedTime = new Date(log.timestamp.replace(" ", "T")).toLocaleString('ko-KR');
+                            } else {
+                                // 타임스탬프가 없는 경우
+                                formattedTime = '시간 없음';
+                            }
+                            // ▲▲▲ [수정 완료] ▲▲▲
+
+                            // [유지] 이미지에서 확인된 method와 status 필드를 가져옵니다.
                             const methodStr = log.method || '방식 모름';
                             const statusStr = log.status || '상태 모름';
 
-                            // [수정] innerHTML 내용을 이미지 형식에 맞게 변경합니다.
-                            entry.innerHTML = `<strong>[${timestampStr}]</strong><br>
+                            // [수정] innerHTML 내용을 합친 형식으로 변경합니다.
+                            entry.innerHTML = `<strong>[${formattedTime}]</strong><br>
                                                <span style="margin-left: 10px;">방식: ${methodStr}</span><br>
                                                <span style="margin-left: 10px;">상태: ${statusStr}</span>`; 
                             doorLockLogContainer.appendChild(entry);
