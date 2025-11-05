@@ -344,6 +344,7 @@
             padding: 8px 5px;
             font-size: 14px;
             border-bottom: 1px solid #f0f0f0;
+            line-height: 1.6; /* [추가] 줄 간격을 보기 좋게 조정 */
         }
 
         /* 커스텀 모달 스타일 */
@@ -972,19 +973,17 @@
                             const entry = document.createElement('div');
                             entry.className = 'full-log-entry';
                             
-                            let dateObj;
-                            if (typeof log.timestamp === 'number') {
-                                dateObj = new Date(log.timestamp);
-                            } else if (typeof log.timestamp === 'string') {
-                                dateObj = new Date(log.timestamp.replace(" ", "T")); 
-                            } else {
-                                dateObj = new Date(); 
-                            }
-                            if (isNaN(dateObj.getTime())) { dateObj = new Date(); }
-                            const formattedTime = dateObj.toLocaleString('ko-KR');
+                            // [수정] log.timestamp가 "2025-10-27 11:16:45" 같은 문자열이라고 가정합니다.
+                            const timestampStr = log.timestamp || '시간 없음';
                             
-                            // (필드명 'action'이라고 가정)
-                            entry.innerHTML = `<strong>[${formattedTime}]</strong>: ${log.action || 'N/A'}`; 
+                            // [추가] 이미지에서 확인된 method와 status 필드를 가져옵니다.
+                            const methodStr = log.method || '방식 모름';
+                            const statusStr = log.status || '상태 모름';
+
+                            // [수정] innerHTML 내용을 이미지 형식에 맞게 변경합니다.
+                            entry.innerHTML = `<strong>[${timestampStr}]</strong><br>
+                                               <span style="margin-left: 10px;">방식: ${methodStr}</span><br>
+                                               <span style="margin-left: 10px;">상태: ${statusStr}</span>`; 
                             doorLockLogContainer.appendChild(entry);
                         });
                     }
