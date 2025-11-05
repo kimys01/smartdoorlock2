@@ -561,7 +561,7 @@
                 if (mainContent) mainContent.classList.remove('hidden'); // 메인 화면 보이기
                 if (header) header.classList.remove('hidden'); // 헤더 보이기
                 if (body) {
-                    body.style.background = '#f8f9fa'; // [수정] 배경 흰색 -> 연한 회색
+                    /* body.style.background = '#f8f9fa'; */ // [수정] 이 줄을 삭제하여 CSS의 그라데이션 배경 유지
                     body.style.overflow = 'auto'; // 스크롤 허용
                 }
                 // 메인 UI 리스너 설정 및 지도 로드
@@ -1163,7 +1163,7 @@
                         if (mainContent) mainContent.classList.remove('hidden');
                         if (header) header.classList.remove('hidden');
                         if (body) {
-                            body.style.background = '#f8f9fa'; // [수정] 배경 흰색 -> 연한 회색
+                            /* body.style.background = '#f8f9fa'; */ // [수정] 이 줄을 삭제하여 CSS의 그라데이션 배경 유지
                             body.style.overflow = 'auto'; // Allow scrolling
                         }
 
