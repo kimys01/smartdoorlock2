@@ -724,10 +724,10 @@
 
                 // 정보창 오버레이
                 const overlayContent = `<div class="custom-overlay-info">
-                                         <strong>로그 위치</strong><br>
-                                         위도: ${lat.toFixed(6)}<br>
-                                         경도: ${lng.toFixed(6)}
-                                        </div>`;
+                                        <strong>로그 위치</strong><br>
+                                        위도: ${lat.toFixed(6)}<br>
+                                        경도: ${lng.toFixed(6)}
+                                       </div>`;
         
                 const infoOverlay = new kakao.maps.CustomOverlay({
                     content: overlayContent,
@@ -834,9 +834,9 @@
 
                 // ▼▼▼ [경로 복구] 2. 최근 위치 로드 경로 (원래 코드로 복구) ▼▼▼
                 const recentLocationsQuery = database.ref('users/' + userId + '/location_logs')
-                                                 .limitToLast(10);
+                                                    .limitToLast(10);
                 // ▲▲▲ [경로 복구 완료] 2. 최근 위치 로드 경로 ▲▲▲
-                                                 
+                                                    
                 recentLocationsQuery.once('value').then((snapshot) => {
                     const mapUserElem = document.getElementById('mapUser');
                     if (!mapUserElem) return;
@@ -948,12 +948,13 @@
                 doorLockLogContainer.innerHTML = '<em>로딩 중...</em>';
                 appLogContainer.innerHTML = '<em>로딩 중...</em>';
 
-                // ▼▼▼ [수정] 1. 도어락 로그 (필드명 'user_id' 기준으로 쿼리) ▼▼▼
-                // 이미지에서 확인된 'user_id' 필드를 기준으로 데이터를 필터링합니다.
+                // ▼▼▼ [수정됨] 1. 도어락 로그 (새 경로 적용) ▼▼▼
+                // 안드로이드 코드(FirebaseHelper)에서 확인된 'doorlock_logs' 최상위 경로를 사용합니다.
                 const doorLockRef = database.ref('doorlock_logs') 
-                                        .orderByChild('user_id') // 'Key' 대신 'user_id' 필드
-                                        .equalTo(userId);       // userId와 값이 같은 것
-                // ▲▲▲ [수정 완료] 1. 도어락 로그 ▲▲▲
+                                            .orderByKey()
+                                            .startAt(userId)
+                                            .endAt(userId + "\uf8ff");
+                // ▲▲▲ [수정 완료] 1. 도어락 로그 (새 경로 적용) ▲▲▲
                 
                 console.log("요청하는 DB 경로 (도어락):", doorLockRef.toString());
 
@@ -978,7 +979,7 @@
                                 // 숫자인 경우 (예: 1678886400000)
                                 formattedTime = new Date(log.timestamp).toLocaleString('ko-KR');
                             } else if (typeof log.timestamp === 'string') {
-                                // 문자열인 경우 (예: "2025-10-28 11:27:44")
+                                // 문자열인 경우 (예: "2025-10-27 11:16:45")
                                 // " "를 "T"로 바꿔야 Safari 등에서 호환됩니다.
                                 formattedTime = new Date(log.timestamp.replace(" ", "T")).toLocaleString('ko-KR');
                             } else {
@@ -993,8 +994,8 @@
 
                             // [수정] innerHTML 내용을 합친 형식으로 변경합니다.
                             entry.innerHTML = `<strong>[${formattedTime}]</strong><br>
-                                                 <span style="margin-left: 10px;">방식: ${methodStr}</span><br>
-                                                 <span style="margin-left: 10px;">상태: ${statusStr}</span>`; 
+                                               <span style="margin-left: 10px;">방식: ${methodStr}</span><br>
+                                               <span style="margin-left: 10px;">상태: ${statusStr}</span>`; 
                             doorLockLogContainer.appendChild(entry);
                         });
                     }
@@ -1041,7 +1042,7 @@
                         });
                     }
                 }).catch(error => {
-                     console.error("앱 로그 로드 중 Firebase 오류:", error);
+                    console.error("앱 로그 로드 중 Firebase 오류:", error);
                     appLogContainer.innerHTML = '<span style="color: red;">앱 로그 로드 실패</span>';
                 });
             }
@@ -1143,7 +1144,7 @@
                  const currentLogContent = document.getElementById('log-content');
                  if (currentLogContent) currentLogContent.classList.add('hidden');
                  if (currentMainContent) currentMainContent.classList.remove('hidden');
-             }
+            }
 
              // --- 새 버튼 핸들러 ---
              function handleNewButtonClick() {
@@ -1211,3 +1212,4 @@
     </script>
 </body>
 </html>
+
