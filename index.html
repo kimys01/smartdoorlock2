@@ -192,11 +192,20 @@
             flex-grow: 1; /* 남은 공간 차지 */
             min-height: 0; /* flex 자식 요소의 overflow-y 스크롤 가능하게 */
         }
+        
+        /* --- [수정] --- */
         #userInfo {
-            overflow-y: auto;
+            /* overflow-y: auto; */ /* [수정] 스크롤 제거 */
+            overflow: hidden; /* [수정] 내부 스크롤을 위해 hidden 처리 */
             height: 45%; /* 높이 유지 */
             flex-shrink: 0; /* 크기 줄어들지 않도록 */
+            
+            /* [추가] Flexbox 레이아웃 적용 */
+            display: flex;
+            flex-direction: column;
         }
+        /* --- [수정 완료] --- */
+
         #mapArea { flex-grow: 1; /* 남은 공간 차지 */ }
 
         .user {
@@ -205,6 +214,34 @@
             cursor: pointer;
         }
         .user:hover { background-color: #f0f0f0; }
+
+        /* --- [추가] 사용자 정보 영역 Flexbox 레이아웃 --- */
+        #infoArea {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1; /* userInfo에서 헤더를 제외한 나머지 공간 채우기 */
+            overflow: hidden; /* 이 영역 자체는 스크롤되지 않음 */
+            min-height: 0; /* flex 자식의 스크롤을 위한 중요 속성 */
+        }
+
+        /* JS로 추가되는 p와 h3가 줄어들지 않도록 설정 */
+        #infoArea p, #infoArea h3 {
+            flex-shrink: 0;
+        }
+
+        #infoArea h3 {
+            margin-top: 10px; /* 제목 위 여백 */
+            margin-bottom: 5px; /* 목록 위 여백 */
+        }
+
+        /* JS로 추가되는 로그 목록 div */
+        .log-list {
+            flex-grow: 1; /* infoArea에서 p, h3를 제외한 나머지 공간 채우기 */
+            overflow-y: auto; /* <-- ★★★ 스크롤을 이 요소에만 적용 */
+            min-height: 0; /* flex 자식의 스크롤을 위한 중요 속성 */
+        }
+        /* --- [추가 완료] --- */
+
         .info-header {
             display: flex;
             justify-content: space-between;
@@ -709,11 +746,11 @@
 
                 // 1. 정보창 오버레이 생성 (초기에는 숨김)
                 const overlayContent = `<div class="custom-overlay-info">
-                                        <strong>로그 위치</strong><br>
-                                        위도: ${lat.toFixed(6)}<br>
-                                        경도: ${lng.toFixed(6)}
-                                       </div>`;
-        
+                                            <strong>로그 위치</strong><br>
+                                            위도: ${lat.toFixed(6)}<br>
+                                            경도: ${lng.toFixed(6)}
+                                           </div>`;
+                
                 const infoOverlay = new kakao.maps.CustomOverlay({
                     content: overlayContent,
                     position: position,
@@ -868,10 +905,10 @@
                         });
 
                         const overlayContent = `<div class="custom-overlay-info">
-                                                 <strong>${formattedTime}</strong><br>
-                                                 위도: ${parsedLat.toFixed(6)}<br>
-                                                 경도: ${parsedLng.toFixed(6)}
-                                                </div>`;
+                                                    <strong>${formattedTime}</strong><br>
+                                                    위도: ${parsedLat.toFixed(6)}<br>
+                                                    경도: ${parsedLng.toFixed(6)}
+                                                   </div>`;
 
                         const infoOverlay = new kakao.maps.CustomOverlay({
                             content: overlayContent,
