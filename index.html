@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Capstone Project</title>
 
-    <!-- Google Fonts Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 
-    <!-- 통합 CSS -->
     <style>
         * {
             margin: 0;
@@ -20,11 +18,10 @@
         }
 
         body {
-            /* display, justify-content, align-items removed to allow normal flow */
             height: 100vh;
             background: linear-gradient(135deg, #71b7e6, #9b59b6);
             padding-top: 70px; /* 헤더 높이만큼 여백 확보 */
-            /* overflow: hidden; /* 로그인 후 스크롤 필요 */
+            transition: background-color 0.3s ease;
         }
 
         .hidden { display: none !important; }
@@ -109,6 +106,7 @@
             color: #71b7e6;
         }
 
+        /* --- [코드 1 스타일 적용] --- */
         /* 메인 콘텐츠 스타일 */
         #header {
             position: fixed;
@@ -142,9 +140,9 @@
         }
 
         /* 각 버튼 색상 */
-        #logoutBtn { background-color: #dc3545; } /* 로그아웃: 빨간색 */
-        #logBtn { background-color: #007bff; } /* 로그 보기: 파란색 */
-        #newBtn { background-color: #ffc107; } /* 새 버튼: 주황색 */
+        #logoutBtn { background-color: #dc3545; }
+        #logBtn { background-color: #007bff; }
+        #newBtn { background-color: #ffc107; }
 
 
         /* 각 버튼 hover 효과 */
@@ -161,52 +159,59 @@
         }
 
         #main-content {
-            display: flex; /* 로그인 성공 후 flex로 변경됨 */
+            display: flex;
             padding: 10px;
             gap: 20px;
             width: 100%;
             height: calc(100vh - 70px); /* 헤더 높이 제외 */
-            background-color: #fff;
-            overflow: hidden; /* 자식 요소들이 넘치지 않도록 */
+            /* [코드 1] background-color: #fff; 제거 -> body 배경색 따름 */
+            overflow: hidden;
         }
 
 
         #sidebar {
             display: flex;
             flex-direction: column;
-            width: 12.5%; /* 가로 폭 유지 */
+            width: 12.5%;
             gap: 15px;
             height: 100%;
         }
 
+        /* [코드 1] box-shadow 스타일 적용 */
         #userList, #userInfo, #mapArea {
-            border: 1px solid #ccc;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             padding: 15px;
             border-radius: 8px;
             background-color: #fff;
-            box-sizing: border-box; /* 패딩 포함 크기 계산 */
+            box-sizing: border-box;
         }
 
+        /* [코드 1] flex-grow 4 (40%) 적용 */
         #userList {
             overflow-y: auto;
-            flex-grow: 1; /* 남은 공간 차지 */
-            min-height: 0; /* flex 자식 요소의 overflow-y 스크롤 가능하게 */
+            flex-grow: 4; 
+            flex-basis: 0;
+            min-height: 0;
         }
         
-        /* --- [CSS 수정] --- */
+        /* [코드 1] flex-grow 6 (60%) 적용 */
         #userInfo {
-            /* overflow-y: auto; */ /* [수정] 스크롤 제거 */
-            overflow: hidden; /* [수정] 내부 스크롤을 위해 hidden 처리 */
-            height: 45%; /* 높이 유지 */
-            flex-shrink: 0; /* 크기 줄어들지 않도록 */
-            
-            /* [추가] Flexbox 레이아웃 적용 */
+            overflow: hidden; 
+            flex-grow: 6; 
+            flex-basis: 0;
+            min-height: 0;
+            flex-shrink: 0;
             display: flex;
             flex-direction: column;
         }
-        /* --- [CSS 수정 완료] --- */
 
-        #mapArea { flex-grow: 1; /* 남은 공간 차지 */ }
+        /* [코드 1] flex 레이아웃 적용 */
+        #mapArea { 
+            flex-grow: 1; 
+            display: flex;
+            flex-direction: column;
+        }
 
         .user {
             padding: 10px;
@@ -215,57 +220,90 @@
         }
         .user:hover { background-color: #f0f0f0; }
 
-        /* --- [CSS 추가] 사용자 정보 영역 Flexbox 레이아웃 --- */
+        /* 사용자 정보 영역 Flexbox 레이아웃 */
         #infoArea {
             display: flex;
             flex-direction: column;
-            flex-grow: 1; /* userInfo에서 헤더를 제외한 나머지 공간 채우기 */
-            overflow: hidden; /* 이 영역 자체는 스크롤되지 않음 */
-            min-height: 0; /* flex 자식의 스크롤을 위한 중요 속성 */
+            flex-grow: 1;
+            overflow: hidden;
+            min-height: 0;
         }
 
-        /* JS로 추가되는 p와 h3가 줄어들지 않도록 설정 */
         #infoArea p, #infoArea h3 {
             flex-shrink: 0;
         }
 
         #infoArea h3 {
-            margin-top: 10px; /* 제목 위 여백 */
-            margin-bottom: 5px; /* 목록 위 여백 */
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-weight: 600; /* [코드 1] 스타일 */
+            color: #555; /* [코드 1] 스타일 */
         }
 
         /* JS로 추가되는 로그 목록 div */
         .log-list {
-            flex-grow: 1; /* infoArea에서 p, h3를 제외한 나머지 공간 채우기 */
-            overflow-y: auto; /* <-- ★★★ 스크롤을 이 요소에만 적용 */
-            min-height: 0; /* flex 자식의 스크롤을 위한 중요 속성 */
+            flex-grow: 1;
+            overflow-y: auto; 
+            min-height: 0;
         }
-        /* --- [CSS 추가 완료] --- */
+
+        /* [코드 1] 각 창의 제목 스타일 */
+        #userList h2, #mapArea h2 {
+            font-weight: 600;
+            color: #9b59b6; /* Gradient purple */
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 10px; 
+            flex-shrink: 0;
+        }
 
         .info-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px; /* 헤더 아래 여백 */
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee; /* [코드 1] 스타일 */
+            padding-bottom: 10px; /* [코드 1] 스타일 */
         }
-         /* 닫기 버튼 스타일 */
-         #closeUserInfoBtn {
-             background: none;
-             border: none;
-             font-size: 1.2rem;
-             cursor: pointer;
-             color: #6c757d; /* 회색 */
-             padding: 0 5px; /* 클릭 영역 확보 */
-         }
-         #closeUserInfoBtn:hover {
-             color: #dc3545; /* 빨간색 */
-         }
 
+        /* [코드 1] 정보창 제목 스타일 */
+        .info-header h2 {
+            font-weight: 600;
+            color: #9b59b6; /* Gradient purple */
+            margin: 0;
+        }
+        /* --- [코드 1 스타일 적용 완료] --- */
+
+
+        /* 닫기 버튼 스타일 */
+        #closeUserInfoBtn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #6c757d;
+            padding: 0 5px;
+        }
+        #closeUserInfoBtn:hover {
+            color: #dc3545;
+        }
+
+        /* [코드 1] flex-grow로 지도 높이 조절 */
         #map {
             width: 100%;
-            height: calc(100% - 40px); /* 제목 높이 등을 고려 */
             margin-top: 10px;
+            flex-grow: 1; /* 남은 공간을 모두 채움 */
+            min-height: 0; /* flex 아이템이 올바르게 축소되도록 함 */
         }
+        
+        /* [코드 1] 지도 아래 설명 텍스트 */
+        #mapArea p#mapUser {
+            font-size: 14px;
+            color: #777;
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+
         .log-entry {
             padding: 8px;
             font-size: 14px;
@@ -283,15 +321,15 @@
             width: 100%;
             height: calc(100vh - 70px);
             padding: 20px;
-            display: flex; /* 로드 시 flex로 변경됨 */
+            display: flex; 
             flex-direction: column;
             gap: 20px;
             background-color: #fff;
-            position: fixed; /* 메인 컨텐츠 위에 덮어씌우도록 */
-            top: 70px; /* 헤더 아래 */
+            position: fixed;
+            top: 70px;
             left: 0;
-            z-index: 600; /* 메인 컨텐츠보다 위에 오도록 */
-            box-sizing: border-box; /* 패딩 포함 크기 계산 */
+            z-index: 600;
+            box-sizing: border-box;
         }
 
         .log-header {
@@ -317,7 +355,7 @@
             display: flex;
             gap: 20px;
             flex-grow: 1;
-            overflow: hidden; /* 내부 스크롤은 각 섹션에서 처리 */
+            overflow: hidden;
         }
 
         .log-section {
@@ -337,14 +375,14 @@
 
         .log-section .log-entries {
             overflow-y: auto;
-            flex-grow: 1; /* 남은 공간 차지하며 스크롤 */
+            flex-grow: 1;
         }
 
         .full-log-entry {
             padding: 8px 5px;
             font-size: 14px;
             border-bottom: 1px solid #f0f0f0;
-            line-height: 1.6; /* [추가] 줄 간격을 보기 좋게 조정 */
+            line-height: 1.6; /* [코드 2] 스타일 유지 */
         }
 
         /* 커스텀 모달 스타일 */
@@ -352,7 +390,7 @@
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.5);
-            display: none; /* 초기 상태 숨김 */
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 2000;
@@ -379,7 +417,7 @@
             font-size: 16px;
         }
 
-        /* --- 커스텀 오버레이(정보창) 스타일 --- */
+        /* 커스텀 오버레이(정보창) 스타일 */
         .custom-overlay-info {
             padding: 5px 10px;
             font-size: 12px;
@@ -390,23 +428,22 @@
             border: 1px solid #ccc;
         }
 
-        /* --- [추가] 커스텀 마커 오버레이 스타일 --- */
+        /* 커스텀 마커 오버레이 스타일 */
         .custom-marker-pin {
-            width: 32px; /* 원본 이미지 크기 */
-            height: 35px; /* 원본 이미지 크기 */
-            transform: scale(1.5); /* 50% 크게 */
-            transform-origin: bottom center; /* 핀의 하단을 기준으로 확대 */
+            width: 32px;
+            height: 35px;
+            transform: scale(1.5);
+            transform-origin: bottom center;
         }
 
         .custom-marker-dot {
-            width: 12px; /* 원본 이미지 크기 */
-            height: 12px; /* 원본 이미지 크기 */
-            transform: scale(1.8); /* 80% 크게 */
-            transform-origin: center center; /* 점의 중심을 기준으로 확대 */
+            width: 12px;
+            height: 12px;
+            transform: scale(1.8);
+            transform-origin: center center;
         }
     </style>
 
-    <!-- 스크립트 로드 순서 변경: SDK들을 <head>로 이동 -->
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -414,16 +451,15 @@
 </head>
 <body>
 
-    <!-- 로그인 컨테이너 -->
     <div id="login-container">
-        <h2>Admin Login</h2> <!-- 제목 변경 -->
+        <h2>Admin Login</h2>
         <form id="login-form">
             <div class="input-group">
-                <label for="username">관리자 아이디</label> <!-- 라벨 변경 -->
+                <label for="username">관리자 아이디</label>
                 <input type="text" id="username" placeholder="아이디를 입력하세요" required>
             </div>
             <div class="input-group">
-                <label for="password">관리자 비밀번호</label> <!-- 라벨 변경 -->
+                <label for="password">관리자 비밀번호</label>
                 <input type="password" id="password" placeholder="비밀번호를 입력하세요" required>
             </div>
             <button type="submit">로그인</button>
@@ -433,17 +469,15 @@
         </div>
     </div>
 
-    <!-- 헤더 (처음에는 숨김) -->
     <div id="header" class="hidden">
         <h1>캡스톤 프로젝트</h1>
         <div class="button-group">
             <button id="logBtn" disabled>로그 보기</button>
-            <button id="newBtn">DB 편집</button> <!-- 버튼 이름 변경 -->
+            <button id="newBtn">DB 편집</button>
             <button id="logoutBtn">로그아웃</button>
         </div>
     </div>
 
-    <!-- 메인 콘텐츠 (처음에는 숨김) -->
     <div id="main-content" class="hidden">
         <div id="sidebar">
             <div id="userInfo" class="hidden">
@@ -460,11 +494,10 @@
         <div id="mapArea">
             <h2>위치 추적</h2>
             <p id="mapUser">사용자를 선택하면 이동 경로가 표시됩니다.</p>
-            <div id="map" style="height: 80vh;"></div> <!-- 지도 높이 조정 -->
+            <div id="map"></div> 
         </div>
     </div>
 
-    <!-- 로그 콘텐츠 (처음에는 숨김) -->
     <div id="log-content" class="hidden">
         <div class="log-header">
             <button id="backToMapBtn">&larr; 지도로 돌아가기</button>
@@ -482,19 +515,17 @@
         </div>
     </div>
 
-    <!-- 커스텀 모달 (Alert 대체) -->
     <div id="custom-modal" class="hidden">
         <div class="modal-content">
             <p id="modal-message"></p>
-            <button onclick="document.getElementById('custom-modal').style.display='none';">확인</button> <!-- 클릭 시 숨기도록 수정 -->
+            <button onclick="document.getElementById('custom-modal').style.display='none';">확인</button>
         </div>
     </div>
 
-    <!-- 메인 스크립트: <body> 맨 끝으로 이동 -->
     <script>
         // --- DOMContentLoaded 사용 ---
         document.addEventListener('DOMContentLoaded', () => {
-             console.log("DOMContentLoaded event fired."); // 디버그 로그
+            console.log("DOMContentLoaded event fired.");
 
             // --- 필수 DOM 요소 가져오기 ---
             const loginContainer = document.getElementById('login-container');
@@ -515,23 +546,24 @@
                 if (mainContent) mainContent.classList.remove('hidden');
                 if (header) header.classList.remove('hidden');
                 if (body) {
-                    body.style.background = '#fff';
+                    // [코드 1 스타일 적용] body.style.background = '#fff'; 주석 처리
+                    /* body.style.background = '#fff'; */
                     body.style.overflow = 'auto';
                 }
                 setupMainUIEventListeners();
                 if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
-                     kakao.maps.load(initMap);
+                    kakao.maps.load(initMap);
                 } else {
-                     console.error("Kakao Maps SDK not ready on initial load (logged in state).");
-                     setTimeout(() => {
-                         if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
-                             kakao.maps.load(initMap);
-                         } else {
-                             customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
-                         }
-                     }, 1000);
+                    console.error("Kakao Maps SDK not ready on initial load (logged in state).");
+                    setTimeout(() => {
+                        if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
+                            kakao.maps.load(initMap);
+                        } else {
+                            customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
+                        }
+                    }, 1000);
                 }
-                 setupInitialEventListeners(false);
+                setupInitialEventListeners(false);
             } else {
                 // 로그인 상태가 아닐 경우
                 console.log("Not logged in. Showing login screen.");
@@ -539,13 +571,9 @@
                 if (mainContent) mainContent.classList.add('hidden');
                 if (header) header.classList.add('hidden');
                 if (logContent) logContent.classList.add('hidden');
-                 if (body) body.style.overflow = 'hidden';
-                 setupInitialEventListeners(true);
+                if (body) body.style.overflow = 'hidden';
+                setupInitialEventListeners(true);
             }
-
-
-            // --- 필수 요소 없으면 중단 ---
-
 
             // 커스텀 alert 함수
             function customAlert(message) {
@@ -583,7 +611,7 @@
             // --- Firebase 앱 초기화 ---
             try {
                 if (typeof firebase === 'undefined' || !firebase.initializeApp) {
-                     throw new Error("Firebase SDK not loaded correctly.");
+                    throw new Error("Firebase SDK not loaded correctly.");
                 }
                 firebase.initializeApp(firebaseConfig);
                 database = firebase.database();
@@ -596,35 +624,35 @@
 
             // --- 지도 초기화 함수 ---
             function initMap() {
-                 console.log("initMap called.");
-                 if (typeof kakao === 'undefined' || !kakao.maps || !kakao.maps.Map) {
-                     console.error("Kakao Maps SDK not loaded correctly.");
-                     customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
-                     return;
-                 }
-                 try {
-                     const container = document.getElementById('map');
-                     if (!container) {
-                         console.error("Map container not found!");
-                         customAlert("지도 표시 영역을 찾을 수 없습니다.");
-                         return;
-                     }
-                     map = new kakao.maps.Map(container, {
-                         center: new kakao.maps.LatLng(37.566826, 126.9786567),
-                         level: 4
-                     });
-                     map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
-                     map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
-                     loadUserList();
-                 } catch (mapError) {
-                     console.error("지도 초기화 오류:", mapError);
-                     customAlert("지도 초기화 중 오류가 발생했습니다.");
-                 }
+                console.log("initMap called.");
+                if (typeof kakao === 'undefined' || !kakao.maps || !kakao.maps.Map) {
+                    console.error("Kakao Maps SDK not loaded correctly.");
+                    customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
+                    return;
+                }
+                try {
+                    const container = document.getElementById('map');
+                    if (!container) {
+                        console.error("Map container not found!");
+                        customAlert("지도 표시 영역을 찾을 수 없습니다.");
+                        return;
+                    }
+                    map = new kakao.maps.Map(container, {
+                        center: new kakao.maps.LatLng(37.566826, 126.9786567),
+                        level: 4
+                    });
+                    map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
+                    map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
+                    loadUserList();
+                } catch (mapError) {
+                    console.error("지도 초기화 오류:", mapError);
+                    customAlert("지도 초기화 중 오류가 발생했습니다.");
+                }
             }
 
             // --- 사용자 목록 로드 함수 ---
             function loadUserList() {
-                 console.log("loadUserList called.");
+                console.log("loadUserList called.");
                 if (!database) {
                     console.error("Firebase Database not initialized (loadUserList)");
                     return;
@@ -636,7 +664,6 @@
                     return;
                 }
                 
-                // [경로 유지] 'users' 경로는 안드로이드 앱에서 별도로 관리한다는 가정
                 const usersRef = database.ref('users');
 
                 usersRef.once('value').then((snapshot) => {
@@ -644,7 +671,7 @@
                     existingUsers.forEach(el => el.remove());
 
                     if (!snapshot.exists()) {
-                         console.warn("Firebase 'users' 경로에 사용자 목록 데이터가 없습니다.");
+                        console.warn("Firebase 'users' 경로에 사용자 목록 데이터가 없습니다.");
                     }
 
                     snapshot.forEach((childSnapshot) => {
@@ -656,7 +683,7 @@
                         userElement.addEventListener('click', () => selectUser(userId));
                         h2.insertAdjacentElement('afterend', userElement);
                     });
-                     console.log("User list loaded.");
+                    console.log("User list loaded.");
                 }).catch(error => {
                     console.error("User list load error:", error);
                     customAlert("사용자 목록을 불러오는 데 실패했습니다.");
@@ -665,7 +692,7 @@
 
             // --- 지도 및 정보 초기화 함수 ---
             function clearMapAndInfo() {
-                 console.log("clearMapAndInfo called.");
+                console.log("clearMapAndInfo called.");
                 markers.forEach(marker => {
                     if (marker.customOverlay) {
                         marker.customOverlay.setMap(null);
@@ -704,7 +731,7 @@
 
             // --- 위치 마커 표시 함수 ---
             function showLocationOnMap(lat, lng) {
-                 console.log("showLocationOnMap called:", { lat, lng });
+                console.log("showLocationOnMap called:", { lat, lng });
                 if (!map) {
                     customAlert("지도가 아직 로드되지 않았습니다.");
                     return;
@@ -724,11 +751,11 @@
 
                 // 정보창 오버레이
                 const overlayContent = `<div class="custom-overlay-info">
-                                         <strong>로그 위치</strong><br>
-                                         위도: ${lat.toFixed(6)}<br>
-                                         경도: ${lng.toFixed(6)}
-                                        </div>`;
-        
+                                            <strong>로그 위치</strong><br>
+                                            위도: ${lat.toFixed(6)}<br>
+                                            경도: ${lng.toFixed(6)}
+                                           </div>`;
+            
                 const infoOverlay = new kakao.maps.CustomOverlay({
                     content: overlayContent,
                     position: position,
@@ -757,9 +784,9 @@
                 map.panTo(position);
             }
 
-            // --- [경로 복구됨] 사용자 선택 함수 ---
+            // --- [코드 2 로직 유지] 사용자 선택 함수 ---
             function selectUser(userId) {
-                 console.log("selectUser called with userId:", userId);
+                console.log("selectUser called with userId:", userId);
                 clearMapAndInfo();
                 selectedUserId = userId;
                 const logBtnElem = document.getElementById('logBtn');
@@ -781,11 +808,8 @@
                     return;
                 }
 
-                // ▼▼▼ [경로 복구] 1. 위치 기록 로드 경로 (원래 코드로 복구) ▼▼▼
-                // "수정 전까지 잘 됐다"는 정보를 바탕으로,
-                // 'location_logs'는 'users/{userId}/location_logs' 경로를 사용하도록 복구합니다.
+                // [코드 2 로직] 'users/{userId}/location_logs' 경로 사용
                 const locationsRef = database.ref('users/' + userId + '/location_logs');
-                // ▲▲▲ [경로 복구 완료] 1. 위치 기록 로드 경로 ▲▲▲
 
                 locationsRef.once('value').then((snapshot) => {
                     const logListDiv = infoArea.querySelector('.log-list');
@@ -803,14 +827,14 @@
                         
                         logs.reverse().forEach((pos) => { // 최신순
                             if (!pos || typeof pos !== 'object' || pos.latitude == null || pos.longitude == null) {
-                                 console.warn("Skipping invalid log entry (location):", pos); 
-                                 return;
+                                console.warn("Skipping invalid log entry (location):", pos); 
+                                return;
                             }
                             const parsedLat = parseFloat(pos.latitude);
                             const parsedLng = parseFloat(pos.longitude);
                             if (isNaN(parsedLat) || isNaN(parsedLng)) {
-                                 console.warn("Skipping log with invalid coordinates (location):", pos); 
-                                 return;
+                                console.warn("Skipping log with invalid coordinates (location):", pos); 
+                                return;
                             }
 
                             const logEntry = document.createElement('div');
@@ -830,13 +854,12 @@
                 }).catch(error => {
                     console.error("Error loading location logs:", error);
                     customAlert("위치 기록 로드 중 오류 발생");
-                 });
+                });
 
-                // ▼▼▼ [경로 복구] 2. 최근 위치 로드 경로 (원래 코드로 복구) ▼▼▼
+                // [코드 2 로직] 최근 10개 위치 로드
                 const recentLocationsQuery = database.ref('users/' + userId + '/location_logs')
-                                                 .limitToLast(10);
-                // ▲▲▲ [경로 복구 완료] 2. 최근 위치 로드 경로 ▲▲▲
-                                                 
+                                                       .limitToLast(10);
+                                                       
                 recentLocationsQuery.once('value').then((snapshot) => {
                     const mapUserElem = document.getElementById('mapUser');
                     if (!mapUserElem) return;
@@ -852,7 +875,7 @@
 
                     snapshot.forEach((snap) => {
                         const pos = snap.val();
-                         if (!pos || typeof pos !== 'object' || pos.latitude == null || pos.longitude == null) return; 
+                        if (!pos || typeof pos !== 'object' || pos.latitude == null || pos.longitude == null) return; 
 
                         const parsedLat = parseFloat(pos.latitude);
                         const parsedLng = parseFloat(pos.longitude);
@@ -872,10 +895,10 @@
                         });
 
                         const overlayContent = `<div class="custom-overlay-info">
-                                                 <strong>${formattedTime}</strong><br>
-                                                 위도: ${parsedLat.toFixed(6)}<br>
-                                                 경도: ${parsedLng.toFixed(6)}
-                                                </div>`;
+                                                   <strong>${formattedTime}</strong><br>
+                                                   위도: ${parsedLat.toFixed(6)}<br>
+                                                   경도: ${parsedLng.toFixed(6)}
+                                                  </div>`;
 
                         const infoOverlay = new kakao.maps.CustomOverlay({
                             content: overlayContent,
@@ -916,18 +939,18 @@
                         map.setBounds(bounds);
                     }
                 }).catch(error => {
-                     console.error("Error loading recent locations:", error);
-                     customAlert("최근 위치 로드 중 오류 발생");
-                 });
+                    console.error("Error loading recent locations:", error);
+                    customAlert("최근 위치 로드 중 오류 발생");
+                });
             }
 
             // --- 사용자 정보 닫기 함수 ---
             function closeUserInfo() {
-                 console.log("closeUserInfo called.");
-                 clearMapAndInfo();
+                console.log("closeUserInfo called.");
+                clearMapAndInfo();
             }
 
-            // --- [수정됨] 모든 로그 로드 함수 (하이브리드 경로) ---
+            // --- [코드 2 기능 유지] 모든 로그 로드 함수 (새로운 쿼리 방식) ---
             function loadAllLogs(userId) {
                 console.log("loadAllLogs 함수 실행됨. UserID:", userId);
 
@@ -948,12 +971,12 @@
                 doorLockLogContainer.innerHTML = '<em>로딩 중...</em>';
                 appLogContainer.innerHTML = '<em>로딩 중...</em>';
 
-                // ▼▼▼ [수정] 1. 도어락 로그 (필드명 'user_id' 기준으로 쿼리) ▼▼▼
-                // 이미지에서 확인된 'user_id' 필드를 기준으로 데이터를 필터링합니다.
+                // ▼▼▼ [코드 2 기능] 도어락 로그 (새 쿼리 경로 적용) ▼▼▼
                 const doorLockRef = database.ref('doorlock_logs') 
-                                        .orderByChild('user_id') // 'Key' 대신 'user_id' 필드
-                                        .equalTo(userId);       // userId와 값이 같은 것
-                // ▲▲▲ [수정 완료] 1. 도어락 로그 ▲▲▲
+                                            .orderByKey()
+                                            .startAt(userId)
+                                            .endAt(userId + "\uf8ff");
+                // ▲▲▲ [코드 2 기능] ▲▲▲
                 
                 console.log("요청하는 DB 경로 (도어락):", doorLockRef.toString());
 
@@ -972,29 +995,23 @@
                             const entry = document.createElement('div');
                             entry.className = 'full-log-entry';
                             
-                            // ▼▼▼ [수정] "수정 전" 코드의 날짜/시간 변환 로직을 다시 적용 ▼▼▼
+                            // [코드 2 기능] 날짜/시간 변환 로직
                             let formattedTime;
                             if (typeof log.timestamp === 'number') {
-                                // 숫자인 경우 (예: 1678886400000)
                                 formattedTime = new Date(log.timestamp).toLocaleString('ko-KR');
                             } else if (typeof log.timestamp === 'string') {
-                                // 문자열인 경우 (예: "2025-10-28 11:27:44")
-                                // " "를 "T"로 바꿔야 Safari 등에서 호환됩니다.
                                 formattedTime = new Date(log.timestamp.replace(" ", "T")).toLocaleString('ko-KR');
                             } else {
-                                // 타임스탬프가 없는 경우
                                 formattedTime = '시간 없음';
                             }
-                            // ▲▲▲ [수정 완료] ▲▲▲
-
-                            // [유지] 이미지에서 확인된 method와 status 필드를 가져옵니다.
+                            
+                            // [코드 2 기능] method와 status 필드 사용
                             const methodStr = log.method || '방식 모름';
                             const statusStr = log.status || '상태 모름';
 
-                            // [수정] innerHTML 내용을 합친 형식으로 변경합니다.
                             entry.innerHTML = `<strong>[${formattedTime}]</strong><br>
-                                                 <span style="margin-left: 10px;">방식: ${methodStr}</span><br>
-                                                 <span style="margin-left: 10px;">상태: ${statusStr}</span>`; 
+                                               <span style="margin-left: 10px;">방식: ${methodStr}</span><br>
+                                               <span style="margin-left: 10px;">상태: ${statusStr}</span>`; 
                             doorLockLogContainer.appendChild(entry);
                         });
                     }
@@ -1003,15 +1020,14 @@
                     doorLockLogContainer.innerHTML = '<span style="color: red;">도어락 로그 로드 실패</span>';
                 });
 
-                // ▼▼▼ [경로 복구] 2. 앱 로그 (원래 코드로 복구) ▼▼▼
-                // 'location_logs'와 마찬가지로, 'app_logs'도 원래 경로로 복구합니다.
+                // ▼▼▼ [코드 2 기능] 앱 로그 ('users/{userId}/app_logs' 경로) ▼▼▼
                 const appLogRef = database.ref('users/' + userId + '/app_logs');
-                // ▲▲▲ [경로 복구 완료] 2. 앱 로그 ▲▲▲
+                // ▲▲▲ [코드 2 기능] ▲▲▲
 
                 console.log("요청하는 DB 경로 (앱):", appLogRef.toString());
 
                 appLogRef.once('value').then((snapshot) => {
-                     console.log("Firebase로부터 받은 앱 응답 (snapshot.exists()):", snapshot.exists());
+                    console.log("Firebase로부터 받은 앱 응답 (snapshot.exists()):", snapshot.exists());
                     appLogContainer.innerHTML = '';
                     if (!snapshot.exists()) {
                         appLogContainer.innerHTML = '표시할 앱 로그가 없습니다.';
@@ -1035,13 +1051,12 @@
                             if (isNaN(dateObj.getTime())) { dateObj = new Date(); }
                             const formattedTime = dateObj.toLocaleString('ko-KR');
 
-                            // (필드명 'event'라고 가정)
                             entry.innerHTML = `<strong>[${formattedTime}]</strong>: ${log.event || 'N/A'}`;
                             appLogContainer.appendChild(entry);
                         });
                     }
                 }).catch(error => {
-                     console.error("앱 로그 로드 중 Firebase 오류:", error);
+                    console.error("앱 로그 로드 중 Firebase 오류:", error);
                     appLogContainer.innerHTML = '<span style="color: red;">앱 로그 로드 실패</span>';
                 });
             }
@@ -1086,7 +1101,8 @@
                         if (mainContent) mainContent.classList.remove('hidden');
                         if (header) header.classList.remove('hidden');
                         if (body) {
-                            body.style.background = '#fff';
+                            // [코드 1 스타일 적용] body.style.background = '#fff'; 주석 처리
+                            /* body.style.background = '#fff'; */
                             body.style.overflow = 'auto';
                         }
 
@@ -1094,18 +1110,18 @@
                             console.log("Loading Kakao Maps...");
                             kakao.maps.load(initMap);
                         } else {
-                             console.error("Kakao Maps SDK not loaded or load function unavailable.");
-                             customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
+                            console.error("Kakao Maps SDK not loaded or load function unavailable.");
+                            customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
                         }
-                         setupMainUIEventListeners();
+                        setupMainUIEventListeners();
                     } else {
                         console.log("Login failed.");
                         customAlert('아이디 또는 비밀번호가 일치하지 않습니다.');
                     }
                 }).catch(error => {
-                     console.error("Login processing error:", error);
-                     customAlert("로그인 중 오류가 발생했습니다.");
-                 });
+                    console.error("Login processing error:", error);
+                    customAlert("로그인 중 오류가 발생했습니다.");
+                });
             }
 
             function handleLogout() {
@@ -1131,38 +1147,38 @@
                     } else {
                         console.error("backToMapBtn element not found in handleLogView!");
                     }
-                    loadAllLogs(selectedUserId);
+                    loadAllLogs(selectedUserId); // [코드 2 기능]
                 } else {
                     customAlert("먼저 사용자 목록에서 사용자를 선택해주세요.");
                 }
             }
 
             function handleBackToMap() {
-                 console.log("Back to map clicked.");
-                 const currentMainContent = document.getElementById('main-content');
-                 const currentLogContent = document.getElementById('log-content');
-                 if (currentLogContent) currentLogContent.classList.add('hidden');
-                 if (currentMainContent) currentMainContent.classList.remove('hidden');
-             }
+                console.log("Back to map clicked.");
+                const currentMainContent = document.getElementById('main-content');
+                const currentLogContent = document.getElementById('log-content');
+                if (currentLogContent) currentLogContent.classList.add('hidden');
+                if (currentMainContent) currentMainContent.classList.remove('hidden');
+            }
 
-             // --- 새 버튼 핸들러 ---
-             function handleNewButtonClick() {
-                 console.log("New button clicked.");
-                 window.location.href = 'loge.html';
-             }
+            // --- 새 버튼 핸들러 ---
+            function handleNewButtonClick() {
+                console.log("New button clicked.");
+                window.location.href = 'loge.html';
+            }
 
 
             // --- 초기 이벤트 리스너 설정 ---
             function setupInitialEventListeners(addLoginFormListener = true) {
-                 console.log("Setting up initial event listeners...");
-                 if (addLoginFormListener) {
-                     if (loginForm) {
-                         loginForm.addEventListener('submit', handleLoginSubmit);
-                         console.log("Login form listener added initially.");
-                     } else {
-                         console.error("loginForm element not found initially.");
-                     }
-                 }
+                console.log("Setting up initial event listeners...");
+                if (addLoginFormListener) {
+                    if (loginForm) {
+                        loginForm.addEventListener('submit', handleLoginSubmit);
+                        console.log("Login form listener added initially.");
+                    } else {
+                        console.error("loginForm element not found initially.");
+                    }
+                }
                 const modalCloseButton = document.querySelector('#custom-modal button');
                 if (modalCloseButton) {
                     modalCloseButton.addEventListener('click', () => {
@@ -1171,40 +1187,40 @@
                     });
                 }
                 if (closeUserInfoButton) {
-                     closeUserInfoButton.addEventListener('click', closeUserInfo);
-                     console.log("Close User Info button listener added initially.");
+                    closeUserInfoButton.addEventListener('click', closeUserInfo);
+                    console.log("Close User Info button listener added initially.");
                 } else {
-                     console.error("closeUserInfoButton not found initially.");
+                    console.error("closeUserInfoButton not found initially.");
                 }
             }
 
-             // --- 로그인 성공/세션 유지 시 호출되는 리스너 설정 ---
+            // --- 로그인 성공/세션 유지 시 호출되는 리스너 설정 ---
             function setupMainUIEventListeners() {
-                 console.log("Setting up main UI event listeners after login.");
-                 const currentLogoutBtn = document.getElementById('logoutBtn');
-                 const currentLogBtn = document.getElementById('logBtn');
-                 const currentNewBtn = document.getElementById('newBtn');
+                console.log("Setting up main UI event listeners after login.");
+                const currentLogoutBtn = document.getElementById('logoutBtn');
+                const currentLogBtn = document.getElementById('logBtn');
+                const currentNewBtn = document.getElementById('newBtn');
 
-                 if (currentLogoutBtn) {
-                     currentLogoutBtn.addEventListener('click', handleLogout);
-                     console.log("Logout button listener added.");
-                 } else {
-                     console.error("logoutBtn element not found after login.");
-                 }
+                if (currentLogoutBtn) {
+                    currentLogoutBtn.addEventListener('click', handleLogout);
+                    console.log("Logout button listener added.");
+                } else {
+                    console.error("logoutBtn element not found after login.");
+                }
 
-                 if (currentLogBtn) {
-                     currentLogBtn.addEventListener('click', handleLogView);
-                     console.log("Log button listener added.");
-                 } else {
-                     console.error("logBtn element not found after login.");
-                 }
+                if (currentLogBtn) {
+                    currentLogBtn.addEventListener('click', handleLogView);
+                    console.log("Log button listener added.");
+                } else {
+                    console.error("logBtn element not found after login.");
+                }
 
-                 if (currentNewBtn) {
-                     currentNewBtn.addEventListener('click', handleNewButtonClick);
-                     console.log("New button listener added.");
-                 } else {
-                     console.error("newBtn element not found after login.");
-                 }
+                if (currentNewBtn) {
+                    currentNewBtn.addEventListener('click', handleNewButtonClick);
+                    console.log("New button listener added.");
+                } else {
+                    console.error("newBtn element not found after login.");
+                }
             }
 
         }); // DOMContentLoaded 닫기
