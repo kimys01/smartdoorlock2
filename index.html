@@ -973,7 +973,7 @@
                  // userInfo 요소 자체는 숨길 필요 없음 (clearMapAndInfo에서 처리됨)
             }
 
-            // --- [수정됨] 모든 로그 로드 함수 (디버깅 로그 추가) ---
+            // --- [수정] 모든 로그 로드 함수 (이미지 기반 경로 수정) ---
             function loadAllLogs(userId) {
                 // ▼▼▼ [추적 1] 함수가 올바른 ID로 실행되었는지 확인
                 console.log("loadAllLogs 함수 실행됨. UserID:", userId);
@@ -996,45 +996,32 @@
                 doorLockLogContainer.innerHTML = '<em>로딩 중...</em>';
                 appLogContainer.innerHTML = '<em>로딩 중...</em>';
 
-                // ▼▼▼ [수정] 도어락 로그 로드 경로 및 쿼리 변경 (모든 로그를 여기서 가져옴) ▼▼▼
-                const allLogsRef = database.ref('doorlock_logs') // 'users/' 경로 제거
-                                    .orderByKey()
-                                    .startAt(userId)
-                                    .endAt(userId + "\uf8ff");
-                // ▲▲▲ [수정 완료] ▲▲▲
+                // ▼▼▼ [수정] 1. 도어락 로그 (이미지 경로: door_lock_logs/{userId}) ▼▼▼
+                const doorLockRef = database.ref('door_lock_logs/' + userId);
                 
                 // ▼▼▼ [추적 3] Firebase에 요청하는 정확한 경로 확인
-                console.log("요청하는 DB 경로 (모든 로그):", allLogsRef.toString());
+                console.log("요청하는 DB 경로 (도어락):", doorLockRef.toString());
 
-                allLogsRef.once('value').then((snapshot) => {
+                doorLockRef.once('value').then((snapshot) => {
                     // ▼▼▼ [추적 4] Firebase가 응답한 실제 데이터(값) 확인
-                    console.log("Firebase로부터 받은 모든 로그 응답 (snapshot.val()):", snapshot.val());
+                    console.log("Firebase로부터 받은 도어락 응답 (snapshot.val()):", snapshot.val());
                     // ▼▼▼ [추적 5] 데이터가 존재하는지 여부 확인
-                    console.log("모든 로그 Snapshot 존재 여부 (snapshot.exists()):", snapshot.exists());
+                    console.log("도어락 Snapshot 존재 여부 (snapshot.exists()):", snapshot.exists());
 
                     doorLockLogContainer.innerHTML = ''; // 초기화
-                    appLogContainer.innerHTML = ''; // [추가] 앱 로그 컨테이너도 초기화
 
                     if (!snapshot.exists()) {
                         doorLockLogContainer.innerHTML = '표시할 도어락 로그가 없습니다.';
-                        appLogContainer.innerHTML = '표시할 앱 로그가 없습니다.'; // [추가]
                     } else {
-                        const doorLogs = []; // [수정]
-                        const appLogs = []; // [수정]
+                        const doorLogs = []; 
 
                         snapshot.forEach(child => {
                             const log = child.val();
-                            console.log("처리 중인 개별 로그 항목:", log); // [추적 6]
-
-                            // [수정] 로그 타입을 확인하여 분리
-                            if (log.event) { // 앱 로그 (event 필드 기준)
-                                appLogs.push(log);
-                            } else if (log.method || log.status) { // 도어락 로그 (method 또는 status 필드 기준)
-                                doorLogs.push(log);
-                            }
+                            console.log("처리 중인 개별 로그 항목 (도어락):", log); // [추적 6]
+                            doorLogs.push(log); // 도어락 로그로 추가
                         });
 
-                        // [수정] 도어락 로그 렌더링
+                        // 도어락 로그 렌더링
                         if (doorLogs.length === 0) {
                             doorLockLogContainer.innerHTML = '표시할 도어락 로그가 없습니다.';
                         } else {
@@ -1061,46 +1048,60 @@
                                 doorLockLogContainer.appendChild(entry);
                             });
                         }
-
-                        // [수정] 앱 로그 렌더링
-                        if (appLogs.length === 0) {
-                            appLogContainer.innerHTML = '표시할 앱 로그가 없습니다.';
-                        } else {
-                            appLogs.reverse().forEach(log => { // 최신순
-                                const entry = document.createElement('div');
-                                entry.className = 'full-log-entry';
-                                
-                                let formattedTime;
-                                if (typeof log.timestamp === 'number') {
-                                    formattedTime = new Date(log.timestamp).toLocaleString('ko-KR');
-                                } else if (typeof log.timestamp === 'string') {
-                                    formattedTime = new Date(log.timestamp.replace(" ", "T")).toLocaleString('ko-KR');
-                                } else {
-                                    formattedTime = '시간 없음';
-                                }
-
-                                entry.innerHTML = `<strong>[${formattedTime}]</strong>: ${log.event || 'N/A'}`;
-                                appLogContainer.appendChild(entry);
-                            });
-                        }
                     }
                 }).catch(error => {
                     // ▼▼▼ [추적 7] 데이터를 가져오다 실패했는지 확인
-                    console.error("모든 로그 로드 중 Firebase 오류:", error);
+                    console.error("도어락 로그 로드 중 Firebase 오류:", error);
                     doorLockLogContainer.innerHTML = '<span style="color: red;">도어락 로그 로드 실패</span>';
-                    appLogContainer.innerHTML = '<span style="color: red;">앱 로그 로드 실패</span>'; // [추가]
                 });
 
-                // ▼▼▼ [수정] 앱 로그 개별 쿼리 삭제 ▼▼▼
-                /*
+                // ▼▼▼ [수정] 2. 앱 로그 (이미지 추론 경로: users/{userId}/app_logs) ▼▼▼
                 const appLogRef = database.ref('users/' + userId + '/app_logs');
-                console.log("요청하는 DB 경로 (앱):", appLogRef.toString());
-                appLogRef.once('value').then((snapshot) => {
-                    // ... (이하 전체 블록 삭제)
-                });
-                */
                 // ▲▲▲ [수정 완료] ▲▲▲
+
+                // ▼▼▼ [추적 3] Firebase에 요청하는 정확한 경로 확인 (앱)
+                console.log("요청하는 DB 경로 (앱):", appLogRef.toString());
+
+                appLogRef.once('value').then((snapshot) => {
+                    // ▼▼▼ [추적 4] Firebase가 응답한 실제 데이터(값) 확인 (앱)
+                    console.log("Firebase로부터 받은 앱 응답 (snapshot.val()):", snapshot.val());
+                    // ▼▼▼ [추적 5] 데이터가 존재하는지 여부 확인 (앱)
+                    console.log("앱 Snapshot 존재 여부 (snapshot.exists()):", snapshot.exists());
+
+                    appLogContainer.innerHTML = ''; // 초기화
+                    if (!snapshot.exists()) {
+                        appLogContainer.innerHTML = '표시할 앱 로그가 없습니다.';
+                    } else {
+                        const logs = [];
+                        snapshot.forEach(child => {
+                            // ▼▼▼ [추적 6] 반복문이 각 데이터를 잘 처리하는지 확인 (앱)
+                            console.log("처리 중인 개별 로그 항목 (앱):", child.val());
+                            logs.push(child.val());
+                        });
+                        logs.reverse().forEach(log => { // 최신순
+                            const entry = document.createElement('div');
+                            entry.className = 'full-log-entry';
+                            
+                            let formattedTime;
+                            if (typeof log.timestamp === 'number') {
+                                formattedTime = new Date(log.timestamp).toLocaleString('ko-KR');
+                            } else if (typeof log.timestamp === 'string') {
+                                formattedTime = new Date(log.timestamp.replace(" ", "T")).toLocaleString('ko-KR');
+                            } else {
+                                formattedTime = '시간 없음';
+                            }
+
+                            entry.innerHTML = `<strong>[${formattedTime}]</strong>: ${log.event || 'N/A'}`;
+                            appLogContainer.appendChild(entry);
+                        });
+                    }
+                }).catch(error => {
+                    // ▼▼▼ [추적 7] 데이터를 가져오다 실패했는지 확인 (앱)
+                    console.error("앱 로그 로드 중 Firebase 오류:", error);
+                    appLogContainer.innerHTML = '<span style="color: red;">앱 로그 로드 실패</span>';
+                });
             }
+            // --- [수정 완료] ---
 
 
             // --- 이벤트 핸들러 함수 정의 ---
@@ -1282,7 +1283,7 @@
 
 
             // --- sessionStorage 확인 및 초기 화면 설정 ---
-            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true'; // [수정] 상단으로 이동됨
+            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true'; 
 
             if (isLoggedIn) {
                 // 이미 로그인 상태일 경우
@@ -1324,8 +1325,7 @@
                  setupInitialEventListeners(true);
             }
 
-            // --- [수정] Firebase 앱 초기화 및 전역 변수 선언을 상단으로 이동 ---
-            // [삭제] 중복 코드 제거
+            // --- [수정] 중복된 코드 블록 삭제 ---
 
         }); // DOMContentLoaded 닫기
     </script>
