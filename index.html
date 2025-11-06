@@ -550,6 +550,42 @@
             // logoutBtn, logBtn 등은 나중에 필요할 때 찾음
             const body = document.querySelector('body');
             const closeUserInfoButton = document.getElementById('closeUserInfoBtn'); // 닫기 버튼 가져오기
+            
+            // --- [수정] Firebase 앱 초기화 및 전역 변수 선언을 상단으로 이동 ---
+            
+            // ▼▼▼ Firebase 설정 정보 ▼▼▼
+            const firebaseConfig = {
+                apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
+                authDomain: "smartdoorlock-b4636.firebaseapp.com",
+                databaseURL: "https://smartdoorlock-b4636-default-rtdb.firebaseio.com",
+                projectId: "smartdoorlock-b4636",
+                storageBucket: "smartdoorlock-b4636.firebasestorage.app",
+                messagingSenderId: "104489505270",
+                appId: "1:104489505270:web:eb385c8f9c5dfd512077d7",
+                measurementId: "G-4TH9MB9WPM"
+            };
+            
+            // 전역 변수
+            let database;
+            let map;
+            let markers = [];
+            let currentPolyline;
+            let selectedLogMarker;
+            let selectedUserId = null;
+
+            // --- Firebase 앱 초기화 ---
+            try {
+                if (typeof firebase === 'undefined' || !firebase.initializeApp) {
+                     throw new Error("Firebase SDK not loaded correctly.");
+                }
+                firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
+                console.log("Firebase initialized successfully.");
+            } catch (e) {
+                console.error("Firebase 초기화 오류:", e);
+                customAlert("Firebase 초기화에 실패했습니다. 콘솔을 확인하세요.");
+                return;
+            }
 
             // --- [수정] 함수 정의를 상단으로 이동 ---
             
@@ -960,113 +996,110 @@
                 doorLockLogContainer.innerHTML = '<em>로딩 중...</em>';
                 appLogContainer.innerHTML = '<em>로딩 중...</em>';
 
-                // ▼▼▼ [수정] 도어락 로그 로드 경로 및 쿼리 변경 ▼▼▼
-                const doorLockRef = database.ref('doorlock_logs') // 'users/' 경로 제거
+                // ▼▼▼ [수정] 도어락 로그 로드 경로 및 쿼리 변경 (모든 로그를 여기서 가져옴) ▼▼▼
+                const allLogsRef = database.ref('doorlock_logs') // 'users/' 경로 제거
                                     .orderByKey()
                                     .startAt(userId)
                                     .endAt(userId + "\uf8ff");
                 // ▲▲▲ [수정 완료] ▲▲▲
                 
                 // ▼▼▼ [추적 3] Firebase에 요청하는 정확한 경로 확인
-                console.log("요청하는 DB 경로 (도어락):", doorLockRef.toString());
+                console.log("요청하는 DB 경로 (모든 로그):", allLogsRef.toString());
 
-                doorLockRef.once('value').then((snapshot) => {
+                allLogsRef.once('value').then((snapshot) => {
                     // ▼▼▼ [추적 4] Firebase가 응답한 실제 데이터(값) 확인
-                    console.log("Firebase로부터 받은 도어락 응답 (snapshot.val()):", snapshot.val());
+                    console.log("Firebase로부터 받은 모든 로그 응답 (snapshot.val()):", snapshot.val());
                     // ▼▼▼ [추적 5] 데이터가 존재하는지 여부 확인
-                    console.log("도어락 Snapshot 존재 여부 (snapshot.exists()):", snapshot.exists());
+                    console.log("모든 로그 Snapshot 존재 여부 (snapshot.exists()):", snapshot.exists());
 
                     doorLockLogContainer.innerHTML = ''; // 초기화
+                    appLogContainer.innerHTML = ''; // [추가] 앱 로그 컨테이너도 초기화
+
                     if (!snapshot.exists()) {
                         doorLockLogContainer.innerHTML = '표시할 도어락 로그가 없습니다.';
+                        appLogContainer.innerHTML = '표시할 앱 로그가 없습니다.'; // [추가]
                     } else {
-                        const logs = [];
+                        const doorLogs = []; // [수정]
+                        const appLogs = []; // [수정]
+
                         snapshot.forEach(child => {
-                            // ▼▼▼ [추적 6] 반복문이 각 데이터를 잘 처리하는지 확인
-                            console.log("처리 중인 개별 로그 항목 (도어락):", child.val());
-                            logs.push(child.val());
-                        });
-                        logs.reverse().forEach(log => { // 최신순
-                            const entry = document.createElement('div');
-                            entry.className = 'full-log-entry';
-                            
-                            // ▼▼▼ [수정] 날짜/시간 변환 로직 보강 ▼▼▼
-                            let formattedTime;
-                            if (typeof log.timestamp === 'number') {
-                                formattedTime = new Date(log.timestamp).toLocaleString('ko-KR');
-                            } else if (typeof log.timestamp === 'string') {
-                                // "YYYY-MM-DD HH:MM:SS" 형식을 "YYYY-MM-DDTHH:MM:SS"로 변경
-                                formattedTime = new Date(log.timestamp.replace(" ", "T")).toLocaleString('ko-KR');
-                            } else {
-                                formattedTime = '시간 없음';
+                            const log = child.val();
+                            console.log("처리 중인 개별 로그 항목:", log); // [추적 6]
+
+                            // [수정] 로그 타입을 확인하여 분리
+                            if (log.event) { // 앱 로그 (event 필드 기준)
+                                appLogs.push(log);
+                            } else if (log.method || log.status) { // 도어락 로그 (method 또는 status 필드 기준)
+                                doorLogs.push(log);
                             }
-                            // ▲▲▲ [수정 완료] ▲▲▲
-
-                            // ▼▼▼ [수정] innerHTML을 method와 status로 변경 ▼▼▼
-                            const methodStr = log.method || '방식 모름';
-                            const statusStr = log.status || '상태 모름';
-
-                            entry.innerHTML = `<strong>[${formattedTime}]</strong><br>
-                                               <span style="margin-left: 10px;">방식: ${methodStr}</span><br>
-                                               <span style="margin-left: 10px;">상태: ${statusStr}</span>`;
-                            // ▲▲▲ [수정 완료] ▲▲▲
-                            
-                            doorLockLogContainer.appendChild(entry);
                         });
+
+                        // [수정] 도어락 로그 렌더링
+                        if (doorLogs.length === 0) {
+                            doorLockLogContainer.innerHTML = '표시할 도어락 로그가 없습니다.';
+                        } else {
+                            doorLogs.reverse().forEach(log => { // 최신순
+                                const entry = document.createElement('div');
+                                entry.className = 'full-log-entry';
+                                
+                                let formattedTime;
+                                if (typeof log.timestamp === 'number') {
+                                    formattedTime = new Date(log.timestamp).toLocaleString('ko-KR');
+                                } else if (typeof log.timestamp === 'string') {
+                                    formattedTime = new Date(log.timestamp.replace(" ", "T")).toLocaleString('ko-KR');
+                                } else {
+                                    formattedTime = '시간 없음';
+                                }
+
+                                const methodStr = log.method || '방식 모름';
+                                const statusStr = log.status || '상태 모름';
+
+                                entry.innerHTML = `<strong>[${formattedTime}]</strong><br>
+                                                   <span style="margin-left: 10px;">방식: ${methodStr}</span><br>
+                                                   <span style="margin-left: 10px;">상태: ${statusStr}</span>`;
+                                
+                                doorLockLogContainer.appendChild(entry);
+                            });
+                        }
+
+                        // [수정] 앱 로그 렌더링
+                        if (appLogs.length === 0) {
+                            appLogContainer.innerHTML = '표시할 앱 로그가 없습니다.';
+                        } else {
+                            appLogs.reverse().forEach(log => { // 최신순
+                                const entry = document.createElement('div');
+                                entry.className = 'full-log-entry';
+                                
+                                let formattedTime;
+                                if (typeof log.timestamp === 'number') {
+                                    formattedTime = new Date(log.timestamp).toLocaleString('ko-KR');
+                                } else if (typeof log.timestamp === 'string') {
+                                    formattedTime = new Date(log.timestamp.replace(" ", "T")).toLocaleString('ko-KR');
+                                } else {
+                                    formattedTime = '시간 없음';
+                                }
+
+                                entry.innerHTML = `<strong>[${formattedTime}]</strong>: ${log.event || 'N/A'}`;
+                                appLogContainer.appendChild(entry);
+                            });
+                        }
                     }
                 }).catch(error => {
                     // ▼▼▼ [추적 7] 데이터를 가져오다 실패했는지 확인
-                    console.error("도어락 로그 로드 중 Firebase 오류:", error);
+                    console.error("모든 로그 로드 중 Firebase 오류:", error);
                     doorLockLogContainer.innerHTML = '<span style="color: red;">도어락 로그 로드 실패</span>';
+                    appLogContainer.innerHTML = '<span style="color: red;">앱 로그 로드 실패</span>'; // [추가]
                 });
 
-                // ▼▼▼ [경로 수정] 앱 로그 로드 경로를 'users/userId/app_logs'로 복원 ▼▼▼
+                // ▼▼▼ [수정] 앱 로그 개별 쿼리 삭제 ▼▼▼
+                /*
                 const appLogRef = database.ref('users/' + userId + '/app_logs');
-                // ▲▲▲ [수정 완료] ▲▲▲
-
-                // ▼▼▼ [추적 3] Firebase에 요청하는 정확한 경로 확인 (앱)
                 console.log("요청하는 DB 경로 (앱):", appLogRef.toString());
-
                 appLogRef.once('value').then((snapshot) => {
-                    // ▼▼▼ [추적 4] Firebase가 응답한 실제 데이터(값) 확인 (앱)
-                    console.log("Firebase로부터 받은 앱 응답 (snapshot.val()):", snapshot.val());
-                    // ▼▼▼ [추적 5] 데이터가 존재하는지 여부 확인 (앱)
-                    console.log("앱 Snapshot 존재 여부 (snapshot.exists()):", snapshot.exists());
-
-                    appLogContainer.innerHTML = ''; // 초기화
-                    if (!snapshot.exists()) {
-                        appLogContainer.innerHTML = '표시할 앱 로그가 없습니다.';
-                    } else {
-                        const logs = [];
-                        snapshot.forEach(child => {
-                            // ▼▼▼ [추적 6] 반복문이 각 데이터를 잘 처리하는지 확인 (앱)
-                            console.log("처리 중인 개별 로그 항목 (앱):", child.val());
-                            logs.push(child.val());
-                        });
-                        logs.reverse().forEach(log => { // 최신순
-                            const entry = document.createElement('div');
-                            entry.className = 'full-log-entry';
-                            
-                            // ▼▼▼ [수정] 날짜/시간 변환 로직 보강 ▼▼▼
-                            let formattedTime;
-                            if (typeof log.timestamp === 'number') {
-                                formattedTime = new Date(log.timestamp).toLocaleString('ko-KR');
-                            } else if (typeof log.timestamp === 'string') {
-                                formattedTime = new Date(log.timestamp.replace(" ", "T")).toLocaleString('ko-KR');
-                            } else {
-                                formattedTime = '시간 없음';
-                            }
-                            // ▲▲▲ [수정 완료] ▲▲▲
-
-                            entry.innerHTML = `<strong>[${formattedTime}]</strong>: ${log.event || 'N/A'}`;
-                            appLogContainer.appendChild(entry);
-                        });
-                    }
-                }).catch(error => {
-                    // ▼▼▼ [추적 7] 데이터를 가져오다 실패했는지 확인 (앱)
-                    console.error("앱 로그 로드 중 Firebase 오류:", error);
-                    appLogContainer.innerHTML = '<span style="color: red;">앱 로그 로드 실패</span>';
+                    // ... (이하 전체 블록 삭제)
                 });
+                */
+                // ▲▲▲ [수정 완료] ▲▲▲
             }
 
 
@@ -1292,40 +1325,7 @@
             }
 
             // --- [수정] Firebase 앱 초기화 및 전역 변수 선언을 상단으로 이동 ---
-            
-            // ▼▼▼ Firebase 설정 정보 ▼▼▼
-            const firebaseConfig = {
-                apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
-                authDomain: "smartdoorlock-b4636.firebaseapp.com",
-                databaseURL: "https://smartdoorlock-b4636-default-rtdb.firebaseio.com",
-                projectId: "smartdoorlock-b4636",
-                storageBucket: "smartdoorlock-b4636.firebasestorage.app",
-                messagingSenderId: "104489505270",
-                appId: "1:104489505270:web:eb385c8f9c5dfd512077d7",
-                measurementId: "G-4TH9MB9WPM"
-            };
-            
-            // 전역 변수
-            let database;
-            let map;
-            let markers = [];
-            let currentPolyline;
-            let selectedLogMarker;
-            let selectedUserId = null;
-
-            // --- Firebase 앱 초기화 ---
-            try {
-                if (typeof firebase === 'undefined' || !firebase.initializeApp) {
-                     throw new Error("Firebase SDK not loaded correctly.");
-                }
-                firebase.initializeApp(firebaseConfig);
-                database = firebase.database();
-                console.log("Firebase initialized successfully.");
-            } catch (e) {
-                console.error("Firebase 초기화 오류:", e);
-                customAlert("Firebase 초기화에 실패했습니다. 콘솔을 확인하세요.");
-                return;
-            }
+            // [삭제] 중복 코드 제거
 
         }); // DOMContentLoaded 닫기
     </script>
