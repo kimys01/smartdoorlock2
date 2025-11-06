@@ -25,7 +25,6 @@
             background: linear-gradient(135deg, #71b7e6, #9b59b6);
             padding-top: 70px; /* 헤더 높이만큼 여백 확보 */
             /* overflow: hidden; /* 로그인 후 스크롤 필요 */
-            transition: background-color 0.3s ease; /* [추가] 배경색 변경 시 부드럽게 */
         }
 
         .hidden { display: none !important; }
@@ -167,7 +166,7 @@
             gap: 20px;
             width: 100%;
             height: calc(100vh - 70px); /* 헤더 높이 제외 */
-            /* background-color: #fff; */ /* [삭제] body의 배경색을 따름 */
+            background-color: #fff;
             overflow: hidden; /* 자식 요소들이 넘치지 않도록 */
         }
 
@@ -181,19 +180,16 @@
         }
 
         #userList, #userInfo, #mapArea {
-            /* border: 1px solid #ccc; */ /* [수정] 테두리 제거 */
-            border: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* [추가] 부드러운 그림자 */
+            border: 1px solid #ccc;
             padding: 15px;
             border-radius: 8px;
-            background-color: #fff; /* [유지] 흰색 배경 */
+            background-color: #fff;
             box-sizing: border-box; /* 패딩 포함 크기 계산 */
         }
 
         #userList {
             overflow-y: auto;
-            flex-grow: 4; /* 6:4 비율을 위해 4로 설정 */
-            flex-basis: 0; /* 6:4 비율을 위해 추가 */
+            flex-grow: 1; /* 남은 공간 차지 */
             min-height: 0; /* flex 자식 요소의 overflow-y 스크롤 가능하게 */
         }
         
@@ -201,24 +197,16 @@
         #userInfo {
             /* overflow-y: auto; */ /* [수정] 스크롤 제거 */
             overflow: hidden; /* [수정] 내부 스크롤을 위해 hidden 처리 */
-            /* height: 60%; */ /* [삭제] flex-grow로 대체 */
-            flex-grow: 6; /* [추가] 6:4 비율을 위해 6으로 설정 */
-            flex-basis: 0; /* [추가] 6:4 비율을 위해 추가 */
-            min-height: 0; /* [추가] 6:4 비율을 위해 추가 */
+            height: 45%; /* 높이 유지 */
             flex-shrink: 0; /* 크기 줄어들지 않도록 */
             
-            /* [유지] Flexbox 레이아웃 적용 */
+            /* [추가] Flexbox 레이아웃 적용 */
             display: flex;
             flex-direction: column;
         }
         /* --- [CSS 수정 완료] --- */
 
-        #mapArea { 
-            flex-grow: 1; /* 남은 공간 차지 */ 
-            /* [추가] Flexbox 레이아웃으로 변경 */
-            display: flex;
-            flex-direction: column;
-        }
+        #mapArea { flex-grow: 1; /* 남은 공간 차지 */ }
 
         .user {
             padding: 10px;
@@ -244,8 +232,6 @@
         #infoArea h3 {
             margin-top: 10px; /* 제목 위 여백 */
             margin-bottom: 5px; /* 목록 위 여백 */
-            font-weight: 600; /* [추가] */
-            color: #555; /* [추가] */
         }
 
         /* JS로 추가되는 로그 목록 div */
@@ -256,33 +242,12 @@
         }
         /* --- [CSS 추가 완료] --- */
 
-        /* --- [CSS 수정] 각 창의 제목 스타일 --- */
-        #userList h2, #mapArea h2 {
-            font-weight: 600;
-            color: #9b59b6; /* Gradient purple */
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-            margin-bottom: 10px; 
-            flex-shrink: 0; /* [추가] 크기가 줄어들지 않도록 설정 */
-        }
-
         .info-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px; /* 헤더 아래 여백 */
-            border-bottom: 1px solid #eee; /* [추가] */
-            padding-bottom: 10px; /* [추가] */
         }
-
-        .info-header h2 {
-            font-weight: 600;
-            color: #9b59b6; /* Gradient purple */
-            margin: 0; /* Reset margin */
-        }
-        /* --- [CSS 수정 완료] --- */
-
-
          /* 닫기 버튼 스타일 */
          #closeUserInfoBtn {
              background: none;
@@ -298,20 +263,9 @@
 
         #map {
             width: 100%;
-            /* height: calc(100% - 40px); */ /* [삭제] 고정 높이 대신 flex-grow 사용 */
+            height: calc(100% - 40px); /* 제목 높이 등을 고려 */
             margin-top: 10px;
-            flex-grow: 1; /* [추가] 남은 공간을 모두 채움 */
-            min-height: 0; /* [추가] flex 아이템이 올바르게 축소되도록 함 */
         }
-        
-        /* [추가] 지도 아래 설명 텍스트 */
-        #mapArea p#mapUser {
-            font-size: 14px;
-            color: #777;
-            margin-top: 5px;
-            flex-shrink: 0; /* [추가] 크기가 줄어들지 않도록 설정 */
-        }
-
         .log-entry {
             padding: 8px;
             font-size: 14px;
@@ -390,6 +344,7 @@
             padding: 8px 5px;
             font-size: 14px;
             border-bottom: 1px solid #f0f0f0;
+            line-height: 1.6; /* [추가] 줄 간격을 보기 좋게 조정 */
         }
 
         /* 커스텀 모달 스타일 */
@@ -505,7 +460,7 @@
         <div id="mapArea">
             <h2>위치 추적</h2>
             <p id="mapUser">사용자를 선택하면 이동 경로가 표시됩니다.</p>
-            <div id="map"></div> <!-- [수정] 인라인 style="height: 80vh;" 제거 -->
+            <div id="map" style="height: 80vh;"></div> <!-- 지도 높이 조정 -->
         </div>
     </div>
 
@@ -547,12 +502,64 @@
             const header = document.getElementById('header');
             const logContent = document.getElementById('log-content');
             const loginForm = document.getElementById('login-form');
-            // logoutBtn, logBtn 등은 나중에 필요할 때 찾음
             const body = document.querySelector('body');
-            const closeUserInfoButton = document.getElementById('closeUserInfoBtn'); // 닫기 버튼 가져오기
-            
-            // --- [수정] Firebase 앱 초기화 및 전역 변수 선언을 상단으로 이동 ---
-            
+            const closeUserInfoButton = document.getElementById('closeUserInfoBtn');
+
+            // --- sessionStorage 확인 및 초기 화면 설정 ---
+            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+
+            if (isLoggedIn) {
+                // 이미 로그인 상태일 경우
+                console.log("Already logged in (sessionStorage). Showing main content.");
+                if (loginContainer) loginContainer.classList.add('hidden');
+                if (mainContent) mainContent.classList.remove('hidden');
+                if (header) header.classList.remove('hidden');
+                if (body) {
+                    body.style.background = '#fff';
+                    body.style.overflow = 'auto';
+                }
+                setupMainUIEventListeners();
+                if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
+                     kakao.maps.load(initMap);
+                } else {
+                     console.error("Kakao Maps SDK not ready on initial load (logged in state).");
+                     setTimeout(() => {
+                         if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
+                             kakao.maps.load(initMap);
+                         } else {
+                             customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
+                         }
+                     }, 1000);
+                }
+                 setupInitialEventListeners(false);
+            } else {
+                // 로그인 상태가 아닐 경우
+                console.log("Not logged in. Showing login screen.");
+                if (loginContainer) loginContainer.classList.remove('hidden');
+                if (mainContent) mainContent.classList.add('hidden');
+                if (header) header.classList.add('hidden');
+                if (logContent) logContent.classList.add('hidden');
+                 if (body) body.style.overflow = 'hidden';
+                 setupInitialEventListeners(true);
+            }
+
+
+            // --- 필수 요소 없으면 중단 ---
+
+
+            // 커스텀 alert 함수
+            function customAlert(message) {
+                const modal = document.getElementById('custom-modal');
+                const messageElem = document.getElementById('modal-message');
+                if (modal && messageElem) {
+                    messageElem.textContent = message;
+                    modal.style.display = 'flex';
+                } else {
+                    console.error("Custom modal elements not found, using standard alert.");
+                    alert(message);
+                }
+            }
+
             // ▼▼▼ Firebase 설정 정보 ▼▼▼
             const firebaseConfig = {
                 apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
@@ -564,7 +571,7 @@
                 appId: "1:104489505270:web:eb385c8f9c5dfd512077d7",
                 measurementId: "G-4TH9MB9WPM"
             };
-            
+
             // 전역 변수
             let database;
             let map;
@@ -587,37 +594,15 @@
                 return;
             }
 
-            // --- [수정] 함수 정의를 상단으로 이동 ---
-            
-            // 커스텀 alert 함수
-            function customAlert(message) {
-                const modal = document.getElementById('custom-modal');
-                const messageElem = document.getElementById('modal-message');
-                if (modal && messageElem) {
-                    messageElem.textContent = message;
-                    modal.style.display = 'flex'; // hidden 클래스 제거 대신 display 속성 변경
-                } else {
-                    console.error("Custom modal elements not found, using standard alert.");
-                    alert(message);
-                }
-            }
-
             // --- 지도 초기화 함수 ---
             function initMap() {
                  console.log("initMap called.");
-                 // Kakao SDK 로드 확인
                  if (typeof kakao === 'undefined' || !kakao.maps || !kakao.maps.Map) {
                      console.error("Kakao Maps SDK not loaded correctly.");
                      customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
                      return;
                  }
                  try {
-                     // ▼▼▼ [수정됨] 마커 이미지 변수 초기화 제거 ▼▼▼
-                     /* selectedMarkerImage = new kakao.maps.MarkerImage( ... );
-                     pathMarkerImage = new kakao.maps.MarkerImage( ... );
-                     */
-                     // ▲▲▲ [수정 완료] ▲▲▲
-
                      const container = document.getElementById('map');
                      if (!container) {
                          console.error("Map container not found!");
@@ -650,12 +635,17 @@
                     console.error("userListDiv or h2 not found.");
                     return;
                 }
+                
+                // [경로 유지] 'users' 경로는 안드로이드 앱에서 별도로 관리한다는 가정
                 const usersRef = database.ref('users');
 
                 usersRef.once('value').then((snapshot) => {
-                    // 기존 목록 초기화
                     const existingUsers = userListDiv.querySelectorAll('.user');
                     existingUsers.forEach(el => el.remove());
+
+                    if (!snapshot.exists()) {
+                         console.warn("Firebase 'users' 경로에 사용자 목록 데이터가 없습니다.");
+                    }
 
                     snapshot.forEach((childSnapshot) => {
                         const userId = childSnapshot.key;
@@ -676,47 +666,39 @@
             // --- 지도 및 정보 초기화 함수 ---
             function clearMapAndInfo() {
                  console.log("clearMapAndInfo called.");
-                // 마커 및 오버레이 제거
                 markers.forEach(marker => {
                     if (marker.customOverlay) {
-                        marker.customOverlay.setMap(null); // 연결된 정보창 제거
+                        marker.customOverlay.setMap(null);
                     }
-                    marker.setMap(null); // 마커(CustomOverlay) 제거
+                    marker.setMap(null);
                 });
-                markers = []; // 배열 초기화
+                markers = [];
 
-                // 폴리라인 제거
                 if (currentPolyline) {
                     currentPolyline.setMap(null);
                     currentPolyline = null;
                 }
 
-                // 선택된 로그 마커 제거
                 if (selectedLogMarker) {
                     selectedLogMarker.setMap(null);
-                    // ▼▼▼ [추가] infoBox도 함께 제거 ▼▼▼
                     if (selectedLogMarker.infoBox) {
                         selectedLogMarker.infoBox.setMap(null);
                     }
-                    // ▲▲▲ [추가 완료] ▲▲▲
                     selectedLogMarker = null;
                 }
 
-                // 사용자 정보 영역 초기화 및 숨기기
                 const infoArea = document.getElementById('infoArea');
                 const userInfoDiv = document.getElementById('userInfo');
                 if (infoArea) infoArea.innerHTML = '';
                 if (userInfoDiv) userInfoDiv.classList.add('hidden');
 
-                // 로그 버튼 비활성화
                 const logBtnElem = document.getElementById('logBtn');
                 if (logBtnElem) logBtnElem.disabled = true;
 
-                // 지도 설명 초기화
                 const mapUserElem = document.getElementById('mapUser');
                 if (mapUserElem) mapUserElem.textContent = '사용자를 선택하면 이동 경로가 표시됩니다.';
 
-                selectedUserId = null; // 선택된 사용자 ID 초기화
+                selectedUserId = null;
             }
 
 
@@ -734,64 +716,51 @@
                 }
                 if (selectedLogMarker) {
                     selectedLogMarker.setMap(null);
-                    // ▼▼▼ [추가] 이전 마커의 infoBox도 제거 ▼▼▼
                     if (selectedLogMarker.infoBox) {
                         selectedLogMarker.infoBox.setMap(null);
                     }
-                    // ▲▲▲ [추가 완료] ▲▲▲
                 }
                 const position = new kakao.maps.LatLng(lat, lng);
 
-                // ▼▼▼ [수정] Marker 대신 CustomOverlay 사용 (정보창 포함) ▼▼▼
-
-                // 1. 정보창 오버레이 생성 (초기에는 숨김)
+                // 정보창 오버레이
                 const overlayContent = `<div class="custom-overlay-info">
-                                            <strong>로그 위치</strong><br>
-                                            위도: ${lat.toFixed(6)}<br>
-                                            경도: ${lng.toFixed(6)}
-                                           </div>`;
-                
+                                         <strong>로그 위치</strong><br>
+                                         위도: ${lat.toFixed(6)}<br>
+                                         경도: ${lng.toFixed(6)}
+                                        </div>`;
+        
                 const infoOverlay = new kakao.maps.CustomOverlay({
                     content: overlayContent,
                     position: position,
-                    xAnchor: 0.5, yAnchor: 2.5, // 핀 이미지 위쪽으로 위치 조정
+                    xAnchor: 0.5, yAnchor: 2.5,
                     zIndex: 3
                 });
 
-                // 2. 마커로 사용할 DOM 요소(이미지) 생성
+                // 마커 DOM
                 const markerImg = document.createElement('img');
                 markerImg.src = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png';
                 markerImg.className = 'custom-marker-pin';
-                markerImg.style.cursor = 'pointer'; // 마우스 커서 변경
+                markerImg.style.cursor = 'pointer';
 
-                // 3. 이미지에 이벤트 리스너 추가
-                markerImg.addEventListener('mouseover', () => {
-                    infoOverlay.setMap(map);
-                });
-                markerImg.addEventListener('mouseout', () => {
-                    infoOverlay.setMap(null);
-                });
+                markerImg.addEventListener('mouseover', () => { infoOverlay.setMap(map); });
+                markerImg.addEventListener('mouseout', () => { infoOverlay.setMap(null); });
                 
-                // 4. 마커 CustomOverlay 생성 (이미지 DOM 요소 사용)
+                // 마커 CustomOverlay
                 selectedLogMarker = new kakao.maps.CustomOverlay({
                     position: position,
-                    content: markerImg, // 문자열 대신 HTML 요소를 전달
-                    yAnchor: 1 // 핀의 하단(y)을 좌표에 맞춤
+                    content: markerImg,
+                    yAnchor: 1
                 });
 
-                // 5. 정보창 참조 저장 (clearMapAndInfo에서 사용)
                 selectedLogMarker.infoBox = infoOverlay; 
-                
                 selectedLogMarker.setMap(map);
-                // ▲▲▲ [수정 완료] ▲▲▲
-
-                map.panTo(position); // 부드럽게 이동
+                map.panTo(position);
             }
 
-            // --- 사용자 선택 함수 ---
+            // --- [경로 복구됨] 사용자 선택 함수 ---
             function selectUser(userId) {
                  console.log("selectUser called with userId:", userId);
-                clearMapAndInfo(); // 먼저 초기화
+                clearMapAndInfo();
                 selectedUserId = userId;
                 const logBtnElem = document.getElementById('logBtn');
                 if (logBtnElem) logBtnElem.disabled = false;
@@ -800,7 +769,6 @@
                 const userInfoDiv = document.getElementById('userInfo');
 
                 if (infoArea && userInfoDiv) {
-                     // .log-list div에 스타일 적용 (부모 요소가 스크롤 처리)
                     infoArea.innerHTML = `<p><strong>사용자 ID:</strong> ${userId}</p><h3>전체 위치 기록</h3><div class="log-list"></div>`;
                     userInfoDiv.classList.remove('hidden');
                 } else {
@@ -813,33 +781,35 @@
                     return;
                 }
 
-                // 전체 위치 기록 로드 (사이드바 목록용)
+                // ▼▼▼ [경로 복구] 1. 위치 기록 로드 경로 (원래 코드로 복구) ▼▼▼
+                // "수정 전까지 잘 됐다"는 정보를 바탕으로,
+                // 'location_logs'는 'users/{userId}/location_logs' 경로를 사용하도록 복구합니다.
                 const locationsRef = database.ref('users/' + userId + '/location_logs');
+                // ▲▲▲ [경로 복구 완료] 1. 위치 기록 로드 경로 ▲▲▲
+
                 locationsRef.once('value').then((snapshot) => {
                     const logListDiv = infoArea.querySelector('.log-list');
                     if (!logListDiv) return;
-                    logListDiv.innerHTML = ''; // 목록 초기화
-                    console.log(`Snapshot exists for ${userId}:`, snapshot.exists()); // 디버그 로그 추가
+                    logListDiv.innerHTML = '';
+                    
                     if (!snapshot.exists()) {
                         logListDiv.innerHTML = '표시할 위치 기록이 없습니다.';
                     } else {
                         const logs = [];
                         snapshot.forEach(childSnapshot => {
-                             // [디버깅] 개별 로그 데이터 확인
-                             console.log("Processing log:", childSnapshot.key, childSnapshot.val());
-                            logs.push(childSnapshot.val());
+                            const logData = childSnapshot.val();
+                            logs.push(logData);
                         });
-                        console.log(`Total logs fetched for ${userId}:`, logs.length); // 디버그 로그 추가
-                        logs.reverse().forEach((pos, index) => { // 최신순으로 표시
-                             console.log(`Rendering log index ${index}:`, pos); // [디버깅] 렌더링 로그 추가
-                            if (!pos || typeof pos !== 'object' || !pos.latitude || !pos.longitude) {
-                                 console.warn("Skipping invalid log entry:", pos); // [디버깅] 잘못된 데이터 경고
-                                 return; // 잘못된 데이터 건너뛰기
+                        
+                        logs.reverse().forEach((pos) => { // 최신순
+                            if (!pos || typeof pos !== 'object' || pos.latitude == null || pos.longitude == null) {
+                                 console.warn("Skipping invalid log entry (location):", pos); 
+                                 return;
                             }
                             const parsedLat = parseFloat(pos.latitude);
                             const parsedLng = parseFloat(pos.longitude);
                             if (isNaN(parsedLat) || isNaN(parsedLng)) {
-                                 console.warn("Skipping log with invalid coordinates:", pos); // [디버깅] 잘못된 좌표 경고
+                                 console.warn("Skipping log with invalid coordinates (location):", pos); 
                                  return;
                             }
 
@@ -856,22 +826,24 @@
                             logEntry.addEventListener('click', () => showLocationOnMap(parsedLat, parsedLng));
                             logListDiv.appendChild(logEntry);
                         });
-                         console.log(`Finished rendering ${logListDiv.children.length} logs for ${userId}`); // [디버깅] 렌더링 완료 로그
                     }
                 }).catch(error => {
                     console.error("Error loading location logs:", error);
                     customAlert("위치 기록 로드 중 오류 발생");
                  });
 
-                // 최근 10개 위치 로드 (지도 표시용)
-                const recentLocationsQuery = database.ref('users/' + userId + '/location_logs').limitToLast(10);
+                // ▼▼▼ [경로 복구] 2. 최근 위치 로드 경로 (원래 코드로 복구) ▼▼▼
+                const recentLocationsQuery = database.ref('users/' + userId + '/location_logs')
+                                                 .limitToLast(10);
+                // ▲▲▲ [경로 복구 완료] 2. 최근 위치 로드 경로 ▲▲▲
+                                                 
                 recentLocationsQuery.once('value').then((snapshot) => {
                     const mapUserElem = document.getElementById('mapUser');
                     if (!mapUserElem) return;
 
                     if (!snapshot.exists()) {
                         mapUserElem.textContent = `${userId} 사용자의 최근 위치 기록이 없습니다.`;
-                        return; // 최근 기록 없으면 지도 표시는 여기서 종료
+                        return;
                     }
 
                     mapUserElem.textContent = `${userId}의 최근 이동 경로 (최대 10개)를 표시합니다.`;
@@ -880,7 +852,7 @@
 
                     snapshot.forEach((snap) => {
                         const pos = snap.val();
-                         if (!pos || typeof pos !== 'object' || !pos.latitude || !pos.longitude) return; // 데이터 유효성 검사 추가
+                         if (!pos || typeof pos !== 'object' || pos.latitude == null || pos.longitude == null) return; 
 
                         const parsedLat = parseFloat(pos.latitude);
                         const parsedLng = parseFloat(pos.longitude);
@@ -889,13 +861,8 @@
                         const latlng = new kakao.maps.LatLng(parsedLat, parsedLng);
                         path.push(latlng);
 
-                        // ▼▼▼ [수정] Marker 대신 CustomOverlay 사용 (파란 점) + 이벤트 리스너 수정 ▼▼▼
-
-                        // 1. 정보창 오버레이 생성 (초기에는 숨김)
                         const timestamp = pos.timestamp || Date.now();
-                         // timestamp가 숫자 형태가 아닐 경우 Date 객체 생성 시도
                         let dateObj = new Date(timestamp);
-                        // 유효하지 않은 날짜면 현재 시간으로 대체
                         if (isNaN(dateObj.getTime())) {
                             dateObj = new Date();
                         }
@@ -905,10 +872,10 @@
                         });
 
                         const overlayContent = `<div class="custom-overlay-info">
-                                                    <strong>${formattedTime}</strong><br>
-                                                    위도: ${parsedLat.toFixed(6)}<br>
-                                                    경도: ${parsedLng.toFixed(6)}
-                                                   </div>`;
+                                                 <strong>${formattedTime}</strong><br>
+                                                 위도: ${parsedLat.toFixed(6)}<br>
+                                                 경도: ${parsedLng.toFixed(6)}
+                                                </div>`;
 
                         const infoOverlay = new kakao.maps.CustomOverlay({
                             content: overlayContent,
@@ -916,43 +883,32 @@
                             xAnchor: 0.5, yAnchor: 2.5, zIndex: 3
                         });
                         
-                        // 2. 마커로 사용할 DOM 요소(이미지) 생성
                         const dotImg = document.createElement('img');
                         dotImg.src = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_dot.png';
                         dotImg.className = 'custom-marker-dot';
                         dotImg.style.cursor = 'pointer';
 
-                        // 3. 이미지에 이벤트 리스너 추가
-                        dotImg.addEventListener('mouseover', () => {
-                            infoOverlay.setMap(map);
-                        });
-                        dotImg.addEventListener('mouseout', () => {
-                            infoOverlay.setMap(null);
-                        });
+                        dotImg.addEventListener('mouseover', () => { infoOverlay.setMap(map); });
+                        dotImg.addEventListener('mouseout', () => { infoOverlay.setMap(null); });
 
-                        // 4. 마커 CustomOverlay 생성
                         const pathPointOverlay = new kakao.maps.CustomOverlay({
                             position: latlng,
-                            content: dotImg, // HTML 요소를 content로 전달
-                            xAnchor: 0.5, // 점의 x축 중앙
-                            yAnchor: 0.5  // 점의 y축 중앙
+                            content: dotImg,
+                            xAnchor: 0.5,
+                            yAnchor: 0.5
                         });
                         pathPointOverlay.setMap(map);
                         
-                        // 5. 정보창 참조 저장 (clearMapAndInfo에서 사용)
                         pathPointOverlay.customOverlay = infoOverlay; 
-                        markers.push(pathPointOverlay); // 마커 배열에 추가
-                        // ▲▲▲ [수정 완료] ▲▲▲
-
+                        markers.push(pathPointOverlay);
                         bounds.extend(latlng);
                     });
 
-                    // 경로선 생성 및 지도 범위 조정
                     if (path.length > 0 && map) {
                         currentPolyline = new kakao.maps.Polyline({
                             path: path,
                             strokeWeight: 4,
-                            strokeColor: '#0000FF', // 선 색상 파란색
+                            strokeColor: '#0000FF',
                             strokeOpacity: 0.8,
                             strokeStyle: 'solid',
                             map: map
@@ -968,14 +924,11 @@
             // --- 사용자 정보 닫기 함수 ---
             function closeUserInfo() {
                  console.log("closeUserInfo called.");
-                 // 🌟 [수정] 지도 및 관련 정보 초기화 함수 호출 추가
                  clearMapAndInfo();
-                 // userInfo 요소 자체는 숨길 필요 없음 (clearMapAndInfo에서 처리됨)
             }
 
-            // --- [수정] 모든 로그 로드 함수 (이미지 기반 경로 수정) ---
+            // --- [수정됨] 모든 로그 로드 함수 (하이브리드 경로) ---
             function loadAllLogs(userId) {
-                // ▼▼▼ [추적 1] 함수가 올바른 ID로 실행되었는지 확인
                 console.log("loadAllLogs 함수 실행됨. UserID:", userId);
 
                 if (!database) {
@@ -987,7 +940,6 @@
                 const logUserTitle = document.getElementById('logUserTitle');
 
                 if (!doorLockLogContainer || !appLogContainer || !logUserTitle) {
-                    // ▼▼▼ [추적 2] HTML 요소를 잘 찾았는지 확인
                     console.error("필수 HTML 요소(로그 컨테이너 등)를 찾지 못했습니다.");
                     return;
                 }
@@ -996,112 +948,103 @@
                 doorLockLogContainer.innerHTML = '<em>로딩 중...</em>';
                 appLogContainer.innerHTML = '<em>로딩 중...</em>';
 
-                // ▼▼▼ [수정] 1. 도어락 로그 (이미지 경로: door_lock_logs/{userId}) ▼▼▼
-                const doorLockRef = database.ref('door_lock_logs/' + userId);
+                // ▼▼▼ [수정] 1. 도어락 로그 (필드명 'user_id' 기준으로 쿼리) ▼▼▼
+                // 이미지에서 확인된 'user_id' 필드를 기준으로 데이터를 필터링합니다.
+                const doorLockRef = database.ref('doorlock_logs') 
+                                        .orderByChild('user_id') // 'Key' 대신 'user_id' 필드
+                                        .equalTo(userId);       // userId와 값이 같은 것
+                // ▲▲▲ [수정 완료] 1. 도어락 로그 ▲▲▲
                 
-                // ▼▼▼ [추적 3] Firebase에 요청하는 정확한 경로 확인
                 console.log("요청하는 DB 경로 (도어락):", doorLockRef.toString());
 
                 doorLockRef.once('value').then((snapshot) => {
-                    // ▼▼▼ [추적 4] Firebase가 응답한 실제 데이터(값) 확인
-                    console.log("Firebase로부터 받은 도어락 응답 (snapshot.val()):", snapshot.val());
-                    // ▼▼▼ [추적 5] 데이터가 존재하는지 여부 확인
-                    console.log("도어락 Snapshot 존재 여부 (snapshot.exists()):", snapshot.exists());
-
-                    doorLockLogContainer.innerHTML = ''; // 초기화
-
+                    console.log("Firebase로부터 받은 도어락 응답 (snapshot.exists()):", snapshot.exists());
+                    doorLockLogContainer.innerHTML = '';
                     if (!snapshot.exists()) {
                         doorLockLogContainer.innerHTML = '표시할 도어락 로그가 없습니다.';
                     } else {
-                        const doorLogs = []; 
-
+                        const logs = [];
                         snapshot.forEach(child => {
-                            const log = child.val();
-                            console.log("처리 중인 개별 로그 항목 (도어락):", log); // [추적 6]
-                            doorLogs.push(log); // 도어락 로그로 추가
+                            const logData = child.val();
+                            logs.push(logData);
                         });
+                        logs.reverse().forEach(log => {
+                            const entry = document.createElement('div');
+                            entry.className = 'full-log-entry';
+                            
+                            // ▼▼▼ [수정] "수정 전" 코드의 날짜/시간 변환 로직을 다시 적용 ▼▼▼
+                            let formattedTime;
+                            if (typeof log.timestamp === 'number') {
+                                // 숫자인 경우 (예: 1678886400000)
+                                formattedTime = new Date(log.timestamp).toLocaleString('ko-KR');
+                            } else if (typeof log.timestamp === 'string') {
+                                // 문자열인 경우 (예: "2025-10-28 11:27:44")
+                                // " "를 "T"로 바꿔야 Safari 등에서 호환됩니다.
+                                formattedTime = new Date(log.timestamp.replace(" ", "T")).toLocaleString('ko-KR');
+                            } else {
+                                // 타임스탬프가 없는 경우
+                                formattedTime = '시간 없음';
+                            }
+                            // ▲▲▲ [수정 완료] ▲▲▲
 
-                        // 도어락 로그 렌더링
-                        if (doorLogs.length === 0) {
-                            doorLockLogContainer.innerHTML = '표시할 도어락 로그가 없습니다.';
-                        } else {
-                            doorLogs.reverse().forEach(log => { // 최신순
-                                const entry = document.createElement('div');
-                                entry.className = 'full-log-entry';
-                                
-                                let formattedTime;
-                                if (typeof log.timestamp === 'number') {
-                                    formattedTime = new Date(log.timestamp).toLocaleString('ko-KR');
-                                } else if (typeof log.timestamp === 'string') {
-                                    formattedTime = new Date(log.timestamp.replace(" ", "T")).toLocaleString('ko-KR');
-                                } else {
-                                    formattedTime = '시간 없음';
-                                }
+                            // [유지] 이미지에서 확인된 method와 status 필드를 가져옵니다.
+                            const methodStr = log.method || '방식 모름';
+                            const statusStr = log.status || '상태 모름';
 
-                                const methodStr = log.method || '방식 모름';
-                                const statusStr = log.status || '상태 모름';
-
-                                entry.innerHTML = `<strong>[${formattedTime}]</strong><br>
-                                                   <span style="margin-left: 10px;">방식: ${methodStr}</span><br>
-                                                   <span style="margin-left: 10px;">상태: ${statusStr}</span>`;
-                                
-                                doorLockLogContainer.appendChild(entry);
-                            });
-                        }
+                            // [수정] innerHTML 내용을 합친 형식으로 변경합니다.
+                            entry.innerHTML = `<strong>[${formattedTime}]</strong><br>
+                                                 <span style="margin-left: 10px;">방식: ${methodStr}</span><br>
+                                                 <span style="margin-left: 10px;">상태: ${statusStr}</span>`; 
+                            doorLockLogContainer.appendChild(entry);
+                        });
                     }
                 }).catch(error => {
-                    // ▼▼▼ [추적 7] 데이터를 가져오다 실패했는지 확인
                     console.error("도어락 로그 로드 중 Firebase 오류:", error);
                     doorLockLogContainer.innerHTML = '<span style="color: red;">도어락 로그 로드 실패</span>';
                 });
 
-                // ▼▼▼ [수정] 2. 앱 로그 (이미지 추론 경로: users/{userId}/app_logs) ▼▼▼
+                // ▼▼▼ [경로 복구] 2. 앱 로그 (원래 코드로 복구) ▼▼▼
+                // 'location_logs'와 마찬가지로, 'app_logs'도 원래 경로로 복구합니다.
                 const appLogRef = database.ref('users/' + userId + '/app_logs');
-                // ▲▲▲ [수정 완료] ▲▲▲
+                // ▲▲▲ [경로 복구 완료] 2. 앱 로그 ▲▲▲
 
-                // ▼▼▼ [추적 3] Firebase에 요청하는 정확한 경로 확인 (앱)
                 console.log("요청하는 DB 경로 (앱):", appLogRef.toString());
 
                 appLogRef.once('value').then((snapshot) => {
-                    // ▼▼▼ [추적 4] Firebase가 응답한 실제 데이터(값) 확인 (앱)
-                    console.log("Firebase로부터 받은 앱 응답 (snapshot.val()):", snapshot.val());
-                    // ▼▼▼ [추적 5] 데이터가 존재하는지 여부 확인 (앱)
-                    console.log("앱 Snapshot 존재 여부 (snapshot.exists()):", snapshot.exists());
-
-                    appLogContainer.innerHTML = ''; // 초기화
+                     console.log("Firebase로부터 받은 앱 응답 (snapshot.exists()):", snapshot.exists());
+                    appLogContainer.innerHTML = '';
                     if (!snapshot.exists()) {
                         appLogContainer.innerHTML = '표시할 앱 로그가 없습니다.';
                     } else {
                         const logs = [];
                         snapshot.forEach(child => {
-                            // ▼▼▼ [추적 6] 반복문이 각 데이터를 잘 처리하는지 확인 (앱)
-                            console.log("처리 중인 개별 로그 항목 (앱):", child.val());
                             logs.push(child.val());
                         });
-                        logs.reverse().forEach(log => { // 최신순
+                        logs.reverse().forEach(log => {
                             const entry = document.createElement('div');
                             entry.className = 'full-log-entry';
                             
-                            let formattedTime;
+                            let dateObj;
                             if (typeof log.timestamp === 'number') {
-                                formattedTime = new Date(log.timestamp).toLocaleString('ko-KR');
+                                dateObj = new Date(log.timestamp);
                             } else if (typeof log.timestamp === 'string') {
-                                formattedTime = new Date(log.timestamp.replace(" ", "T")).toLocaleString('ko-KR');
+                                dateObj = new Date(log.timestamp.replace(" ", "T"));
                             } else {
-                                formattedTime = '시간 없음';
+                                dateObj = new Date();
                             }
+                            if (isNaN(dateObj.getTime())) { dateObj = new Date(); }
+                            const formattedTime = dateObj.toLocaleString('ko-KR');
 
+                            // (필드명 'event'라고 가정)
                             entry.innerHTML = `<strong>[${formattedTime}]</strong>: ${log.event || 'N/A'}`;
                             appLogContainer.appendChild(entry);
                         });
                     }
                 }).catch(error => {
-                    // ▼▼▼ [추적 7] 데이터를 가져오다 실패했는지 확인 (앱)
-                    console.error("앱 로그 로드 중 Firebase 오류:", error);
+                     console.error("앱 로그 로드 중 Firebase 오류:", error);
                     appLogContainer.innerHTML = '<span style="color: red;">앱 로그 로드 실패</span>';
                 });
             }
-            // --- [수정 완료] ---
 
 
             // --- 이벤트 핸들러 함수 정의 ---
@@ -1128,28 +1071,25 @@
                     if (snapshot.exists()) {
                         snapshot.forEach((childSnapshot) => {
                             const adminData = childSnapshot.val();
-                            // Null check for adminData added
                             if (adminData && adminData.adminId === usernameInput && adminData.password === passwordInput) {
                                 loginSuccess = true;
-                                return true; // Exit forEach early
+                                return true;
                             }
                         });
                     }
 
                     if (loginSuccess) {
                         console.log("Login successful.");
-                        // [수정] 로그인 성공 시 sessionStorage에 상태 저장
                         sessionStorage.setItem('isLoggedIn', 'true');
 
                         if (loginContainer) loginContainer.classList.add('hidden');
                         if (mainContent) mainContent.classList.remove('hidden');
                         if (header) header.classList.remove('hidden');
                         if (body) {
-                            /* body.style.background = '#f8f9fa'; */ // [수정] 이 줄을 삭제하여 CSS의 그라데이션 배경 유지
-                            body.style.overflow = 'auto'; // Allow scrolling
+                            body.style.background = '#fff';
+                            body.style.overflow = 'auto';
                         }
 
-                        // Load Kakao Maps SDK only after login
                         if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
                             console.log("Loading Kakao Maps...");
                             kakao.maps.load(initMap);
@@ -1157,7 +1097,6 @@
                              console.error("Kakao Maps SDK not loaded or load function unavailable.");
                              customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
                         }
-                         // 로그인 성공 후 메인 UI 리스너 설정
                          setupMainUIEventListeners();
                     } else {
                         console.log("Login failed.");
@@ -1171,14 +1110,12 @@
 
             function handleLogout() {
                 console.log("Logout clicked.");
-                // [수정] 로그아웃 시 sessionStorage 클리어
                 sessionStorage.removeItem('isLoggedIn');
-                window.location.reload(); // Simple reload for logout
+                window.location.reload();
             }
 
             function handleLogView() {
                 console.log("Log view clicked.");
-                 // 필요한 요소들을 이 함수 내에서 다시 찾음
                 const currentMainContent = document.getElementById('main-content');
                 const currentLogContent = document.getElementById('log-content');
 
@@ -1186,10 +1123,8 @@
                     if (currentMainContent) currentMainContent.classList.add('hidden');
                     if (currentLogContent) currentLogContent.classList.remove('hidden');
 
-                    // Dynamically add listener for backToMapBtn only when log view is shown
-                    const backBtn = document.getElementById('backToMapBtn'); // Get the button again
+                    const backBtn = document.getElementById('backToMapBtn');
                     if (backBtn) {
-                        // Remove potential duplicate listener before adding
                         backBtn.removeEventListener('click', handleBackToMap);
                         backBtn.addEventListener('click', handleBackToMap);
                         console.log("Back to Map listener added/updated in handleLogView.");
@@ -1204,12 +1139,11 @@
 
             function handleBackToMap() {
                  console.log("Back to map clicked.");
-                 // 필요한 요소들을 이 함수 내에서 다시 찾음
                  const currentMainContent = document.getElementById('main-content');
                  const currentLogContent = document.getElementById('log-content');
                  if (currentLogContent) currentLogContent.classList.add('hidden');
                  if (currentMainContent) currentMainContent.classList.remove('hidden');
-            }
+             }
 
              // --- 새 버튼 핸들러 ---
              function handleNewButtonClick() {
@@ -1219,7 +1153,6 @@
 
 
             // --- 초기 이벤트 리스너 설정 ---
-            // [수정] 로그인 상태에 따라 로그인 폼 리스너 추가 여부 결정
             function setupInitialEventListeners(addLoginFormListener = true) {
                  console.log("Setting up initial event listeners...");
                  if (addLoginFormListener) {
@@ -1230,7 +1163,6 @@
                          console.error("loginForm element not found initially.");
                      }
                  }
-                // Add modal close button listener
                 const modalCloseButton = document.querySelector('#custom-modal button');
                 if (modalCloseButton) {
                     modalCloseButton.addEventListener('click', () => {
@@ -1238,7 +1170,6 @@
                         if(modal) modal.style.display = 'none';
                     });
                 }
-                // userInfo 닫기 버튼 리스너도 여기서 추가
                 if (closeUserInfoButton) {
                      closeUserInfoButton.addEventListener('click', closeUserInfo);
                      console.log("Close User Info button listener added initially.");
@@ -1250,10 +1181,9 @@
              // --- 로그인 성공/세션 유지 시 호출되는 리스너 설정 ---
             function setupMainUIEventListeners() {
                  console.log("Setting up main UI event listeners after login.");
-                 // 요소 다시 가져오기
                  const currentLogoutBtn = document.getElementById('logoutBtn');
                  const currentLogBtn = document.getElementById('logBtn');
-                 const currentNewBtn = document.getElementById('newBtn'); // 새 버튼 가져오기
+                 const currentNewBtn = document.getElementById('newBtn');
 
                  if (currentLogoutBtn) {
                      currentLogoutBtn.addEventListener('click', handleLogout);
@@ -1269,63 +1199,13 @@
                      console.error("logBtn element not found after login.");
                  }
 
-                 // 새 버튼 리스너 추가
                  if (currentNewBtn) {
                      currentNewBtn.addEventListener('click', handleNewButtonClick);
                      console.log("New button listener added.");
                  } else {
                      console.error("newBtn element not found after login.");
                  }
-                 // backToMapBtn listener is added dynamically in handleLogView
             }
-            
-            // --- [수정] 함수 정의 끝 ---
-
-
-            // --- sessionStorage 확인 및 초기 화면 설정 ---
-            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true'; 
-
-            if (isLoggedIn) {
-                // 이미 로그인 상태일 경우
-                console.log("Already logged in (sessionStorage). Showing main content.");
-                if (loginContainer) loginContainer.classList.add('hidden'); // 로그인 화면 숨기기
-                if (mainContent) mainContent.classList.remove('hidden'); // 메인 화면 보이기
-                if (header) header.classList.remove('hidden'); // 헤더 보이기
-                if (body) {
-                    /* body.style.background = '#f8f9fa'; */ // [수정] 이 줄을 삭제하여 CSS의 그라데이션 배경 유지
-                    body.style.overflow = 'auto'; // 스크롤 허용
-                }
-                // 메인 UI 리스너 설정 및 지도 로드
-                setupMainUIEventListeners();
-                if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
-                     kakao.maps.load(initMap);
-                } else {
-                     console.error("Kakao Maps SDK not ready on initial load (logged in state).");
-                     // SDK 로드를 기다리거나 사용자에게 새로고침 안내
-                     setTimeout(() => { // 잠시 후 다시 시도
-                         if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
-                             kakao.maps.load(initMap);
-                         } else {
-                             customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
-                         }
-                     }, 1000); // 1초 후 시도
-                }
-                 // 초기 리스너 설정 (모달 닫기 등)도 필요
-                 setupInitialEventListeners(false); // 로그인 폼 리스너는 추가 안 함
-            } else {
-                // 로그인 상태가 아닐 경우
-                console.log("Not logged in. Showing login screen.");
-                if (loginContainer) loginContainer.classList.remove('hidden'); // 로그인 화면 보이기
-                if (mainContent) mainContent.classList.add('hidden');
-                if (header) header.classList.add('hidden');
-                if (logContent) logContent.classList.add('hidden');
-                 if (body) body.style.overflow = 'hidden'; // 로그인 화면에서 스크롤 방지
-
-                 // 초기 리스너 설정 (로그인 폼 리스너 포함)
-                 setupInitialEventListeners(true);
-            }
-
-            // --- [수정] 중복된 코드 블록 삭제 ---
 
         }); // DOMContentLoaded 닫기
     </script>
