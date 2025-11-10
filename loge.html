@@ -13,8 +13,10 @@
     <style>
         body {
             font-family: 'Poppins', sans-serif; /* 기본 폰트 Poppins로 변경 */
-            background-color: #f3f4f6; /* bg-gray-100 */
+            /* background-color: #f3f4f6; */ /* bg-gray-100 */
+            background: linear-gradient(135deg, #71b7e6, #9b59b6); /* <<< [수정] 로그인 배경 적용 */
             padding-top: 70px; /* 헤더 높이 */
+            min-height: 100vh; /* [추가] 그라데이션이 전체 화면을 채우도록 */
         }
         /* 로딩 스피너 */
         .spinner {
@@ -199,7 +201,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="min-h-screen"> <!-- [수정] bg-gray-100 제거 -->
 
     <!-- 🌟 헤더 추가 (index.html 스타일) 🌟 -->
     <div id="header" style="position: fixed; top: 0; left: 0; width: 100%; padding: 10px 20px; background-color: #f8f9fa; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 500;">
@@ -303,7 +305,7 @@
              if (updateButton) updateButton.addEventListener('click', handleUpdate);
              if (deleteButton) deleteButton.addEventListener('click', handleDelete);
              if (backBtn) backBtn.addEventListener('click', () => {
-                  window.history.back(); // 브라우저 뒤로가기 기능 사용
+                 window.history.back(); // 브라우저 뒤로가기 기능 사용
              });
 
              // 모달 닫기 버튼 리스너
@@ -317,7 +319,7 @@
 
              // Firebase 초기화 및 리스너 설정 호출
              initializeFirebase();
-         });
+        });
 
 
         // 커스텀 alert 함수
@@ -736,4 +738,3 @@
     </script>
 </body>
 </html>
-
