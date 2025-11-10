@@ -121,7 +121,18 @@
             box-sizing: border-box;
             z-index: 500;
         }
-        #header h1 { margin: 0; font-size: 24px; }
+        
+        /* --- [사용자 요청] 헤더 제목 그라데이션 적용 --- */
+        #header h1 { 
+            margin: 0; 
+            font-size: 24px; 
+            background: linear-gradient(135deg, #71b7e6, #9b59b6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        /* --- [사용자 요청] 적용 완료 --- */
+
 
         /* 헤더 버튼 그룹 */
         #header .button-group {
@@ -248,13 +259,19 @@
         }
 
         /* [코드 1] 각 창의 제목 스타일 */
+        /* --- [사용자 요청] 그라데이션 적용 --- */
         #userList h2, #mapArea h2 {
             font-weight: 600;
-            color: #9b59b6; /* Gradient purple */
+            /* color: #9b59b6; */ /* Gradient purple - 그라데이션으로 대체됨 */
             border-bottom: 1px solid #eee;
             padding-bottom: 10px;
             margin-bottom: 10px; 
             flex-shrink: 0;
+            
+            background: linear-gradient(135deg, #71b7e6, #9b59b6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
 
         .info-header {
@@ -267,10 +284,16 @@
         }
 
         /* [코드 1] 정보창 제목 스타일 */
+        /* --- [사용자 요청] 그라데이션 적용 --- */
         .info-header h2 {
             font-weight: 600;
-            color: #9b59b6; /* Gradient purple */
+            /* color: #9b59b6; */ /* Gradient purple - 그라데이션으로 대체됨 */
             margin: 0;
+            
+            background: linear-gradient(135deg, #71b7e6, #9b59b6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
         /* --- [코드 1 스타일 적용 완료] --- */
 
@@ -777,7 +800,7 @@
                                             위도: ${lat.toFixed(6)}<br>
                                             경도: ${lng.toFixed(6)}
                                            </div>`;
-            
+                
                 const infoOverlay = new kakao.maps.CustomOverlay({
                     content: overlayContent,
                     position: position,
@@ -880,8 +903,8 @@
 
                 // [코드 2 로직] 최근 10개 위치 로드
                 const recentLocationsQuery = database.ref('users/' + userId + '/location_logs')
-                                                      .limitToLast(10);
-                                                      
+                                                       .limitToLast(10);
+                                                       
                 recentLocationsQuery.once('value').then((snapshot) => {
                     const mapUserElem = document.getElementById('mapUser');
                     if (!mapUserElem) return;
@@ -1032,8 +1055,8 @@
                             const statusStr = log.status || '상태 모름';
 
                             entry.innerHTML = `<strong>[${formattedTime}]</strong><br>
-                                                 <span style="margin-left: 10px;">방식: ${methodStr}</span><br>
-                                                 <span style="margin-left: 10px;">상태: ${statusStr}</span>`; 
+                                               <span style="margin-left: 10px;">방식: ${methodStr}</span><br>
+                                               <span style="margin-left: 10px;">상태: ${statusStr}</span>`; 
                             doorLockLogContainer.appendChild(entry);
                         });
                     }
