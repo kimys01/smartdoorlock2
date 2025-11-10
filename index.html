@@ -379,11 +379,16 @@
             background-color: #e0e0e0;
         }
 
-        /* <<< 스타일 추가: 로그 헤더 h2 스타일 */
+        /* <<< 스타일 추가: 로그 헤더 h2 스타일 --- [사용자 요청] 그라데이션 적용 --- */
         .log-header h2 {
             margin: 0;
             font-weight: 600;
-            color: #9b59b6;
+            /* color: #9b59b6; */ /* 그라데이션으로 대체 */
+            
+            background: linear-gradient(135deg, #71b7e6, #9b59b6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
 
 
