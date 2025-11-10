@@ -205,7 +205,9 @@
 
     <!-- 🌟 헤더 추가 (index.html 스타일) 🌟 -->
     <div id="header" style="position: fixed; top: 0; left: 0; width: 100%; padding: 10px 20px; background-color: #f8f9fa; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 500;">
-        <h1>실시간 DB 편집기</h1>
+        <!-- ▼▼▼ [사용자 요청] 스타일 적용 ▼▼▼ -->
+        <h1 style="margin: 0; font-size: 24px; background: linear-gradient(135deg, #71b7e6, #9b59b6); -webkit-background-clip: text; background-clip: text; color: transparent;">실시간 DB 편집기</h1>
+        <!-- ▲▲▲ [사용자 요청] 스타일 적용 완료 ▲▲▲ -->
         <div class="button-group">
             <button id="backBtn" class="action-button back-button">&larr; 뒤로 가기</button>
         </div>
@@ -592,7 +594,7 @@
              });
 
              if (fieldsContainer) fieldsContainer.appendChild(fieldRow);
-         }
+        }
 
         /**
          * 입력 필드의 값을 타입에 맞게 변환하는 함수
@@ -634,10 +636,10 @@
                     return;
                 }
                  if (/[.#$\[\]]/.test(key)) {
-                      customAlert(`키 "${key}"에 유효하지 않은 문자(. # $ [ ])가 포함되어 있습니다.`, true);
-                      keyInput.focus();
-                      hasError = true;
-                      return;
+                     customAlert(`키 "${key}"에 유효하지 않은 문자(. # $ [ ])가 포함되어 있습니다.`, true);
+                     keyInput.focus();
+                     hasError = true;
+                     return;
                  }
 
                 const value = getValueFromInput(valueInput.value);
