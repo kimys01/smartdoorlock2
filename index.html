@@ -144,17 +144,17 @@
         /* --- [사용자 요청] 스타일 수정 --- */
         /* 헤더 버튼 공통 스타일 (새 버튼 포함) */
         #logoutBtn, #logBtn, #newBtn {
-            padding: 8px 15px;
+            /* padding: 8px 15px; */ /* 헤더 높이에 맞게 수정 */
+            padding: 10px 15px; /* 헤더의 상하 패딩과 동일하게 설정 */
             border: none;
-            /* color: white; */ /* 흰색 배경에 맞춰 수정 */
             color: #333; /* 어두운 글자색 */
-            /* border-radius: 5px; */ /* 각지게 수정 */
             border-radius: 0; 
             cursor: pointer;
             font-weight: 500; 
             transition: background-color 0.3s ease;
             position: relative; /* 가상요소(경계선) 배치를 위해 추가 */
-            background-color: #ffffff; /* 흰색 배경 */
+            /* background-color: #ffffff; */ /* 헤더 색상과 동일하게 수정 */
+            background-color: #f8f9fa;
         }
 
         /* 각 버튼 색상 (배경색은 공통 스타일로 이동) */
@@ -167,7 +167,8 @@
         #logoutBtn:hover, 
         #logBtn:hover, 
         #newBtn:hover { 
-            background-color: #f2f2f2; /* 밝은 회색으로 변경 */
+            /* background-color: #f2f2f2; */ /* 조금 더 어두운 회색으로 변경 */
+            background-color: #e9ecef;
         }
         /* --- [사용자 요청] 수정 완료 --- */
 
@@ -187,14 +188,17 @@
 
         /* 로그 버튼 비활성화 스타일 */
         #logBtn:disabled {
-            background-color: #ccc;
+            /* background-color: #ccc; */ /* 헤더와 동일하게 수정 */
+            background-color: #f8f9fa;
             cursor: not-allowed;
-            opacity: 0.6;
-            color: #777; /* 비활성화 시 글자색 */
+            /* opacity: 0.6; */ /* 글자색으로 비활성 표현 */
+            opacity: 1;
+            color: #aaa; /* 비활성화 시 연한 글자색 */
         }
         /* 비활성화 시 hover 효과 방지 */
         #logBtn:disabled:hover {
-            background-color: #ccc;
+            /* background-color: #ccc; */ /* hover 효과 없음 */
+            background-color: #f8f9fa;
         }
 
         #main-content {
