@@ -3,440 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Capstone Project</title>
-
+    <title>실시간 데이터베이스 뷰어/편집기</title>
+    <!-- Tailwind CSS 로드 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter & Poppins 폰트 사용 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
-
         body {
-            height: 100vh;
-            background: linear-gradient(135deg, #71b7e6, #9b59b6);
-            padding-top: 70px; /* 헤더 높이만큼 여백 확보 */
-            transition: background-color 0.3s ease;
+            font-family: 'Poppins', sans-serif; /* 기본 폰트 Poppins로 변경 */
+            /* background-color: #f3f4f6; */ /* bg-gray-100 */
+            background: linear-gradient(135deg, #71b7e6, #9b59b6); /* <<< [수정] 로그인 배경 적용 */
+            padding-top: 70px; /* 헤더 높이 */
+            min-height: 100vh; /* [추가] 그라데이션이 전체 화면을 채우도록 */
         }
-
-        .hidden { display: none !important; }
-
-        /* 로그인 컨테이너 */
-        #login-container {
-            width: 100%;
-            max-width: 400px;
-            background-color: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            text-align: center;
-            position: absolute; /* 화면 중앙 배치 */
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1000;
+        /* 로딩 스피너 */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #09f;
+            animation: spin 1s ease infinite;
         }
-
-        #login-container h2 {
-            font-size: 28px;
-            font-weight: 600;
-            margin-bottom: 25px;
-            color: #333;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .input-group label {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 8px;
-            color: #555;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: #71b7e6;
-        }
-
-        #login-container button {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #71b7e6, #9b59b6);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 18px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: opacity 0.3s ease;
-        }
-
-        #login-container button:hover {
-            opacity: 0.9;
-        }
-
-        .extra-links {
-            margin-top: 20px;
-            font-size: 14px;
-        }
-        .extra-links a {
-            color: #555;
-            text-decoration: none;
-        }
-        .extra-links a:hover {
-            text-decoration: underline;
-            color: #71b7e6;
-        }
-
-        /* --- [코드 1 스타일 적용] --- */
-        /* 메인 콘텐츠 스타일 */
-        #header {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%;
-            padding: 10px 20px;
-            background-color: #f8f9fa;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-sizing: border-box;
-            z-index: 500;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         
-        /* --- [사용자 요청] 헤더 제목 그라데이션 적용 --- */
-        #header h1 { 
-            margin: 0; 
-            font-size: 24px; 
-            background: linear-gradient(135deg, #71b7e6, #9b59b6);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
+        /* ▼▼▼ [수정] JSON 뷰어 스타일 (pre 태그에서 div용으로 변경) ▼▼▼ */
+        #json-viewer {
+            background-color: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            max-height: 45vh;
+            overflow-y: auto;
         }
-        /* --- [사용자 요청] 적용 완료 --- */
+        /* ▲▲▲ [수정 완료] ▲▲▲ */
 
-
-        /* 헤더 버튼 그룹 */
-        #header .button-group {
-            display: flex;
-            gap: 10px;
+        /* ▼▼▼ [추가] JSON 트리 뷰 스타일 ▼▼▼ */
+        .json-tree {
+            list-style-type: none;
+            padding-left: 20px;
+            margin: 0;
         }
+        .json-tree li {
+            position: relative;
+        }
+        .json-toggle {
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-right: 6px;
+            display: inline-block;
+            width: 1em; /* 너비 고정 */
+            user-select: none; /* 선택 방지 */
+            color: #6b7280; /* 회색 */
+        }
+        .json-toggle.expanded {
+            transform: rotate(90deg);
+        }
+        .json-toggle-placeholder {
+            display: inline-block;
+            width: 1em;
+            margin-right: 6px;
+        }
+        .json-key {
+            font-weight: 600;
+            color: #1d4ed8; /* 파란색 계열 */
+            cursor: pointer; /* 키 클릭으로도 토글 */
+        }
+        .json-nested {
+            list-style-type: none;
+            padding-left: 25px;
+            margin: 0;
+        }
+        .json-nested.hidden {
+            display: none;
+        }
+        .json-value {
+            font-weight: 400;
+        }
+        .json-value-string { color: #c43a00; } /* 주황색 */
+        .json-value-number { color: #059669; } /* 녹색 */
+        .json-value-boolean { color: #7c3aed; } /* 보라색 */
+        .json-value-null { color: #ef4444; } /* 빨간색 */
+        /* ▲▲▲ [추가 완료] ▲▲▲ */
 
-        /* 헤더 버튼 공통 스타일 (새 버튼 포함) */
-        #logoutBtn, #logBtn, #newBtn {
-            padding: 8px 15px;
-            border: none;
+
+        /* 입력 필드 스타일 */
+        .form-input {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            width: 100%;
+            font-family: 'Inter', sans-serif; /* 입력 필드는 Inter 사용 */
+        }
+        /* 버튼 스타일 */
+        .action-button {
+            padding: 8px 15px; /* index.html 버튼과 동일하게 조정 */
+            border-radius: 5px; /* index.html 버튼과 동일하게 조정 */
             color: white;
-            border-radius: 5px;
+            font-weight: 500; /* index.html 버튼과 동일하게 조정 */
             cursor: pointer;
             transition: background-color 0.2s ease;
+            font-size: 0.875rem;
+            border: none; /* 테두리 제거 */
         }
-
-        /* 각 버튼 색상 */
-        #logoutBtn { background-color: #dc3545; }
-        #logBtn { background-color: #007bff; }
-        #newBtn { background-color: #ffc107; }
-
-
-        /* 각 버튼 hover 효과 */
-        #logoutBtn:hover { background-color: #c82333; }
-        #logBtn:hover { background-color: #0056b3; }
-        #newBtn:hover { background-color: #e0a800; }
-
-
-        /* 로그 버튼 비활성화 스타일 */
-        #logBtn:disabled {
-            background-color: #ccc;
+        .action-button:hover {
+            opacity: 0.9;
+        }
+        .action-button:disabled {
+            background-color: #ccc !important; /* 비활성화 색상 명확히 */
             cursor: not-allowed;
-            opacity: 0.6;
+            opacity: 0.7;
         }
-
-        #main-content {
-            display: flex;
-            padding: 10px;
-            gap: 20px;
-            width: 100%;
-            height: calc(100vh - 70px); /* 헤더 높이 제외 */
-            /* [코드 1] background-color: #fff; 제거 -> body 배경색 따름 */
-            overflow: hidden;
+        /* 각 버튼 색상 index.html과 유사하게 */
+        .set-button { background-color: #007bff; } /* 파란색 */
+        .update-button { background-color: #ffc107; } /* 노란색 */
+        .delete-button { background-color: #dc3545; } /* 빨간색 */
+        .add-field-button { background-color: #17a2b8; } /* 청록색 */
+        .remove-field-button {
+            background-color: #6c757d; /* 회색 */
+            padding: 4px 8px; /* 크기 조정 */
+            font-size: 0.75rem;
+            line-height: 1;
         }
-
-
-        #sidebar {
-            display: flex;
-            flex-direction: column;
-            width: 12.5%;
-            gap: 15px;
-            height: 100%;
+         .back-button { /* 뒤로가기 버튼 스타일 */
+            background-color: #6c757d;
         }
-
-        /* [코드 1] box-shadow 스타일 적용 */
-        #userList, #userInfo, #mapArea {
-            border: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            padding: 15px;
-            border-radius: 8px;
-            background-color: #fff;
-            box-sizing: border-box;
-        }
-
-        /* [코드 1] flex-grow 4 (40%) 적용 */
-        #userList {
-            overflow-y: auto;
-            flex-grow: 4; 
-            flex-basis: 0;
-            min-height: 0;
-        }
-        
-        /* [코드 1] flex-grow 6 (60%) 적용 */
-        #userInfo {
-            overflow: hidden; 
-            flex-grow: 6; 
-            flex-basis: 0;
-            min-height: 0;
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* [코드 1] flex 레이아웃 적용 */
-        #mapArea { 
-            flex-grow: 1; 
-            display: flex;
-            flex-direction: column;
-        }
-
-        .user {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-        }
-        .user:hover { background-color: #f0f0f0; }
-
-        /* 사용자 정보 영역 Flexbox 레이아웃 */
-        #infoArea {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-            overflow: hidden;
-            min-height: 0;
-        }
-
-        #infoArea p, #infoArea h3 {
-            flex-shrink: 0;
-        }
-
-        #infoArea h3 {
-            margin-top: 10px;
-            margin-bottom: 5px;
-            font-weight: 600; /* [코드 1] 스타일 */
-            color: #555; /* [코드 1] 스타일 */
-        }
-
-        /* JS로 추가되는 로그 목록 div */
-        .log-list {
-            flex-grow: 1;
-            overflow-y: auto; 
-            min-height: 0;
-        }
-
-        /* [코드 1] 각 창의 제목 스타일 */
-        /* --- [사용자 요청] 그라데이션 적용 --- */
-        #userList h2, #mapArea h2 {
-            font-weight: 600;
-            /* color: #9b59b6; */ /* Gradient purple - 그라데이션으로 대체됨 */
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-            margin-bottom: 10px; 
-            flex-shrink: 0;
-            
-            background: linear-gradient(135deg, #71b7e6, #9b59b6);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .info-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #eee; /* [코드 1] 스타일 */
-            padding-bottom: 10px; /* [코드 1] 스타일 */
-        }
-
-        /* [코드 1] 정보창 제목 스타일 */
-        /* --- [사용자 요청] 그라데이션 적용 --- */
-        .info-header h2 {
-            font-weight: 600;
-            /* color: #9b59b6; */ /* Gradient purple - 그라데이션으로 대체됨 */
-            margin: 0;
-            
-            background: linear-gradient(135deg, #71b7e6, #9b59b6);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        /* --- [코드 1 스타일 적용 완료] --- */
-
-
-        /* 닫기 버튼 스타일 */
-        #closeUserInfoBtn {
-            background: none;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            color: #6c757d;
-            padding: 0 5px;
-        }
-        #closeUserInfoBtn:hover {
-            color: #dc3545;
-        }
-
-        /* [코드 1] flex-grow로 지도 높이 조절 */
-        #map {
-            width: 100%;
-            margin-top: 10px;
-            flex-grow: 1; /* 남은 공간을 모두 채움 */
-            min-height: 0; /* flex 아이템이 올바르게 축소되도록 함 */
-        }
-        
-        /* [코드 1] 지도 아래 설명 텍스트 */
-        #mapArea p#mapUser {
-            font-size: 14px;
-            color: #777;
-            margin-top: 5px;
-            flex-shrink: 0;
-        }
-
-        .log-entry {
-            padding: 8px;
-            font-size: 14px;
-            border-bottom: 1px solid #f0f0f0;
-            cursor: pointer;
-            border-radius: 4px;
-            line-height: 1.5;
-        }
-        .log-entry:hover {
-            background-color: #e9ecef;
-        }
-
-        /* 로그 페이지 스타일 */
-        #log-content {
-            width: 100%;
-            height: calc(100vh - 70px);
-            padding: 20px;
-            display: flex; 
-            flex-direction: column;
-            gap: 20px;
-            /* background-color: #fff; */ /* <<< 스타일 변경: 배경색 제거 */
-            position: fixed;
-            top: 70px;
-            left: 0;
-            z-index: 600;
-            box-sizing: border-box;
-        }
-
-        .log-header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            flex-shrink: 0;
-            /* <<< 스타일 추가: 헤더 배경 및 패딩 */
-            background-color: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-
-        #backToMapBtn {
-            padding: 8px 15px;
-            border: 1px solid #ccc;
-            background-color: #f0f0f0;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        #backToMapBtn:hover {
-            background-color: #e0e0e0;
-        }
-
-        /* <<< 스타일 추가: 로그 헤더 h2 스타일 --- [사용자 요청] 그라데이션 적용 --- */
-        .log-header h2 {
-            margin: 0;
-            font-weight: 600;
-            /* color: #9b59b6; */ /* 그라데이션으로 대체 */
-            
-            background: linear-gradient(135deg, #71b7e6, #9b59b6);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
+        .back-button:hover {
+             background-color: #5a6268;
         }
 
 
-        .log-container {
-            display: flex;
-            gap: 20px;
-            flex-grow: 1;
-            overflow: hidden;
-        }
-
-        .log-section {
-            width: 50%;
-            /* border: 1px solid #ccc; */ /* <<< 스타일 변경: border 제거 */
-            /* <<< 스타일 추가: #mapArea 등과 동일한 스타일 적용 */
-            border: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            background-color: #fff;
-            box-sizing: border-box;
-            /* --- */
-            border-radius: 8px;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .log-section h3 {
-            margin-bottom: 10px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-             /* <<< 스타일 추가: 제목 색상 */
-            font-weight: 600;
-            color: #555;
-        }
-
-        .log-section .log-entries {
-            overflow-y: auto;
-            flex-grow: 1;
-        }
-
-        .full-log-entry {
-            padding: 8px 5px;
-            font-size: 14px;
-            border-bottom: 1px solid #f0f0f0;
-            line-height: 1.6; /* [코드 2] 스타일 유지 */
-        }
-
-        /* 커스텀 모달 스타일 */
-        #custom-modal {
+         /* 커스텀 모달 스타일 */
+         #custom-modal {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.5);
@@ -452,6 +159,7 @@
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
             max-width: 350px;
             text-align: center;
+            font-family: 'Poppins', sans-serif; /* 모달 폰트 */
         }
         .modal-content p {
             margin-bottom: 20px;
@@ -466,105 +174,46 @@
             cursor: pointer;
             font-size: 16px;
         }
-
-        /* 커스텀 오버레이(정보창) 스타일 */
-        .custom-overlay-info {
-            padding: 5px 10px;
-            font-size: 12px;
-            text-align: left;
-            background: white;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            border: 1px solid #ccc;
+        /* 동적 필드 스타일 */
+        .field-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
         }
-
-        /* 커스텀 마커 오버레이 스타일 */
-        .custom-marker-pin {
-            width: 32px;
-            height: 35px;
-            transform: scale(1.5);
-            transform-origin: bottom center;
+        .field-row input {
+            flex: 1;
         }
-
-        .custom-marker-dot {
-            width: 12px;
-            height: 12px;
-            transform: scale(1.8);
-            transform-origin: center center;
+        .field-row label {
+             width: 40px;
+             text-align: right;
+             font-size: 0.875rem;
+             color: #4A5568;
+             flex-shrink: 0; /* 라벨 너비 고정 */
+        }
+        #fields-container {
+             max-height: 25vh; /* 필드 영역 최대 높이 및 스크롤 */
+             overflow-y: auto;
+             border: 1px solid #e2e8f0; /* 테두리 추가 */
+             padding: 0.75rem; /* 안쪽 여백 */
+             border-radius: 0.375rem; /* 둥근 모서리 */
+             background-color: #fff; /* 배경색 */
         }
     </style>
-
-    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-
 </head>
-<body>
+<body class="min-h-screen"> <!-- [수정] bg-gray-100 제거 -->
 
-    <div id="login-container">
-        <h2>Admin Login</h2>
-        <form id="login-form">
-            <div class="input-group">
-                <label for="username">관리자 아이디</label>
-                <input type="text" id="username" placeholder="아이디를 입력하세요" required>
-            </div>
-            <div class="input-group">
-                <label for="password">관리자 비밀번호</label>
-                <input type="password" id="password" placeholder="비밀번호를 입력하세요" required>
-            </div>
-            <button type="submit">로그인</button>
-        </form>
-        <div class="extra-links">
-            <a href="#">비밀번호를 잊으셨나요?</a>
-        </div>
-    </div>
-
-    <div id="header" class="hidden">
-        <h1>Smart Doorlock Admin Page</h1>
+    <!-- 🌟 헤더 추가 (index.html 스타일) 🌟 -->
+    <div id="header" style="position: fixed; top: 0; left: 0; width: 100%; padding: 10px 20px; background-color: #f8f9fa; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 500;">
+        <!-- ▼▼▼ [사용자 요청] 스타일 적용 ▼▼▼ -->
+        <h1 style="margin: 0; font-size: 24px; background: linear-gradient(135deg, #71b7e6, #9b59b6); -webkit-background-clip: text; background-clip: text; color: transparent;">실시간 DB 편집기</h1>
+        <!-- ▲▲▲ [사용자 요청] 스타일 적용 완료 ▲▲▲ -->
         <div class="button-group">
-            <button id="logBtn" disabled>로그 보기</button>
-            <button id="newBtn">DB 편집</button>
-            <button id="logoutBtn">로그아웃</button>
+            <button id="backBtn" class="action-button back-button">&larr; 뒤로 가기</button>
         </div>
     </div>
 
-    <div id="main-content" class="hidden">
-        <div id="sidebar">
-            <div id="userInfo" class="hidden">
-                <div class="info-header">
-                    <h2>사용자 정보</h2>
-                    <button id="closeUserInfoBtn">X</button>
-                </div>
-                <div id="infoArea">사용자를 선택해주세요.</div>
-            </div>
-            <div id="userList">
-                <h2>사용자 목록</h2>
-            </div>
-        </div>
-        <div id="mapArea">
-            <h2>위치 추적</h2>
-            <p id="mapUser">사용자를 선택하면 이동 경로가 표시됩니다.</p>
-            <div id="map"></div> 
-        </div>
-    </div>
-
-    <div id="log-content" class="hidden">
-        <div class="log-header">
-            <button id="backToMapBtn">&larr; 지도로 돌아가기</button>
-            <h2 id="logUserTitle">전체 로그</h2>
-        </div>
-        <div class="log-container">
-            <div id="doorLockLogs" class="log-section">
-                <h3>도어락 로그</h3>
-                <div class="log-entries"></div>
-            </div>
-            <div id="appLogs" class="log-section">
-                <h3>애플리케이션 로그</h3>
-                <div class="log-entries"></div>
-            </div>
-        </div>
-    </div>
-
+    <!-- 커스텀 모달 (Alert 대체) -->
     <div id="custom-modal" class="hidden">
         <div class="modal-content">
             <p id="modal-message"></p>
@@ -572,708 +221,522 @@
         </div>
     </div>
 
-    <script>
-        // --- DOMContentLoaded 사용 ---
+    <div class="container mx-auto max-w-4xl p-4 md:p-8">
+        <!-- 🌟 bg-white 컨테이너 추가 (index.html 스타일) -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <!-- 기존 header 제거 (새 헤더로 대체) -->
+            <!-- <header class="bg-gradient-to-r from-green-600 to-green-800 p-6"> ... </header> -->
+
+            <div id="data-container" class="p-6 space-y-4 min-h-[calc(100vh-100px)]"> <!-- 높이 조정 -->
+                <!-- 로딩 상태 -->
+                <div id="loading-state" class="flex flex-col items-center justify-center text-gray-500 py-10">
+                    <div class="spinner mb-4"></div>
+                    <p>Firebase Realtime Database에 연결하고 데이터를 불러오는 중...</p>
+                </div>
+
+                <!-- 비어있는 상태 -->
+                <div id="empty-state" class="hidden flex flex-col items-center justify-center text-gray-500 py-10">
+                    <!-- SVG 아이콘 -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                    </svg>
+                    <p class="font-medium">데이터베이스가 비어 있습니다.</p>
+                    <p class="text-sm">Realtime Database 콘솔에서 데이터를 추가하거나 아래 편집기를 사용하세요.</p>
+                </div>
+
+                <!-- 데이터 편집 UI -->
+                <div id="edit-controls" class="hidden p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-3">
+                    <h2 class="text-lg font-semibold text-gray-700">데이터 편집</h2>
+                    <div>
+                        <label for="edit-path" class="block text-sm font-medium text-gray-600 mb-1">경로 (예: users/123456)</label>
+                        <input type="text" id="edit-path" class="form-input" placeholder="/">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">필드 (Key-Value)</label>
+                        <div id="fields-container" class="space-y-2">
+                             <p id="no-fields-msg" class="text-sm text-gray-400 italic">추가할 필드가 없습니다. '+ 필드 추가' 버튼을 누르세요.</p>
+                        </div>
+                        <button id="add-field-button" class="mt-2 action-button add-field-button">+ 필드 추가</button>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="set-button" class="action-button set-button flex-1">Set (추가/덮어쓰기)</button>
+                        <button id="update-button" class="action-button update-button flex-1">Update (수정)</button>
+                        <button id="delete-button" class="action-button delete-button flex-1">Delete (경로 삭제)</button>
+                    </div>
+                </div>
+
+                <!-- 데이터 표시 영역 -->
+                <!-- ▼▼▼ [수정] pre 태그를 div 태그로 변경 ▼▼▼ -->
+                <div id="json-viewer-container" class="hidden">
+                     <h2 class="text-lg font-semibold mb-2 text-gray-700">데이터베이스 내용:</h2>
+                     <div id="json-viewer"></div> 
+                </div>
+                <!-- ▲▲▲ [수정 완료] ▲▲▲ -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Firebase SDK 가져오기
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getDatabase, ref, onValue, set, remove, child, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        // DOM 요소 가져오기 (DOMContentLoaded 보장)
+        let dataContainer, jsonViewerContainer, jsonViewer, loadingState, emptyState, editControls, editPathInput, fieldsContainer, addFieldButton, noFieldsMsg, setButton, updateButton, deleteButton, backBtn;
+
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("DOMContentLoaded event fired.");
+             dataContainer = document.getElementById('data-container');
+             jsonViewerContainer = document.getElementById('json-viewer-container');
+             jsonViewer = document.getElementById('json-viewer');
+             loadingState = document.getElementById('loading-state');
+             emptyState = document.getElementById('empty-state');
+             editControls = document.getElementById('edit-controls');
+             editPathInput = document.getElementById('edit-path');
+             fieldsContainer = document.getElementById('fields-container');
+             addFieldButton = document.getElementById('add-field-button');
+             noFieldsMsg = document.getElementById('no-fields-msg');
+             setButton = document.getElementById('set-button');
+             updateButton = document.getElementById('update-button');
+             deleteButton = document.getElementById('delete-button');
+             backBtn = document.getElementById('backBtn'); // 뒤로가기 버튼
 
-            // --- 필수 DOM 요소 가져오기 ---
-            const loginContainer = document.getElementById('login-container');
-            const mainContent = document.getElementById('main-content');
-            const header = document.getElementById('header');
-            const logContent = document.getElementById('log-content');
-            const loginForm = document.getElementById('login-form');
-            const body = document.querySelector('body');
-            const closeUserInfoButton = document.getElementById('closeUserInfoBtn');
+             // --- 이벤트 리스너 연결 ---
+             if (addFieldButton) addFieldButton.addEventListener('click', addField);
+             if (setButton) setButton.addEventListener('click', handleSet);
+             if (updateButton) updateButton.addEventListener('click', handleUpdate);
+             if (deleteButton) deleteButton.addEventListener('click', handleDelete);
+             if (backBtn) backBtn.addEventListener('click', () => {
+                 window.history.back(); // 브라우저 뒤로가기 기능 사용
+             });
 
-            // --- sessionStorage 확인 및 초기 화면 설정 ---
-            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+             // 모달 닫기 버튼 리스너
+             const modalCloseButton = document.querySelector('#custom-modal button');
+             if (modalCloseButton) {
+                 modalCloseButton.addEventListener('click', () => {
+                     const modal = document.getElementById('custom-modal');
+                     if(modal) modal.style.display = 'none';
+                 });
+             }
 
-            if (isLoggedIn) {
-                // 이미 로그인 상태일 경우
-                console.log("Already logged in (sessionStorage). Showing main content.");
-                if (loginContainer) loginContainer.classList.add('hidden');
-                if (mainContent) mainContent.classList.remove('hidden');
-                if (header) header.classList.remove('hidden');
-                if (body) {
-                    // [코드 1 스타일 적용] body.style.background = '#fff'; 주석 처리
-                    /* body.style.background = '#fff'; */
-                    body.style.overflow = 'auto';
-                }
-                setupMainUIEventListeners();
-                if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
-                    kakao.maps.load(initMap);
-                } else {
-                    console.error("Kakao Maps SDK not ready on initial load (logged in state).");
-                    setTimeout(() => {
-                        if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
-                            kakao.maps.load(initMap);
-                        } else {
-                            customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
-                        }
-                    }, 1000);
-                }
-                setupInitialEventListeners(false);
+             // Firebase 초기화 및 리스너 설정 호출
+             initializeFirebase();
+        });
+
+
+        // 커스텀 alert 함수
+        function customAlert(message, isError = false) {
+            // DOM 요소는 DOMContentLoaded 후 접근 가능
+            const modal = document.getElementById('custom-modal');
+            const messageElem = document.getElementById('modal-message');
+            if (modal && messageElem) {
+                messageElem.textContent = message;
+                messageElem.style.color = isError ? 'red' : 'inherit';
+                modal.style.display = 'flex';
             } else {
-                // 로그인 상태가 아닐 경우
-                console.log("Not logged in. Showing login screen.");
-                if (loginContainer) loginContainer.classList.remove('hidden');
-                if (mainContent) mainContent.classList.add('hidden');
-                if (header) header.classList.add('hidden');
-                if (logContent) logContent.classList.add('hidden');
-                if (body) body.style.overflow = 'hidden';
-                setupInitialEventListeners(true);
+                console.error("Custom modal elements not found, using standard alert.");
+                alert(message);
             }
+        }
 
-            // 커스텀 alert 함수
-            function customAlert(message) {
-                const modal = document.getElementById('custom-modal');
-                const messageElem = document.getElementById('modal-message');
-                if (modal && messageElem) {
-                    messageElem.textContent = message;
-                    modal.style.display = 'flex';
-                } else {
-                    console.error("Custom modal elements not found, using standard alert.");
-                    alert(message);
+        // --- Firebase 연결 1단계: 설정 정보 ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
+            authDomain: "smartdoorlock-b4636.firebaseapp.com",
+            databaseURL: "https://smartdoorlock-b4636-default-rtdb.firebaseio.com",
+            projectId: "smartdoorlock-b4636",
+            storageBucket: "smartdoorlock-b4636.firebasestorage.app",
+            messagingSenderId: "104489505270",
+            appId: "1:104489505270:web:eb385c8f9c5dfd512077d7",
+            measurementId: "G-4TH9MB9WPM"
+        };
+
+        let db;
+
+        // --- [수정됨] 민감한 데이터 숨기는 함수 (이전과 동일) ---
+        function censorSensitiveData(obj) {
+            if (typeof obj !== 'object' || obj === null) {
+                return obj;
+            }
+            if (Array.isArray(obj)) {
+                return obj.map(item => censorSensitiveData(item));
+            }
+            const newObj = {};
+            for (const key in obj) {
+                if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                    if (key !== 'admin_pass' && key !== 'password') {
+                        newObj[key] = censorSensitiveData(obj[key]);
+                    }
                 }
             }
+            return newObj;
+        }
 
-            // ▼▼▼ Firebase 설정 정보 ▼▼▼
-            const firebaseConfig = {
-                apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
-                authDomain: "smartdoorlock-b4636.firebaseapp.com",
-                databaseURL: "https://smartdoorlock-b4636-default-rtdb.firebaseio.com",
-                projectId: "smartdoorlock-b4636",
-                storageBucket: "smartdoorlock-b4636.firebasestorage.app",
-                messagingSenderId: "104489505270",
-                appId: "1:104489505270:web:eb385c8f9c5dfd512077d7",
-                measurementId: "G-4TH9MB9WPM"
-            };
-
-            // 전역 변수
-            let database;
-            let map;
-            let markers = [];
-            let currentPolyline;
-            let selectedLogMarker;
-            let selectedUserId = null;
-
-            // --- Firebase 앱 초기화 ---
+        // --- Firebase 초기화 및 리스너 설정 함수 ---
+        function initializeFirebase() {
             try {
-                if (typeof firebase === 'undefined' || !firebase.initializeApp) {
-                    throw new Error("Firebase SDK not loaded correctly.");
-                }
-                firebase.initializeApp(firebaseConfig);
-                database = firebase.database();
-                console.log("Firebase initialized successfully.");
+                const app = initializeApp(firebaseConfig);
+                db = getDatabase(app);
+                console.log("Firebase initialized.");
+                setupDataListener();
             } catch (e) {
-                console.error("Firebase 초기화 오류:", e);
-                customAlert("Firebase 초기화에 실패했습니다. 콘솔을 확인하세요.");
+                console.error("Firebase initialization error:", e);
+                if (loadingState) {
+                     loadingState.innerHTML = `<p class="text-red-500">Firebase 초기화 오류. F12를 눌러 콘솔을 확인하세요.</p>`;
+                } else {
+                     alert("Firebase 초기화 오류. 콘솔을 확인하세요.");
+                }
+            }
+        }
+
+        // ▼▼▼ [추가] JSON 트리를 그리는 함수들 ▼▼▼
+
+        /**
+         * 재귀적으로 JSON 데이터를 HTML 트리 뷰로 변환합니다.
+         * @param {any} data - 표시할 데이터
+         * @param {HTMLElement} container - 트리를 삽입할 HTML 요소
+         */
+        function buildJsonTree(data, container) {
+            container.innerHTML = ''; // 이전 뷰 지우기
+
+            if (data === null || data === undefined) {
+                 container.innerHTML = '<span class="json-value-null">null</span>';
+                 return;
+            }
+
+            const rootUl = document.createElement('ul');
+            rootUl.className = 'json-tree'; // 최상위 ul에는 padding-left가 없습니다 (CSS에서).
+
+            // 데이터 타입에 따라 분기
+            if (Array.isArray(data)) {
+                // 배열 처리
+                data.forEach((item, index) => {
+                    rootUl.appendChild(createTreeItem(index, item));
+                });
+            } else if (typeof data === 'object') {
+                // 객체 처리
+                for (const key in data) {
+                    if (Object.prototype.hasOwnProperty.call(data, key)) {
+                        rootUl.appendChild(createTreeItem(key, data[key]));
+                    }
+                }
+            } else {
+                // 데이터가 객체나 배열이 아닌 단일 값인 경우 (예: 루트가 문자열)
+                 const li = document.createElement('li');
+                 li.innerHTML = `<span class="json-value-string">"${data}"</span>`; // 예시
+                 rootUl.appendChild(li);
+            }
+            container.appendChild(rootUl);
+        }
+
+        /**
+         * JSON 트리의 개별 항목(li)을 생성합니다.
+         * @param {string|number} key - 키 또는 인덱스
+         * @param {any} value - 값
+         * @returns {HTMLLIElement}
+         */
+        function createTreeItem(key, value) {
+            const li = document.createElement('li');
+            
+            const isExpandable = (typeof value === 'object' && value !== null && Object.keys(value).length > 0);
+            
+            // 1. 토글러 (펼치기/접기 화살표)
+            const toggle = document.createElement('span');
+            if (isExpandable) {
+                toggle.className = 'json-toggle';
+                toggle.textContent = '►'; // 접힌 상태
+            } else {
+                toggle.className = 'json-toggle-placeholder'; // 정렬을 위한 빈 공간
+            }
+            li.appendChild(toggle);
+
+            // 2. 키 (예: "users": )
+            const keySpan = document.createElement('span');
+            keySpan.className = 'json-key';
+            keySpan.textContent = `${key}: `;
+            li.appendChild(keySpan);
+
+            // 3. 값 (단순 값이거나, 중첩 리스트)
+            if (isExpandable) {
+                // 값 요약 (예: {3 keys} 또는 [2 items])
+                const summary = document.createElement('span');
+                summary.className = 'json-summary';
+                if (Array.isArray(value)) {
+                    summary.textContent = `[${value.length} items]`;
+                } else {
+                    summary.textContent = `{${Object.keys(value).length} keys}`;
+                }
+                li.appendChild(summary);
+
+                // 중첩 리스트 (ul) 생성 - 기본은 숨김
+                const nestedUl = document.createElement('ul');
+                nestedUl.className = 'json-nested hidden'; // 'hidden' 클래스로 숨김
+                
+                // 재귀적으로 하위 항목들 생성
+                if (Array.isArray(value)) {
+                    value.forEach((item, index) => {
+                        nestedUl.appendChild(createTreeItem(index, item));
+                    });
+                } else {
+                    for (const subKey in value) {
+                        if (Object.prototype.hasOwnProperty.call(value, subKey)) {
+                            nestedUl.appendChild(createTreeItem(subKey, value[subKey]));
+                        }
+                    }
+                }
+                li.appendChild(nestedUl);
+
+                // 토글 이벤트 리스너 (키 또는 화살표 클릭 시)
+                const toggleFn = () => {
+                    nestedUl.classList.toggle('hidden');
+                    summary.classList.toggle('hidden');
+                    toggle.classList.toggle('expanded');
+                    toggle.textContent = toggle.classList.contains('expanded') ? '▼' : '►';
+                };
+
+                toggle.addEventListener('click', toggleFn);
+                keySpan.addEventListener('click', toggleFn); // 키를 클릭해도 토글
+
+            } else {
+                // 단순 값 표시 (문자열, 숫자, boolean, null)
+                const valueSpan = document.createElement('span');
+                let valueType = typeof value;
+                let displayValue = value;
+
+                if (value === null) {
+                    valueType = 'null';
+                    displayValue = 'null';
+                } else if (valueType === 'string') {
+                    displayValue = `"${value}"`;
+                }
+
+                valueSpan.className = `json-value json-value-${valueType}`;
+                valueSpan.textContent = displayValue;
+                li.appendChild(valueSpan);
+            }
+
+            return li;
+        }
+
+        // ▲▲▲ [추가 완료] ▲▲▲
+
+
+        /**
+         * 데이터베이스 루트를 실시간으로 감시하는 리스너를 설정합니다.
+         */
+        function setupDataListener() {
+            const dbRootRef = ref(db, '/');
+            console.log(`Listening for data at root path '/'`);
+
+            onValue(dbRootRef, (snapshot) => {
+                if (loadingState) loadingState.classList.add('hidden');
+                if (editControls) editControls.classList.remove('hidden');
+                const data = snapshot.val();
+
+                if (data) {
+                    if (emptyState) emptyState.classList.add('hidden');
+                    if (jsonViewerContainer) jsonViewerContainer.classList.remove('hidden');
+                    
+                    // ▼▼▼ [수정] JSON.stringify 대신 buildJsonTree 호출 ▼▼▼
+                    const censoredData = censorSensitiveData(data); // 민감 데이터 필터링
+                    if (jsonViewer) {
+                        // jsonViewer.textContent = JSON.stringify(censoredData, null, 2); // [삭제]
+                        buildJsonTree(censoredData, jsonViewer); // [추가]
+                    }
+                    // ▲▲▲ [수정 완료] ▲▲▲
+
+                } else {
+                    if (jsonViewerContainer) jsonViewerContainer.classList.add('hidden');
+                    if (emptyState) emptyState.classList.remove('hidden');
+                    if (jsonViewer) jsonViewer.innerHTML = ''; // [수정] innerHTML로 클리어
+                }
+
+            }, (error) => {
+                console.error("Error listening to database:", error);
+                if (loadingState) loadingState.classList.remove('hidden');
+                if (editControls) editControls.classList.add('hidden');
+                if (emptyState) emptyState.classList.add('hidden');
+                if (jsonViewerContainer) jsonViewerContainer.classList.add('hidden');
+
+                const errorMsg = (error.code === 'PERMISSION_DENIED')
+                    ? `<p class="text-red-500">데이터 접근 권한이 없습니다 (PERMISSION_DENIED).<br>Firebase Realtime Database의 '규칙' 탭에서 루트 경로('.read' 및 '.write')가 true로 설정되어 있는지 확인하세요.</p>`
+                    : `<p class="text-red-500">데이터를 불러오는 중 오류가 발생했습니다: ${error.message}</p>`;
+
+                if (loadingState) loadingState.innerHTML = errorMsg;
+                else customAlert(error.message, true); // 로딩 상태 없으면 모달 사용
+            });
+        }
+
+        // --- 편집 기능 함수 ---
+
+        /**
+         * 새 필드 입력 행을 추가하는 함수
+         */
+        function addField() {
+             if (noFieldsMsg) noFieldsMsg.classList.add('hidden');
+             const fieldRow = document.createElement('div');
+             fieldRow.className = 'field-row';
+
+             fieldRow.innerHTML = `
+                 <label>키:</label>
+                 <input type="text" class="form-input field-key" placeholder="필드 이름">
+                 <label>값:</label>
+                 <input type="text" class="form-input field-value" placeholder="값 (숫자, true/false, null 가능)">
+                 <button class="action-button remove-field-button">X</button>
+             `;
+
+             const removeButton = fieldRow.querySelector('.remove-field-button');
+             removeButton.addEventListener('click', () => {
+                 fieldRow.remove();
+                 if (fieldsContainer && fieldsContainer.querySelectorAll('.field-row').length === 0 && noFieldsMsg) {
+                     noFieldsMsg.classList.remove('hidden');
+                 }
+             });
+
+             if (fieldsContainer) fieldsContainer.appendChild(fieldRow);
+        }
+
+        /**
+         * 입력 필드의 값을 타입에 맞게 변환하는 함수
+         */
+        function getValueFromInput(valueString) {
+            const trimmedValue = valueString.trim();
+            if (!isNaN(trimmedValue) && trimmedValue !== '') {
+                return parseFloat(trimmedValue);
+            }
+            if (trimmedValue.toLowerCase() === 'true') return true;
+            if (trimmedValue.toLowerCase() === 'false') return false;
+            if (trimmedValue.toLowerCase() === 'null') return null;
+            return trimmedValue; // 기본값 문자열
+        }
+
+        /**
+         * 동적 필드에서 데이터를 수집하여 객체로 만드는 함수
+         */
+        function collectDataFromFields() {
+            const dataObject = {};
+            const fieldRows = fieldsContainer?.querySelectorAll('.field-row');
+            let hasError = false;
+
+            if (!fieldRows || fieldRows.length === 0) {
+                 customAlert('추가/수정할 필드가 없습니다. 먼저 필드를 추가해주세요.', true);
+                 return null;
+            }
+
+            fieldRows.forEach(row => {
+                 if (hasError) return; // 에러 발생 시 더 이상 처리 안 함
+                const keyInput = row.querySelector('.field-key');
+                const valueInput = row.querySelector('.field-value');
+                const key = keyInput.value.trim();
+
+                if (!key) {
+                    customAlert('모든 필드의 키(이름)를 입력해주세요.', true);
+                    keyInput.focus();
+                    hasError = true;
+                    return;
+                }
+                 if (/[.#$\[\]]/.test(key)) {
+                     customAlert(`키 "${key}"에 유효하지 않은 문자(. # $ [ ])가 포함되어 있습니다.`, true);
+                     keyInput.focus();
+                     hasError = true;
+                     return;
+                 }
+
+                const value = getValueFromInput(valueInput.value);
+                dataObject[key] = value;
+            });
+
+            return hasError ? null : dataObject;
+        }
+
+
+        /**
+         * 'Set (추가/덮어쓰기)' 버튼 클릭 핸들러
+         */
+        function handleSet() {
+            const path = editPathInput.value.trim();
+            const dataToSet = collectDataFromFields();
+            if (dataToSet === null) return;
+
+            console.log(`Setting path '${path || '/'}' with value:`, dataToSet);
+            if (setButton) setButton.disabled = true;
+
+            set(ref(db, path || '/'), dataToSet)
+                .then(() => {
+                    customAlert(`경로 '${path || '/'}'에 데이터 추가/덮어쓰기 성공!`);
+                     // 필드 초기화
+                     if (fieldsContainer) fieldsContainer.innerHTML = '';
+                     if (noFieldsMsg) noFieldsMsg.classList.remove('hidden');
+                })
+                .catch((error) => {
+                    console.error("Error setting data:", error);
+                    customAlert(`데이터 추가/덮어쓰기 실패: ${error.message}`, true);
+                })
+                .finally(() => {
+                    if (setButton) setButton.disabled = false;
+                });
+        }
+
+        /**
+         * 'Update (수정)' 버튼 클릭 핸들러
+         */
+        function handleUpdate() {
+            const path = editPathInput.value.trim();
+            if (path === '' || path === '/') {
+                customAlert('수정할 경로를 입력해주세요. 루트(/) 경로는 수정할 수 없습니다.', true);
+                return;
+            }
+            const dataToUpdate = collectDataFromFields();
+            if (dataToUpdate === null) return;
+
+            console.log(`Updating path '${path}' with value:`, dataToUpdate);
+            if (updateButton) updateButton.disabled = true;
+            update(ref(db, path), dataToUpdate)
+                .then(() => {
+                    customAlert(`경로 '${path}'의 데이터 수정 성공!`);
+                     // 필드 초기화
+                     if (fieldsContainer) fieldsContainer.innerHTML = '';
+                     if (noFieldsMsg) noFieldsMsg.classList.remove('hidden');
+                })
+                .catch((error) => {
+                    console.error("Error updating data:", error);
+                    customAlert(`데이터 수정 실패: ${error.message}`, true);
+                })
+                .finally(() => {
+                    if (updateButton) updateButton.disabled = false;
+                });
+        }
+
+
+        /**
+         * 'Delete (경로 삭제)' 버튼 클릭 핸들러
+         */
+        function handleDelete() {
+            const path = editPathInput.value.trim();
+            if (path === '' || path === '/') {
+                customAlert('삭제할 경로를 입력해주세요. 루트(/) 경로는 삭제할 수 없습니다.', true);
                 return;
             }
 
-            // --- 지도 초기화 함수 ---
-            function initMap() {
-                console.log("initMap called.");
-                if (typeof kakao === 'undefined' || !kakao.maps || !kakao.maps.Map) {
-                    console.error("Kakao Maps SDK not loaded correctly.");
-                    customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
-                    return;
-                }
-                try {
-                    const container = document.getElementById('map');
-                    if (!container) {
-                        console.error("Map container not found!");
-                        customAlert("지도 표시 영역을 찾을 수 없습니다.");
-                        return;
-                    }
-                    map = new kakao.maps.Map(container, {
-                        center: new kakao.maps.LatLng(37.566826, 126.9786567),
-                        level: 4
-                    });
-                    map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
-                    map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
-                    loadUserList();
-                } catch (mapError) {
-                    console.error("지도 초기화 오류:", mapError);
-                    customAlert("지도 초기화 중 오류가 발생했습니다.");
-                }
-            }
-
-            // --- 사용자 목록 로드 함수 ---
-            function loadUserList() {
-                console.log("loadUserList called.");
-                if (!database) {
-                    console.error("Firebase Database not initialized (loadUserList)");
-                    return;
-                }
-                const userListDiv = document.getElementById('userList');
-                const h2 = userListDiv?.querySelector('h2');
-                if (!h2 || !userListDiv) {
-                    console.error("userListDiv or h2 not found.");
-                    return;
-                }
-                
-                const usersRef = database.ref('users');
-
-                usersRef.once('value').then((snapshot) => {
-                    const existingUsers = userListDiv.querySelectorAll('.user');
-                    existingUsers.forEach(el => el.remove());
-
-                    if (!snapshot.exists()) {
-                        console.warn("Firebase 'users' 경로에 사용자 목록 데이터가 없습니다.");
-                    }
-
-                    snapshot.forEach((childSnapshot) => {
-                        const userId = childSnapshot.key;
-                        const userElement = document.createElement('div');
-                        userElement.className = 'user';
-                        userElement.dataset.name = userId;
-                        userElement.textContent = userId;
-                        userElement.addEventListener('click', () => selectUser(userId));
-                        h2.insertAdjacentElement('afterend', userElement);
-                    });
-                    console.log("User list loaded.");
-                }).catch(error => {
-                    console.error("User list load error:", error);
-                    customAlert("사용자 목록을 불러오는 데 실패했습니다.");
+            console.log(`Removing path '${path}'`);
+            if (deleteButton) deleteButton.disabled = true;
+            remove(ref(db, path))
+                .then(() => {
+                    customAlert(`경로 '${path}'의 데이터 삭제 성공!`);
+                     // 필드 및 경로 초기화
+                     if (fieldsContainer) fieldsContainer.innerHTML = '';
+                     if (noFieldsMsg) noFieldsMsg.classList.remove('hidden');
+                     if (editPathInput) editPathInput.value = '';
+                })
+                .catch((error) => {
+                    console.error("Error removing data:", error);
+                    customAlert(`데이터 삭제 실패: ${error.message}`, true);
+                })
+                .finally(() => {
+                    if (deleteButton) deleteButton.disabled = false;
                 });
-            }
+        }
 
-            // --- 지도 및 정보 초기화 함수 ---
-            function clearMapAndInfo() {
-                console.log("clearMapAndInfo called.");
-                markers.forEach(marker => {
-                    if (marker.customOverlay) {
-                        marker.customOverlay.setMap(null);
-                    }
-                    marker.setMap(null);
-                });
-                markers = [];
-
-                if (currentPolyline) {
-                    currentPolyline.setMap(null);
-                    currentPolyline = null;
-                }
-
-                if (selectedLogMarker) {
-                    selectedLogMarker.setMap(null);
-                    if (selectedLogMarker.infoBox) {
-                        selectedLogMarker.infoBox.setMap(null);
-                    }
-                    selectedLogMarker = null;
-                }
-
-                const infoArea = document.getElementById('infoArea');
-                const userInfoDiv = document.getElementById('userInfo');
-                if (infoArea) infoArea.innerHTML = '';
-                if (userInfoDiv) userInfoDiv.classList.add('hidden');
-
-                const logBtnElem = document.getElementById('logBtn');
-                if (logBtnElem) logBtnElem.disabled = true;
-
-                const mapUserElem = document.getElementById('mapUser');
-                if (mapUserElem) mapUserElem.textContent = '사용자를 선택하면 이동 경로가 표시됩니다.';
-
-                selectedUserId = null;
-            }
-
-
-            // --- 위치 마커 표시 함수 ---
-            function showLocationOnMap(lat, lng) {
-                console.log("showLocationOnMap called:", { lat, lng });
-                if (!map) {
-                    customAlert("지도가 아직 로드되지 않았습니다.");
-                    return;
-                }
-                if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) {
-                    console.error("Invalid coordinates:", lat, lng);
-                    customAlert("잘못된 위치 정보입니다.");
-                    return;
-                }
-                if (selectedLogMarker) {
-                    selectedLogMarker.setMap(null);
-                    if (selectedLogMarker.infoBox) {
-                        selectedLogMarker.infoBox.setMap(null);
-                    }
-                }
-                const position = new kakao.maps.LatLng(lat, lng);
-
-                // 정보창 오버레이
-                const overlayContent = `<div class="custom-overlay-info">
-                                            <strong>로그 위치</strong><br>
-                                            위도: ${lat.toFixed(6)}<br>
-                                            경도: ${lng.toFixed(6)}
-                                           </div>`;
-                
-                const infoOverlay = new kakao.maps.CustomOverlay({
-                    content: overlayContent,
-                    position: position,
-                    xAnchor: 0.5, yAnchor: 2.5,
-                    zIndex: 3
-                });
-
-                // 마커 DOM
-                const markerImg = document.createElement('img');
-                markerImg.src = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png';
-                markerImg.className = 'custom-marker-pin';
-                markerImg.style.cursor = 'pointer';
-
-                markerImg.addEventListener('mouseover', () => { infoOverlay.setMap(map); });
-                markerImg.addEventListener('mouseout', () => { infoOverlay.setMap(null); });
-                
-                // 마커 CustomOverlay
-                selectedLogMarker = new kakao.maps.CustomOverlay({
-                    position: position,
-                    content: markerImg,
-                    yAnchor: 1
-                });
-
-                selectedLogMarker.infoBox = infoOverlay; 
-                selectedLogMarker.setMap(map);
-                map.panTo(position);
-            }
-
-            // --- [코드 2 로직 유지] 사용자 선택 함수 ---
-            function selectUser(userId) {
-                console.log("selectUser called with userId:", userId);
-                clearMapAndInfo();
-                selectedUserId = userId;
-                const logBtnElem = document.getElementById('logBtn');
-                if (logBtnElem) logBtnElem.disabled = false;
-
-                const infoArea = document.getElementById('infoArea');
-                const userInfoDiv = document.getElementById('userInfo');
-
-                if (infoArea && userInfoDiv) {
-                    infoArea.innerHTML = `<p><strong>사용자 ID:</strong> ${userId}</p><h3>전체 위치 기록</h3><div class="log-list"></div>`;
-                    userInfoDiv.classList.remove('hidden');
-                } else {
-                    console.error("infoArea or userInfo element not found in selectUser.");
-                    return;
-                }
-
-                if (!database) {
-                    console.error("Firebase Database not initialized (selectUser)");
-                    return;
-                }
-
-                // [코드 2 로직] 'users/{userId}/location_logs' 경로 사용
-                const locationsRef = database.ref('users/' + userId + '/location_logs');
-
-                locationsRef.once('value').then((snapshot) => {
-                    const logListDiv = infoArea.querySelector('.log-list');
-                    if (!logListDiv) return;
-                    logListDiv.innerHTML = '';
-                    
-                    if (!snapshot.exists()) {
-                        logListDiv.innerHTML = '표시할 위치 기록이 없습니다.';
-                    } else {
-                        const logs = [];
-                        snapshot.forEach(childSnapshot => {
-                            const logData = childSnapshot.val();
-                            logs.push(logData);
-                        });
-                        
-                        logs.reverse().forEach((pos) => { // 최신순
-                            if (!pos || typeof pos !== 'object' || pos.latitude == null || pos.longitude == null) {
-                                console.warn("Skipping invalid log entry (location):", pos); 
-                                return;
-                            }
-                            const parsedLat = parseFloat(pos.latitude);
-                            const parsedLng = parseFloat(pos.longitude);
-                            if (isNaN(parsedLat) || isNaN(parsedLng)) {
-                                console.warn("Skipping log with invalid coordinates (location):", pos); 
-                                return;
-                            }
-
-                            const logEntry = document.createElement('div');
-                            logEntry.className = 'log-entry';
-                            let displayText = `위도: ${parsedLat.toFixed(6)}<br>경도: ${parsedLng.toFixed(6)}`;
-                            if (pos.altitude !== undefined && pos.altitude !== null) {
-                                const parsedAlt = parseFloat(pos.altitude);
-                                if (!isNaN(parsedAlt)) {
-                                    displayText += `<br>고도: ${parsedAlt.toFixed(2)}m`;
-                                }
-                            }
-                            logEntry.innerHTML = displayText;
-                            logEntry.addEventListener('click', () => showLocationOnMap(parsedLat, parsedLng));
-                            logListDiv.appendChild(logEntry);
-                        });
-                    }
-                }).catch(error => {
-                    console.error("Error loading location logs:", error);
-                    customAlert("위치 기록 로드 중 오류 발생");
-                });
-
-                // [코드 2 로직] 최근 10개 위치 로드
-                const recentLocationsQuery = database.ref('users/' + userId + '/location_logs')
-                                                       .limitToLast(10);
-                                                       
-                recentLocationsQuery.once('value').then((snapshot) => {
-                    const mapUserElem = document.getElementById('mapUser');
-                    if (!mapUserElem) return;
-
-                    if (!snapshot.exists()) {
-                        mapUserElem.textContent = `${userId} 사용자의 최근 위치 기록이 없습니다.`;
-                        return;
-                    }
-
-                    mapUserElem.textContent = `${userId}의 최근 이동 경로 (최대 10개)를 표시합니다.`;
-                    let path = [];
-                    const bounds = new kakao.maps.LatLngBounds();
-
-                    snapshot.forEach((snap) => {
-                        const pos = snap.val();
-                        if (!pos || typeof pos !== 'object' || pos.latitude == null || pos.longitude == null) return; 
-
-                        const parsedLat = parseFloat(pos.latitude);
-                        const parsedLng = parseFloat(pos.longitude);
-                        if (isNaN(parsedLat) || isNaN(parsedLng)) return;
-
-                        const latlng = new kakao.maps.LatLng(parsedLat, parsedLng);
-                        path.push(latlng);
-
-                        const timestamp = pos.timestamp || Date.now();
-                        let dateObj = new Date(timestamp);
-                        if (isNaN(dateObj.getTime())) {
-                            dateObj = new Date();
-                        }
-                        const formattedTime = dateObj.toLocaleString('ko-KR', {
-                            year: 'numeric', month: '2-digit', day: '2-digit',
-                            hour: '2-digit', minute: '2-digit', second: '2-digit'
-                        });
-
-                        const overlayContent = `<div class="custom-overlay-info">
-                                                    <strong>${formattedTime}</strong><br>
-                                                    위도: ${parsedLat.toFixed(6)}<br>
-                                                    경도: ${parsedLng.toFixed(6)}
-                                                </div>`;
-
-                        const infoOverlay = new kakao.maps.CustomOverlay({
-                            content: overlayContent,
-                            position: latlng,
-                            xAnchor: 0.5, yAnchor: 2.5, zIndex: 3
-                        });
-                        
-                        const dotImg = document.createElement('img');
-                        dotImg.src = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_dot.png';
-                        dotImg.className = 'custom-marker-dot';
-                        dotImg.style.cursor = 'pointer';
-
-                        dotImg.addEventListener('mouseover', () => { infoOverlay.setMap(map); });
-                        dotImg.addEventListener('mouseout', () => { infoOverlay.setMap(null); });
-
-                        const pathPointOverlay = new kakao.maps.CustomOverlay({
-                            position: latlng,
-                            content: dotImg,
-                            xAnchor: 0.5,
-                            yAnchor: 0.5
-                        });
-                        pathPointOverlay.setMap(map);
-                        
-                        pathPointOverlay.customOverlay = infoOverlay; 
-                        markers.push(pathPointOverlay);
-                        bounds.extend(latlng);
-                    });
-
-                    if (path.length > 0 && map) {
-                        currentPolyline = new kakao.maps.Polyline({
-                            path: path,
-                            strokeWeight: 4,
-                            strokeColor: '#0000FF',
-                            strokeOpacity: 0.8,
-                            strokeStyle: 'solid',
-                            map: map
-                        });
-                        map.setBounds(bounds);
-                    }
-                }).catch(error => {
-                    console.error("Error loading recent locations:", error);
-                    customAlert("최근 위치 로드 중 오류 발생");
-                });
-            }
-
-            // --- 사용자 정보 닫기 함수 ---
-            function closeUserInfo() {
-                console.log("closeUserInfo called.");
-                clearMapAndInfo();
-            }
-
-            // --- [코드 2 기능 유지] 모든 로그 로드 함수 (새로운 쿼리 방식) ---
-            function loadAllLogs(userId) {
-                console.log("loadAllLogs 함수 실행됨. UserID:", userId);
-
-                if (!database) {
-                    console.error("Firebase Database not initialized (loadAllLogs)");
-                    return;
-                }
-                const doorLockLogContainer = document.querySelector('#doorLockLogs .log-entries');
-                const appLogContainer = document.querySelector('#appLogs .log-entries');
-                const logUserTitle = document.getElementById('logUserTitle');
-
-                if (!doorLockLogContainer || !appLogContainer || !logUserTitle) {
-                    console.error("필수 HTML 요소(로그 컨테이너 등)를 찾지 못했습니다.");
-                    return;
-                }
-
-                logUserTitle.textContent = `${userId} 사용자의 전체 로그`;
-                doorLockLogContainer.innerHTML = '<em>로딩 중...</em>';
-                appLogContainer.innerHTML = '<em>로딩 중...</em>';
-
-                // ▼▼▼ [코드 2 기능] 도어락 로그 (새 쿼리 경로 적용) ▼▼▼
-                const doorLockRef = database.ref('doorlock_logs') 
-                                            .orderByKey()
-                                            .startAt(userId)
-                                            .endAt(userId + "\uf8ff");
-                // ▲▲▲ [코드 2 기능] ▲▲▲
-                
-                console.log("요청하는 DB 경로 (도어락):", doorLockRef.toString());
-
-                doorLockRef.once('value').then((snapshot) => {
-                    console.log("Firebase로부터 받은 도어락 응답 (snapshot.exists()):", snapshot.exists());
-                    doorLockLogContainer.innerHTML = '';
-                    if (!snapshot.exists()) {
-                        doorLockLogContainer.innerHTML = '표시할 도어락 로그가 없습니다.';
-                    } else {
-                        const logs = [];
-                        snapshot.forEach(child => {
-                            const logData = child.val();
-                            logs.push(logData);
-                        });
-                        logs.reverse().forEach(log => {
-                            const entry = document.createElement('div');
-                            entry.className = 'full-log-entry';
-                            
-                            // [코드 2 기능] 날짜/시간 변환 로직
-                            let formattedTime;
-                            if (typeof log.timestamp === 'number') {
-                                formattedTime = new Date(log.timestamp).toLocaleString('ko-KR');
-                            } else if (typeof log.timestamp === 'string') {
-                                formattedTime = new Date(log.timestamp.replace(" ", "T")).toLocaleString('ko-KR');
-                            } else {
-                                formattedTime = '시간 없음';
-                            }
-                            
-                            // [코드 2 기능] method와 status 필드 사용
-                            const methodStr = log.method || '방식 모름';
-                            const statusStr = log.status || '상태 모름';
-
-                            entry.innerHTML = `<strong>[${formattedTime}]</strong><br>
-                                               <span style="margin-left: 10px;">방식: ${methodStr}</span><br>
-                                               <span style="margin-left: 10px;">상태: ${statusStr}</span>`; 
-                            doorLockLogContainer.appendChild(entry);
-                        });
-                    }
-                }).catch(error => {
-                    console.error("도어락 로그 로드 중 Firebase 오류:", error);
-                    doorLockLogContainer.innerHTML = '<span style="color: red;">도어락 로그 로드 실패</span>';
-                });
-
-                // ▼▼▼ [코드 2 기능] 앱 로그 ('users/{userId}/app_logs' 경로) ▼▼▼
-                const appLogRef = database.ref('users/' + userId + '/app_logs');
-                // ▲▲▲ [코드 2 기능] ▲▲▲
-
-                console.log("요청하는 DB 경로 (앱):", appLogRef.toString());
-
-                appLogRef.once('value').then((snapshot) => {
-                    console.log("Firebase로부터 받은 앱 응답 (snapshot.exists()):", snapshot.exists());
-                    appLogContainer.innerHTML = '';
-                    if (!snapshot.exists()) {
-                        appLogContainer.innerHTML = '표시할 앱 로그가 없습니다.';
-                    } else {
-                        const logs = [];
-                        snapshot.forEach(child => {
-                            logs.push(child.val());
-                        });
-                        logs.reverse().forEach(log => {
-                            const entry = document.createElement('div');
-                            entry.className = 'full-log-entry';
-                            
-                            let dateObj;
-                            if (typeof log.timestamp === 'number') {
-                                dateObj = new Date(log.timestamp);
-                            } else if (typeof log.timestamp === 'string') {
-                                dateObj = new Date(log.timestamp.replace(" ", "T"));
-                            } else {
-                                dateObj = new Date();
-                            }
-                            if (isNaN(dateObj.getTime())) { dateObj = new Date(); }
-                            const formattedTime = dateObj.toLocaleString('ko-KR');
-
-                            entry.innerHTML = `<strong>[${formattedTime}]</strong>: ${log.event || 'N/A'}`;
-                            appLogContainer.appendChild(entry);
-                        });
-                    }
-                }).catch(error => {
-                    console.error("앱 로그 로드 중 Firebase 오류:", error);
-                    appLogContainer.innerHTML = '<span style="color: red;">앱 로그 로드 실패</span>';
-                });
-            }
-
-
-            // --- 이벤트 핸들러 함수 정의 ---
-            function handleLoginSubmit(e) {
-                e.preventDefault();
-                console.log("Login submitted.");
-                const usernameInput = document.getElementById('username')?.value.trim();
-                const passwordInput = document.getElementById('password')?.value.trim();
-
-                if (!usernameInput || !passwordInput) {
-                    customAlert('아이디와 비밀번호를 올바르게 입력해주세요.');
-                    return;
-                }
-
-                if (!database) {
-                    console.error("Firebase Database not initialized (Login Submit)");
-                    customAlert("데이터베이스 연결 오류");
-                    return;
-                }
-                const adminRef = database.ref('admin_pass');
-
-                adminRef.once('value').then((snapshot) => {
-                    let loginSuccess = false;
-                    if (snapshot.exists()) {
-                        snapshot.forEach((childSnapshot) => {
-                            const adminData = childSnapshot.val();
-                            if (adminData && adminData.adminId === usernameInput && adminData.password === passwordInput) {
-                                loginSuccess = true;
-                                return true;
-                            }
-                        });
-                    }
-
-                    if (loginSuccess) {
-                        console.log("Login successful.");
-                        sessionStorage.setItem('isLoggedIn', 'true');
-
-                        if (loginContainer) loginContainer.classList.add('hidden');
-                        if (mainContent) mainContent.classList.remove('hidden');
-                        if (header) header.classList.remove('hidden');
-                        if (body) {
-                            // [코드 1 스타일 적용] body.style.background = '#fff'; 주석 처리
-                            /* body.style.background = '#fff'; */
-                            body.style.overflow = 'auto';
-                        }
-
-                        if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
-                            console.log("Loading Kakao Maps...");
-                            kakao.maps.load(initMap);
-                        } else {
-                            console.error("Kakao Maps SDK not loaded or load function unavailable.");
-                            customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
-                        }
-                        setupMainUIEventListeners();
-                    } else {
-                        console.log("Login failed.");
-                        customAlert('아이디 또는 비밀번호가 일치하지 않습니다.');
-                    }
-                }).catch(error => {
-                    console.error("Login processing error:", error);
-                    customAlert("로그인 중 오류가 발생했습니다.");
-                });
-            }
-
-            function handleLogout() {
-                console.log("Logout clicked.");
-                sessionStorage.removeItem('isLoggedIn');
-                window.location.reload();
-            }
-
-            function handleLogView() {
-                console.log("Log view clicked.");
-                const currentMainContent = document.getElementById('main-content');
-                const currentLogContent = document.getElementById('log-content');
-
-                if (selectedUserId) {
-                    if (currentMainContent) currentMainContent.classList.add('hidden');
-                    if (currentLogContent) currentLogContent.classList.remove('hidden');
-
-                    const backBtn = document.getElementById('backToMapBtn');
-                    if (backBtn) {
-                        backBtn.removeEventListener('click', handleBackToMap);
-                        backBtn.addEventListener('click', handleBackToMap);
-                        console.log("Back to Map listener added/updated in handleLogView.");
-                    } else {
-                        console.error("backToMapBtn element not found in handleLogView!");
-                    }
-                    loadAllLogs(selectedUserId); // [코드 2 기능]
-                } else {
-                    customAlert("먼저 사용자 목록에서 사용자를 선택해주세요.");
-                }
-            }
-
-            function handleBackToMap() {
-                console.log("Back to map clicked.");
-                const currentMainContent = document.getElementById('main-content');
-                const currentLogContent = document.getElementById('log-content');
-                if (currentLogContent) currentLogContent.classList.add('hidden');
-                if (currentMainContent) currentMainContent.classList.remove('hidden');
-            }
-
-            // --- 새 버튼 핸들러 ---
-            function handleNewButtonClick() {
-                console.log("New button clicked.");
-                window.location.href = 'loge.html';
-            }
-
-
-            // --- 초기 이벤트 리스너 설정 ---
-            function setupInitialEventListeners(addLoginFormListener = true) {
-                console.log("Setting up initial event listeners...");
-                if (addLoginFormListener) {
-                    if (loginForm) {
-                        loginForm.addEventListener('submit', handleLoginSubmit);
-                        console.log("Login form listener added initially.");
-                    } else {
-                        console.error("loginForm element not found initially.");
-                    }
-                }
-                const modalCloseButton = document.querySelector('#custom-modal button');
-                if (modalCloseButton) {
-                    modalCloseButton.addEventListener('click', () => {
-                        const modal = document.getElementById('custom-modal');
-                        if(modal) modal.style.display = 'none';
-                    });
-                }
-                if (closeUserInfoButton) {
-                    closeUserInfoButton.addEventListener('click', closeUserInfo);
-                    console.log("Close User Info button listener added initially.");
-                } else {
-                    console.error("closeUserInfoButton not found initially.");
-                }
-            }
-
-            // --- 로그인 성공/세션 유지 시 호출되는 리스너 설정 ---
-            function setupMainUIEventListeners() {
-                console.log("Setting up main UI event listeners after login.");
-                const currentLogoutBtn = document.getElementById('logoutBtn');
-                const currentLogBtn = document.getElementById('logBtn');
-                const currentNewBtn = document.getElementById('newBtn');
-
-                if (currentLogoutBtn) {
-                    currentLogoutBtn.addEventListener('click', handleLogout);
-                    console.log("Logout button listener added.");
-                } else {
-                    console.error("logoutBtn element not found after login.");
-                }
-
-                if (currentLogBtn) {
-                    currentLogBtn.addEventListener('click', handleLogView);
-                    console.log("Log button listener added.");
-                } else {
-                    console.error("logBtn element not found after login.");
-                }
-
-                if (currentNewBtn) {
-                    currentNewBtn.addEventListener('click', handleNewButtonClick);
-                    console.log("New button listener added.");
-                } else {
-                    console.error("newBtn element not found after login.");
-                }
-            }
-
-        }); // DOMContentLoaded 닫기
     </script>
 </body>
 </html>
