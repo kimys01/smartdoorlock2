@@ -137,7 +137,8 @@
         /* 헤더 버튼 그룹 */
         #header .button-group {
             display: flex;
-            gap: 10px;
+            /* gap: 10px; */ /* 제거 */
+            gap: 0; /* 경계선을 위해 gap 제거 */
         }
 
         /* --- [사용자 요청] 스타일 수정 --- */
@@ -145,37 +146,43 @@
         #logoutBtn, #logBtn, #newBtn {
             padding: 8px 15px;
             border: none;
-            color: white;
-            border-radius: 5px;
+            /* color: white; */ /* 흰색 배경에 맞춰 수정 */
+            color: #333; /* 어두운 글자색 */
+            /* border-radius: 5px; */ /* 각지게 수정 */
+            border-radius: 0; 
             cursor: pointer;
-            font-weight: 500; /* 폰트 두께 유지 */
-            /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */ /* 제거됨 */
-            transition: background-color 0.3s ease; /* 수정 */
+            font-weight: 500; 
+            transition: background-color 0.3s ease;
+            position: relative; /* 가상요소(경계선) 배치를 위해 추가 */
+            background-color: #ffffff; /* 흰색 배경 */
         }
 
-        /* 각 버튼 색상 */
-        #logoutBtn { background-color: #dc3545; }
-        #logBtn { background-color: #007bff; }
-        #newBtn { background-color: #ffc107; }
+        /* 각 버튼 색상 (배경색은 공통 스타일로 이동) */
+        #logoutBtn { /* background-color: #dc3545; */ }
+        #logBtn { /* background-color: #007bff; */ }
+        #newBtn { /* background-color: #ffc107; */ }
 
 
-        /* 각 버튼 hover 효과 */
-        #logoutBtn:hover { 
-            background-color: #c82333; 
-            /* transform: translateY(-2px); */ /* 제거됨 */
-            /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); */ /* 제거됨 */
-        }
-        #logBtn:hover { 
-            background-color: #0056b3; 
-            /* transform: translateY(-2px); */ /* 제거됨 */
-            /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); */ /* 제거됨 */
-        }
+        /* 각 버튼 hover 효과 (통합) */
+        #logoutBtn:hover, 
+        #logBtn:hover, 
         #newBtn:hover { 
-            background-color: #e0a800; 
-            /* transform: translateY(-2px); */ /* 제거됨 */
-            /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); */ /* 제거됨 */
+            background-color: #f2f2f2; /* 밝은 회색으로 변경 */
         }
         /* --- [사용자 요청] 수정 완료 --- */
+
+        /* --- [사용자 요청] 버튼 사이 경계선 추가 --- */
+        #header .button-group button + button::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 16px; /* 버튼 높이보다 짧게 (padding 8px * 2) */
+            width: 1px;
+            background-color: #ddd; /* 경계선 색상 */
+        }
+        /* --- [사용자 요청] 추가 완료 --- */
 
 
         /* 로그 버튼 비활성화 스타일 */
@@ -183,9 +190,11 @@
             background-color: #ccc;
             cursor: not-allowed;
             opacity: 0.6;
-            /* 비활성화 시 hover 효과 제거 */
-            /* transform: none; */ /* 제거됨 */
-            /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */ /* 제거됨 */
+            color: #777; /* 비활성화 시 글자색 */
+        }
+        /* 비활성화 시 hover 효과 방지 */
+        #logBtn:disabled:hover {
+            background-color: #ccc;
         }
 
         #main-content {
