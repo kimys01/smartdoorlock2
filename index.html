@@ -152,10 +152,11 @@
             border-radius: 0; 
             cursor: pointer;
             font-weight: 500; 
-            transition: background-color 0.3s ease, color 0.3s ease; /* [수정] color transition 추가 */
+            transition: background-color 0.3s ease, color 0.3s ease, background-image 0.3s ease; /* [수정] transition 속성 보완 */
             position: relative; /* 가상요소(경계선) 배치를 위해 추가 */
             /* background-color: #ffffff; */ /* 헤더 색상과 동일하게 수정 */
             background-color: #f8f9fa;
+            background-image: none; /* [추가] 호버 아웃 시 그라데이션 제거 */
         }
 
         /* 각 버튼 색상 (배경색은 공통 스타일로 이동) */
@@ -183,6 +184,7 @@
         /* --- [사용자 요청] 로그아웃 버튼 hover 시 스타일 수정 --- */
         #logoutBtn:hover {
             background-color: #f8f9fa; /* [수정] 타이틀 바 배경색과 동일하게 */
+            background-image: none; /* [추가] 그라데이션 제거 */
             color: #dc3545; /* [수정] 빨간색 글씨 */
         }
         /* --- [사용자 요청] 적용 완료 --- */
@@ -214,6 +216,7 @@
         #logBtn:disabled:hover {
             /* background-color: #ccc; */ /* hover 효과 없음 */
             background-color: #f8f9fa;
+            background-image: none; /* [추가] 그라데이션 제거 */
             color: #aaa; /* [수정] hover 시 색상 유지 */
         }
 
@@ -411,7 +414,7 @@
             /* <<< 스타일 추가: 헤더 배경 및 패딩 */
             background-color: #fff;
             padding: 15px;
-            border-radius: 8px;
+            border-radius: 0; /* [수정] 8px -> 0 */
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
 
@@ -423,8 +426,9 @@
             border-radius: 0; 
             cursor: pointer;
             font-weight: 500; 
-            transition: background-color 0.3s ease, color 0.3s ease; 
+            transition: background-color 0.3s ease, color 0.3s ease, background-image 0.3s ease; /* [수정] transition 보완 */
             background-color: #f8f9fa;
+            background-image: none; /* [추가] 호버 아웃 시 그라데이션 제거 */
         }
         #backToMapBtn:hover {
              /* [수정] #logBtn:hover 스타일과 동일하게 변경 */
@@ -464,7 +468,7 @@
             background-color: #fff;
             box-sizing: border-box;
             /* --- */
-            border-radius: 8px;
+            border-radius: 0; /* [수정] 8px -> 0 */
             padding: 15px;
             display: flex;
             flex-direction: column;
