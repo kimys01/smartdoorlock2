@@ -416,15 +416,23 @@
         }
 
         #backToMapBtn {
-            padding: 8px 15px;
-            border: 1px solid #ccc;
-            background-color: #f0f0f0;
-            border-radius: 5px;
+            /* [수정] #logBtn 스타일과 동일하게 변경 */
+            padding: 10px 20px; 
+            border: none;
+            color: #333; 
+            border-radius: 0; 
             cursor: pointer;
-            font-size: 16px;
+            font-weight: 500; 
+            transition: background-color 0.3s ease, color 0.3s ease; 
+            background-color: #f8f9fa;
         }
         #backToMapBtn:hover {
-            background-color: #e0e0e0;
+             /* [수정] #logBtn:hover 스타일과 동일하게 변경 */
+            background-color: #f8f9fa; 
+            background-image: linear-gradient(135deg, #71b7e6, #9b59b6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
 
         /* <<< 스타일 추가: 로그 헤더 h2 스타일 --- [사용자 요청] 그라데이션 적용 --- */
