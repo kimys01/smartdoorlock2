@@ -1082,7 +1082,7 @@
                 appLogContainer.innerHTML = '<em>로딩 중...</em>';
 
                 // ▼▼▼ [코드 2 기능] 도어락 로그 (새 쿼리 경로 적용) ▼▼▼
-                const doorLockRef = database.ref('doorlock_logs') 
+                const doorLockRef = database.ref('doorlock_logs/' + userId)
                                                 .orderByKey()
                                                 .startAt(userId)
                                                 .endAt(userId + "\uf8ff");
@@ -1336,4 +1336,5 @@
         }); // DOMContentLoaded 닫기
     </script>
 </body>
+
 </html>
