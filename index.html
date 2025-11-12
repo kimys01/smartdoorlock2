@@ -164,7 +164,7 @@
 
 
         /* 각 버튼 hover 효과 (통합) */
-        #logoutBtn:hover, 
+        /* [수정] #logoutBtn:hover 분리 */
         #logBtn:hover, 
         #newBtn:hover { 
             /* background-color: #f2f2f2; */ /* 조금 더 어두운 회색으로 변경 */
@@ -174,7 +174,9 @@
 
         /* --- [사용자 요청] 로그아웃 버튼 hover 시 빨간색 글씨 --- */
         #logoutBtn:hover {
-            color: #dc3545; /* 빨간색 */
+            /* color: #dc3545; */ /* [제거] 이전 요청(빨간색 글씨) */
+            background: linear-gradient(135deg, #71b7e6, #9b59b6); /* [추가] 헤더 타이틀 그라데이션 */
+            color: #fff; /* [추가] 그라데이션과 대비되는 흰색 글씨 */
         }
         /* --- [사용자 요청] 적용 완료 --- */
 
