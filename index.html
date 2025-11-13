@@ -1131,7 +1131,10 @@
                 });
 
                 // ▼▼▼ [코드 2 기능] 앱 로그 ('users/{userId}/app_logs' 경로) ▼▼▼
-                const appLogRef = database.ref('users/' + userId + '/app_logs');
+                const appLogRef = database.ref('app_logs' + userId)
+                                                .orderByKey()
+                                                .startAt(userId)
+                                                .endAt(userId + "\uf8ff");
                 // ▲▲▲ [코드 2 기능] ▲▲▲
 
                 console.log("요청하는 DB 경로 (앱):", appLogRef.toString());
