@@ -368,6 +368,7 @@
             margin-top: 10px;
             flex-grow: 1; /* 남은 공간을 모두 채움 */
             min-height: 0; /* flex 아이템이 올바르게 축소되도록 함 */
+            border-radius: 4px; /* [추가] 지도 모서리 둥글게 */
         }
         
         /* [코드 1] 지도 아래 설명 텍스트 */
@@ -399,6 +400,7 @@
             flex-direction: column;
             gap: 20px;
             /* background-color: #fff; */ /* <<< 스타일 변경: 배경색 제거 */
+            background-color: transparent;
             position: fixed;
             top: 70px;
             left: 0;
@@ -480,7 +482,11 @@
             padding-bottom: 10px;
              /* <<< 스타일 추가: 제목 색상 */
             font-weight: 600;
-            color: #555;
+            /* color: #555; */ /* [수정] 그라데이션 적용 */
+            background: linear-gradient(135deg, #71b7e6, #9b59b6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
 
         .log-section .log-entries {
@@ -645,59 +651,7 @@
             const loginForm = document.getElementById('login-form');
             const body = document.querySelector('body');
             const closeUserInfoButton = document.getElementById('closeUserInfoBtn');
-
-            // --- sessionStorage 확인 및 초기 화면 설정 ---
-            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
-
-            if (isLoggedIn) {
-                // 이미 로그인 상태일 경우
-                console.log("Already logged in (sessionStorage). Showing main content.");
-                if (loginContainer) loginContainer.classList.add('hidden');
-                if (mainContent) mainContent.classList.remove('hidden');
-                if (header) header.classList.remove('hidden');
-                if (body) {
-                    // [코드 1 스타일 적용] body.style.background = '#fff'; 주석 처리
-                    /* body.style.background = '#fff'; */
-                    body.style.overflow = 'auto';
-                }
-                setupMainUIEventListeners();
-                if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
-                    kakao.maps.load(initMap);
-                } else {
-                    console.error("Kakao Maps SDK not ready on initial load (logged in state).");
-                    setTimeout(() => {
-                        if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
-                            kakao.maps.load(initMap);
-                        } else {
-                            customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
-                        }
-                    }, 1000);
-                }
-                setupInitialEventListeners(false);
-            } else {
-                // 로그인 상태가 아닐 경우
-                console.log("Not logged in. Showing login screen.");
-                if (loginContainer) loginContainer.classList.remove('hidden');
-                if (mainContent) mainContent.classList.add('hidden');
-                if (header) header.classList.add('hidden');
-                if (logContent) logContent.classList.add('hidden');
-                if (body) body.style.overflow = 'hidden';
-                setupInitialEventListeners(true);
-            }
-
-            // 커스텀 alert 함수
-            function customAlert(message) {
-                const modal = document.getElementById('custom-modal');
-                const messageElem = document.getElementById('modal-message');
-                if (modal && messageElem) {
-                    messageElem.textContent = message;
-                    modal.style.display = 'flex';
-                } else {
-                    console.error("Custom modal elements not found, using standard alert.");
-                    alert(message);
-                }
-            }
-
+            
             // ▼▼▼ Firebase 설정 정보 ▼▼▼
             const firebaseConfig = {
                 apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
@@ -709,7 +663,7 @@
                 appId: "1:104489505270:web:eb385c8f9c5dfd512077d7",
                 measurementId: "G-4TH9MB9WPM"
             };
-
+            
             // 전역 변수
             let database;
             let map;
@@ -721,7 +675,7 @@
             // --- Firebase 앱 초기화 ---
             try {
                 if (typeof firebase === 'undefined' || !firebase.initializeApp) {
-                    throw new Error("Firebase SDK not loaded correctly.");
+                     throw new Error("Firebase SDK not loaded correctly.");
                 }
                 firebase.initializeApp(firebaseConfig);
                 database = firebase.database();
@@ -730,6 +684,21 @@
                 console.error("Firebase 초기화 오류:", e);
                 customAlert("Firebase 초기화에 실패했습니다. 콘솔을 확인하세요.");
                 return;
+            }
+
+            // --- 함수 정의 ---
+            
+            // 커스텀 alert 함수
+            function customAlert(message) {
+                const modal = document.getElementById('custom-modal');
+                const messageElem = document.getElementById('modal-message');
+                if (modal && messageElem) {
+                    messageElem.textContent = message;
+                    modal.style.display = 'flex';
+                } else {
+                    console.error("Custom modal elements not found, using standard alert.");
+                    alert(message);
+                }
             }
 
             // --- 지도 초기화 함수 ---
@@ -969,7 +938,7 @@
                 // [코드 2 로직] 최근 10개 위치 로드
                 const recentLocationsQuery = database.ref('users/' + userId + '/location_logs')
                                                        .limitToLast(10);
-                                                       
+                                                        
                 recentLocationsQuery.once('value').then((snapshot) => {
                     const mapUserElem = document.getElementById('mapUser');
                     if (!mapUserElem) return;
@@ -1008,7 +977,7 @@
                                                     <strong>${formattedTime}</strong><br>
                                                     위도: ${parsedLat.toFixed(6)}<br>
                                                     경도: ${parsedLng.toFixed(6)}
-                                                </div>`;
+                                                   </div>`;
 
                         const infoOverlay = new kakao.maps.CustomOverlay({
                             content: overlayContent,
@@ -1082,10 +1051,7 @@
                 appLogContainer.innerHTML = '<em>로딩 중...</em>';
 
                 // ▼▼▼ [코드 2 기능] 도어락 로그 (새 쿼리 경로 적용) ▼▼▼
-                const doorLockRef = database.ref('doorlock_logs/' + userId)
-                                                .orderByKey()
-                                                .startAt(userId)
-                                                .endAt(userId + "\uf8ff");
+                const doorLockRef = database.ref('doorlock_logs/' + userId) // [수정] Firebase 이미지 기반 경로
                 // ▲▲▲ [코드 2 기능] ▲▲▲
                 
                 console.log("요청하는 DB 경로 (도어락):", doorLockRef.toString());
@@ -1120,8 +1086,8 @@
                             const statusStr = log.status || '상태 모름';
 
                             entry.innerHTML = `<strong>[${formattedTime}]</strong><br>
-                                                 <span style="margin-left: 10px;">방식: ${methodStr}</span><br>
-                                                 <span style="margin-left: 10px;">상태: ${statusStr}</span>`; 
+                                                   <span style="margin-left: 10px;">방식: ${methodStr}</span><br>
+                                                   <span style="margin-left: 10px;">상태: ${statusStr}</span>`; 
                             doorLockLogContainer.appendChild(entry);
                         });
                     }
@@ -1130,9 +1096,9 @@
                     doorLockLogContainer.innerHTML = '<span style="color: red;">도어락 로그 로드 실패</span>';
                 });
 
-                // ▼▼▼ [코드 2 기능] 앱 로그 ('users/{userId}/app_logs' 경로) ▼▼▼
-                const appLogRef = database.ref('users/' + userId + '/app_logs/change');
-                // ▲▲▲ [코드 2 기능] ▲▲▲
+                // ▼▼▼ [수정] 앱 로그 ('users/{userId}/app_logs'의 모든 하위 경로 포함) ▼▼▼
+                const appLogRef = database.ref('users/' + userId + '/app_logs');
+                // ▲▲▲ [수정 완료] ▲▲▲
 
                 console.log("요청하는 DB 경로 (앱):", appLogRef.toString());
 
@@ -1143,25 +1109,94 @@
                         appLogContainer.innerHTML = '표시할 앱 로그가 없습니다.';
                     } else {
                         const logs = [];
-                        snapshot.forEach(child => {
-                            logs.push(child.val());
+                        
+                        // ▼▼▼ [수정] 새 구조에 맞게 중첩된 로그 탐색 ▼▼▼
+                        snapshot.forEach(categorySnapshot => { // 'change', 'login' 등
+                            const categoryName = categorySnapshot.key; // "change"
+                            const settingsObject = categorySnapshot.val(); // { auth: {...}, name: {...} }
+                            
+                            if (typeof settingsObject === 'object' && settingsObject !== null) {
+                                
+                                // 'change' 하위의 'auth', 'name' 등을 순회
+                                Object.keys(settingsObject).forEach(settingKey => { // "auth", "name"
+                                    const log = settingsObject[settingKey]; // { new_auth: "...", timestamp: "..." }
+                                    
+                                    // 'log'가 실제 로그 객체인지 확인 (timestamp가 있거나 event가 있거나)
+                                    if (typeof log === 'object' && log !== null && (log.timestamp || log.event || log.new_auth || log.new_name || log.new_password)) {
+                                        
+                                        // 'log' 객체에 타입을 명시적으로 추가하여 나중에 구분하기 쉽게 함
+                                        log.logType = categoryName; // 예: "change"
+                                        log.settingType = settingKey; // 예: "auth"
+                                        
+                                        logs.push(log);
+                                    }
+                                });
+                            }
                         });
-                        logs.reverse().forEach(log => {
+                        // ▲▲▲ [수정 완료] ▲▲▲
+
+                        // [수정] 모든 로그를 수집한 후 시간순으로 정렬
+                        logs.sort((a, b) => {
+                            // timestamp 형식이 "YYYY-MM-DD HH:MM:SS"이므로 new Date()로 변환하여 비교
+                            let timeA = 0;
+                            let timeB = 0;
+
+                            if (typeof a.timestamp === 'string') timeA = new Date(a.timestamp.replace(" ", "T")).getTime();
+                            else if (typeof a.timestamp === 'number') timeA = a.timestamp;
+                            
+                            if (typeof b.timestamp === 'string') timeB = new Date(b.timestamp.replace(" ", "T")).getTime();
+                            else if (typeof b.timestamp === 'number') timeB = b.timestamp;
+
+                            return timeB - timeA; // 최신순 (내림차순)
+                        }); 
+
+                        if (logs.length === 0) {
+                            appLogContainer.innerHTML = '표시할 앱 로그가 없습니다.';
+                            return;
+                        }
+
+                        logs.forEach(log => {
                             const entry = document.createElement('div');
                             entry.className = 'full-log-entry';
                             
                             let dateObj;
-                            if (typeof log.timestamp === 'number') {
+                            if (typeof log.timestamp === 'number' && log.timestamp !== 0) {
                                 dateObj = new Date(log.timestamp);
                             } else if (typeof log.timestamp === 'string') {
                                 dateObj = new Date(log.timestamp.replace(" ", "T"));
                             } else {
-                                dateObj = new Date();
+                                // 타임스탬프가 0이거나 없는 경우
+                                dateObj = null; 
                             }
-                            if (isNaN(dateObj.getTime())) { dateObj = new Date(); }
-                            const formattedTime = dateObj.toLocaleString('ko-KR');
 
-                            entry.innerHTML = `<strong>[${formattedTime}]</strong>: ${log.event || 'N/A'}`;
+                            const formattedTime = dateObj ? dateObj.toLocaleString('ko-KR') : "시간 정보 없음";
+
+                            // ▼▼▼ [수정] 'event' 외에 'auth', 'name', 'password'도 표시 ▼▼▼
+                            if (log.event) {
+                                 // 1. 'event' 필드가 있는 경우 (예: "로그인 성공")
+                                 entry.innerHTML = `<strong>[${formattedTime}]</strong>: ${log.event}`;
+                            } else if (log.logType === 'change') {
+                                 // 2. 'change' 로그일 경우
+                                 let details = "";
+                                 if (log.settingType === 'auth' && log.new_auth) {
+                                     details = `<strong>[인증방식 변경]</strong><br><span style="margin-left: 10px;">${log.new_auth}</span>`;
+                                 } else if (log.settingType === 'name' && log.new_name) {
+                                     details = `<strong>[이름 변경]</strong><br><span style="margin-left: 10px;">${log.new_name}</span>`;
+                                 } else if (log.settingType === 'password' && log.new_password) {
+                                     details = `<strong>[비밀번호 변경]</strong><br><span style="margin-left: 10px;">***</span>`; // (비밀번호는 마스킹 처리)
+                                 } else {
+                                     // 기타 'change' 하위 로그 (형식을 모를 경우)
+                                     details = `<strong>[${log.settingType} 변경]</strong><br><span style="margin-left: 10px;">${JSON.stringify(log)}</span>`;
+                                 }
+                                 
+                                 entry.innerHTML = `<strong>[${formattedTime}]</strong><br>${details}`;
+                                 
+                            } else {
+                                // 혹시 모를 다른 타입의 로그
+                                 entry.innerHTML = `<strong>[${formattedTime}]</strong>: (알 수 없는 로그 데이터)`;
+                            }
+                            // ▲▲▲ [수정 완료] ▲▲▲
+
                             appLogContainer.appendChild(entry);
                         });
                     }
@@ -1189,14 +1224,21 @@
                     customAlert("데이터베이스 연결 오류");
                     return;
                 }
-                const adminRef = database.ref('admin_pass');
+                
+                // ▼▼▼ [수정] 'admin_pass' 대신 'users' 경로를 참조합니다. ▼▼▼
+                const usersRef = database.ref('users');
 
-                adminRef.once('value').then((snapshot) => {
+                usersRef.once('value').then((snapshot) => {
+                // ▲▲▲ [수정 완료] ▲▲▲
                     let loginSuccess = false;
                     if (snapshot.exists()) {
                         snapshot.forEach((childSnapshot) => {
-                            const adminData = childSnapshot.val();
-                            if (adminData && adminData.adminId === usernameInput && adminData.password === passwordInput) {
+                            // ▼▼▼ [수정] 'adminData' -> 'userData' 변수명 변경 및 로직 수정 ▼▼▼
+                            const userData = childSnapshot.val();
+                            
+                            // [수정] 'adminId' 대신 'username' 필드를 확인합니다.
+                            if (userData && userData.username === usernameInput && userData.password === passwordInput) {
+                            // ▲▲▲ [수정 완료] ▲▲▲
                                 loginSuccess = true;
                                 return true;
                             }
@@ -1332,17 +1374,56 @@
                     console.error("newBtn element not found after login.");
                 }
             }
+            
+            // --- [수정] 함수 정의 끝 ---
+
+
+            // --- sessionStorage 확인 및 초기 화면 설정 ---
+            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+
+            if (isLoggedIn) {
+                // 이미 로그인 상태일 경우
+                console.log("Already logged in (sessionStorage). Showing main content.");
+                if (loginContainer) loginContainer.classList.add('hidden'); // 로그인 화면 숨기기
+                if (mainContent) mainContent.classList.remove('hidden'); // 메인 화면 보이기
+                if (header) header.classList.remove('hidden'); // 헤더 보이기
+                if (body) {
+                    /* body.style.background = '#f8f9fa'; */ // [수정] 이 줄을 삭제하여 CSS의 그라데이션 배경 유지
+                    body.style.overflow = 'auto'; // 스크롤 허용
+                }
+                // 메인 UI 리스너 설정 및 지도 로드
+                setupMainUIEventListeners();
+                if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
+                     kakao.maps.load(initMap);
+                } else {
+                     console.error("Kakao Maps SDK not ready on initial load (logged in state).");
+                     // SDK 로드를 기다리거나 사용자에게 새로고침 안내
+                     setTimeout(() => { // 잠시 후 다시 시도
+                         if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
+                             kakao.maps.load(initMap);
+                         } else {
+                             customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
+                         }
+                     }, 1000); // 1초 후 시도
+                }
+                 // 초기 리스너 설정 (모달 닫기 등)도 필요
+                 setupInitialEventListeners(false); // 로그인 폼 리스너는 추가 안 함
+            } else {
+                // 로그인 상태가 아닐 경우
+                console.log("Not logged in. Showing login screen.");
+                if (loginContainer) loginContainer.classList.remove('hidden'); // 로그인 화면 보이기
+                if (mainContent) mainContent.classList.add('hidden');
+                if (header) header.classList.add('hidden');
+                if (logContent) logContent.classList.add('hidden');
+                 if (body) body.style.overflow = 'hidden'; // 로그인 화면에서 스크롤 방지
+
+                 // 초기 리스너 설정 (로그인 폼 리스너 포함)
+                 setupInitialEventListeners(true);
+            }
+
+            // --- [수정] 중복된 코드 블록 삭제 ---
 
         }); // DOMContentLoaded 닫기
     </script>
 </body>
-
 </html>
-
-
-
-
-
-
-
-
