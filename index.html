@@ -1225,19 +1225,19 @@
                     return;
                 }
                 
-                // ▼▼▼ [수정] 'admin_pass' 대신 'users' 경로를 참조합니다. ▼▼▼
-                const usersRef = database.ref('users');
+                // ▼▼▼ [수정] 'users' 대신 'admin_pass' 경로를 참조합니다. ▼▼▼
+                const adminRef = database.ref('admin_pass');
 
-                usersRef.once('value').then((snapshot) => {
+                adminRef.once('value').then((snapshot) => {
                 // ▲▲▲ [수정 완료] ▲▲▲
                     let loginSuccess = false;
                     if (snapshot.exists()) {
                         snapshot.forEach((childSnapshot) => {
-                            // ▼▼▼ [수정] 'adminData' -> 'userData' 변수명 변경 및 로직 수정 ▼▼▼
-                            const userData = childSnapshot.val();
+                            // ▼▼▼ [수정] 'userData' -> 'adminData' 변수명 변경 및 로직 수정 ▼▼▼
+                            const adminData = childSnapshot.val();
                             
-                            // [수정] 'adminId' 대신 'username' 필드를 확인합니다.
-                            if (userData && userData.username === usernameInput && userData.password === passwordInput) {
+                            // [수정] 'username' 대신 'adminId' 필드를 확인합니다.
+                            if (adminData && adminData.adminId === usernameInput && adminData.password === passwordInput) {
                             // ▲▲▲ [수정 완료] ▲▲▲
                                 loginSuccess = true;
                                 return true;
@@ -1423,7 +1423,7 @@
 
             // --- [수정] 중복된 코드 블록 삭제 ---
 
-        }); // DOMContentLoaded 닫기 //
+        }); // DOMContentLoaded 닫기
     </script>
 </body>
 </html>
