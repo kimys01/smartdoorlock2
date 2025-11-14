@@ -368,7 +368,6 @@
             margin-top: 10px;
             flex-grow: 1; /* 남은 공간을 모두 채움 */
             min-height: 0; /* flex 아이템이 올바르게 축소되도록 함 */
-            border-radius: 4px; /* [추가] 지도 모서리 둥글게 */
         }
         
         /* [코드 1] 지도 아래 설명 텍스트 */
@@ -400,7 +399,6 @@
             flex-direction: column;
             gap: 20px;
             /* background-color: #fff; */ /* <<< 스타일 변경: 배경색 제거 */
-            background-color: transparent;
             position: fixed;
             top: 70px;
             left: 0;
@@ -482,11 +480,7 @@
             padding-bottom: 10px;
              /* <<< 스타일 추가: 제목 색상 */
             font-weight: 600;
-            /* color: #555; */ /* [수정] 그라데이션 적용 */
-            background: linear-gradient(135deg, #71b7e6, #9b59b6);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
+            color: #555;
         }
 
         .log-section .log-entries {
@@ -651,43 +645,46 @@
             const loginForm = document.getElementById('login-form');
             const body = document.querySelector('body');
             const closeUserInfoButton = document.getElementById('closeUserInfoBtn');
-            
-            // ▼▼▼ Firebase 설정 정보 ▼▼▼
-            const firebaseConfig = {
-                apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
-                authDomain: "smartdoorlock-b4636.firebaseapp.com",
-                databaseURL: "https://smartdoorlock-b4636-default-rtdb.firebaseio.com",
-                projectId: "smartdoorlock-b4636",
-                storageBucket: "smartdoorlock-b4636.firebasestorage.app",
-                messagingSenderId: "104489505270",
-                appId: "1:104489505270:web:eb385c8f9c5dfd512077d7",
-                measurementId: "G-4TH9MB9WPM"
-            };
-            
-            // 전역 변수
-            let database;
-            let map;
-            let markers = [];
-            let currentPolyline;
-            let selectedLogMarker;
-            let selectedUserId = null;
 
-            // --- Firebase 앱 초기화 ---
-            try {
-                if (typeof firebase === 'undefined' || !firebase.initializeApp) {
-                     throw new Error("Firebase SDK not loaded correctly.");
+            // --- sessionStorage 확인 및 초기 화면 설정 ---
+            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+
+            if (isLoggedIn) {
+                // 이미 로그인 상태일 경우
+                console.log("Already logged in (sessionStorage). Showing main content.");
+                if (loginContainer) loginContainer.classList.add('hidden');
+                if (mainContent) mainContent.classList.remove('hidden');
+                if (header) header.classList.remove('hidden');
+                if (body) {
+                    // [코드 1 스타일 적용] body.style.background = '#fff'; 주석 처리
+                    /* body.style.background = '#fff'; */
+                    body.style.overflow = 'auto';
                 }
-                firebase.initializeApp(firebaseConfig);
-                database = firebase.database();
-                console.log("Firebase initialized successfully.");
-            } catch (e) {
-                console.error("Firebase 초기화 오류:", e);
-                customAlert("Firebase 초기화에 실패했습니다. 콘솔을 확인하세요.");
-                return;
+                setupMainUIEventListeners();
+                if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
+                    kakao.maps.load(initMap);
+                } else {
+                    console.error("Kakao Maps SDK not ready on initial load (logged in state).");
+                    setTimeout(() => {
+                        if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
+                            kakao.maps.load(initMap);
+                        } else {
+                            customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
+                        }
+                    }, 1000);
+                }
+                setupInitialEventListeners(false);
+            } else {
+                // 로그인 상태가 아닐 경우
+                console.log("Not logged in. Showing login screen.");
+                if (loginContainer) loginContainer.classList.remove('hidden');
+                if (mainContent) mainContent.classList.add('hidden');
+                if (header) header.classList.add('hidden');
+                if (logContent) logContent.classList.add('hidden');
+                if (body) body.style.overflow = 'hidden';
+                setupInitialEventListeners(true);
             }
 
-            // --- 함수 정의 ---
-            
             // 커스텀 alert 함수
             function customAlert(message) {
                 const modal = document.getElementById('custom-modal');
@@ -699,6 +696,40 @@
                     console.error("Custom modal elements not found, using standard alert.");
                     alert(message);
                 }
+            }
+
+            // ▼▼▼ Firebase 설정 정보 ▼▼▼
+            const firebaseConfig = {
+                apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
+                authDomain: "smartdoorlock-b4636.firebaseapp.com",
+                databaseURL: "https://smartdoorlock-b4636-default-rtdb.firebaseio.com",
+                projectId: "smartdoorlock-b4636",
+                storageBucket: "smartdoorlock-b4636.firebasestorage.app",
+                messagingSenderId: "104489505270",
+                appId: "1:104489505270:web:eb385c8f9c5dfd512077d7",
+                measurementId: "G-4TH9MB9WPM"
+            };
+
+            // 전역 변수
+            let database;
+            let map;
+            let markers = [];
+            let currentPolyline;
+            let selectedLogMarker;
+            let selectedUserId = null;
+
+            // --- Firebase 앱 초기화 ---
+            try {
+                if (typeof firebase === 'undefined' || !firebase.initializeApp) {
+                    throw new Error("Firebase SDK not loaded correctly.");
+                }
+                firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
+                console.log("Firebase initialized successfully.");
+            } catch (e) {
+                console.error("Firebase 초기화 오류:", e);
+                customAlert("Firebase 초기화에 실패했습니다. 콘솔을 확인하세요.");
+                return;
             }
 
             // --- 지도 초기화 함수 ---
@@ -938,7 +969,7 @@
                 // [코드 2 로직] 최근 10개 위치 로드
                 const recentLocationsQuery = database.ref('users/' + userId + '/location_logs')
                                                        .limitToLast(10);
-                                                        
+                                                       
                 recentLocationsQuery.once('value').then((snapshot) => {
                     const mapUserElem = document.getElementById('mapUser');
                     if (!mapUserElem) return;
@@ -977,7 +1008,7 @@
                                                     <strong>${formattedTime}</strong><br>
                                                     위도: ${parsedLat.toFixed(6)}<br>
                                                     경도: ${parsedLng.toFixed(6)}
-                                                   </div>`;
+                                                </div>`;
 
                         const infoOverlay = new kakao.maps.CustomOverlay({
                             content: overlayContent,
@@ -1051,7 +1082,10 @@
                 appLogContainer.innerHTML = '<em>로딩 중...</em>';
 
                 // ▼▼▼ [코드 2 기능] 도어락 로그 (새 쿼리 경로 적용) ▼▼▼
-                const doorLockRef = database.ref('doorlock_logs/' + userId) // [수정] Firebase 이미지 기반 경로
+                const doorLockRef = database.ref('doorlock_logs/' + userId)
+                                                .orderByKey()
+                                                .startAt(userId)
+                                                .endAt(userId + "\uf8ff");
                 // ▲▲▲ [코드 2 기능] ▲▲▲
                 
                 console.log("요청하는 DB 경로 (도어락):", doorLockRef.toString());
@@ -1086,8 +1120,8 @@
                             const statusStr = log.status || '상태 모름';
 
                             entry.innerHTML = `<strong>[${formattedTime}]</strong><br>
-                                                   <span style="margin-left: 10px;">방식: ${methodStr}</span><br>
-                                                   <span style="margin-left: 10px;">상태: ${statusStr}</span>`; 
+                                                 <span style="margin-left: 10px;">방식: ${methodStr}</span><br>
+                                                 <span style="margin-left: 10px;">상태: ${statusStr}</span>`; 
                             doorLockLogContainer.appendChild(entry);
                         });
                     }
@@ -1298,56 +1332,17 @@
                     console.error("newBtn element not found after login.");
                 }
             }
-            
-            // --- [수정] 함수 정의 끝 ---
-
-
-            // --- sessionStorage 확인 및 초기 화면 설정 ---
-            // const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true'; // [수정] 상단으로 이동됨
-
-            if (isLoggedIn) {
-                // 이미 로그인 상태일 경우
-                console.log("Already logged in (sessionStorage). Showing main content.");
-                if (loginContainer) loginContainer.classList.add('hidden'); // 로그인 화면 숨기기
-                if (mainContent) mainContent.classList.remove('hidden'); // 메인 화면 보이기
-                if (header) header.classList.remove('hidden'); // 헤더 보이기
-                if (body) {
-                    /* body.style.background = '#f8f9fa'; */ // [수정] 이 줄을 삭제하여 CSS의 그라데이션 배경 유지
-                    body.style.overflow = 'auto'; // 스크롤 허용
-                }
-                // 메인 UI 리스너 설정 및 지도 로드
-                setupMainUIEventListeners();
-                if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
-                     kakao.maps.load(initMap);
-                } else {
-                     console.error("Kakao Maps SDK not ready on initial load (logged in state).");
-                     // SDK 로드를 기다리거나 사용자에게 새로고침 안내
-                     setTimeout(() => { // 잠시 후 다시 시도
-                         if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
-                             kakao.maps.load(initMap);
-                         } else {
-                             customAlert("지도 SDK 로딩 오류. 페이지를 새로고침해주세요.");
-                         }
-                     }, 1000); // 1초 후 시도
-                }
-                 // 초기 리스너 설정 (모달 닫기 등)도 필요
-                 setupInitialEventListeners(false); // 로그인 폼 리스너는 추가 안 함
-            } else {
-                // 로그인 상태가 아닐 경우
-                console.log("Not logged in. Showing login screen.");
-                if (loginContainer) loginContainer.classList.remove('hidden'); // 로그인 화면 보이기
-                if (mainContent) mainContent.classList.add('hidden');
-                if (header) header.classList.add('hidden');
-                if (logContent) logContent.classList.add('hidden');
-                 if (body) body.style.overflow = 'hidden'; // 로그인 화면에서 스크롤 방지
-
-                 // 초기 리스너 설정 (로그인 폼 리스너 포함)
-                 setupInitialEventListeners(true);
-            }
-
-            // --- [수정] 중복된 코드 블록 삭제 ---
 
         }); // DOMContentLoaded 닫기
     </script>
 </body>
+
 </html>
+
+
+
+
+
+
+
+
