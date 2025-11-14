@@ -36,7 +36,7 @@
         #json-viewer {
             background-color: #f8f9fa;
             border: 1px solid #e0e0e0;
-            border-radius: 8px;
+            border-radius: 0; /* [수정] 8px -> 0 */
             padding: 1rem;
             font-family: monospace;
             font-size: 0.875rem;
@@ -98,7 +98,7 @@
         /* 입력 필드 스타일 */
         .form-input {
             border: 1px solid #ccc;
-            border-radius: 6px;
+            border-radius: 0; /* [수정] 6px -> 0 */
             padding: 0.5rem 0.75rem;
             font-size: 0.875rem;
             width: 100%;
@@ -107,7 +107,7 @@
         /* 버튼 스타일 */
         .action-button {
             padding: 8px 15px; /* index.html 버튼과 동일하게 조정 */
-            border-radius: 5px; /* index.html 버튼과 동일하게 조정 */
+            border-radius: 0; /* [수정] 5px -> 0 */
             color: white;
             font-weight: 500; /* index.html 버튼과 동일하게 조정 */
             cursor: pointer;
@@ -135,70 +135,70 @@
             line-height: 1;
         }
          .back-button { /* 뒤로가기 버튼 스타일 */
-            background-color: #6c757d;
-        }
-        .back-button:hover {
+             background-color: #6c757d;
+         }
+         .back-button:hover {
              background-color: #5a6268;
-        }
+         }
 
 
          /* 커스텀 모달 스타일 */
          #custom-modal {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-        }
+             position: fixed;
+             top: 0; left: 0; right: 0; bottom: 0;
+             background: rgba(0, 0, 0, 0.5);
+             display: none;
+             justify-content: center;
+             align-items: center;
+             z-index: 2000;
+         }
         .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-            max-width: 350px;
-            text-align: center;
-            font-family: 'Poppins', sans-serif; /* 모달 폰트 */
-        }
+             background: white;
+             padding: 30px;
+             border-radius: 0; /* [수정] 10px -> 0 */
+             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+             max-width: 350px;
+             text-align: center;
+             font-family: 'Poppins', sans-serif; /* 모달 폰트 */
+         }
         .modal-content p {
-            margin-bottom: 20px;
-            font-size: 16px;
-        }
+             margin-bottom: 20px;
+             font-size: 16px;
+         }
         .modal-content button {
-            padding: 10px 20px;
-            background-color: #71b7e6;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
+             padding: 10px 20px;
+             background-color: #71b7e6;
+             color: white;
+             border: none;
+             border-radius: 0; /* [수정] 5px -> 0 */
+             cursor: pointer;
+             font-size: 16px;
+         }
         /* 동적 필드 스타일 */
         .field-row {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
+             display: flex;
+             align-items: center;
+             gap: 0.5rem;
+             margin-bottom: 0.5rem;
+         }
         .field-row input {
-            flex: 1;
-        }
+             flex: 1;
+         }
         .field-row label {
              width: 40px;
              text-align: right;
              font-size: 0.875rem;
              color: #4A5568;
              flex-shrink: 0; /* 라벨 너비 고정 */
-        }
+         }
         #fields-container {
              max-height: 25vh; /* 필드 영역 최대 높이 및 스크롤 */
              overflow-y: auto;
              border: 1px solid #e2e8f0; /* 테두리 추가 */
              padding: 0.75rem; /* 안쪽 여백 */
-             border-radius: 0.375rem; /* 둥근 모서리 */
+             border-radius: 0; /* [수정] 0.375rem -> 0 */
              background-color: #fff; /* 배경색 */
-        }
+         }
     </style>
 </head>
 <body class="min-h-screen"> <!-- [수정] bg-gray-100 제거 -->
@@ -223,7 +223,7 @@
 
     <div class="container mx-auto max-w-4xl p-4 md:p-8">
         <!-- 🌟 bg-white 컨테이너 추가 (index.html 스타일) -->
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-white shadow-lg overflow-hidden"> <!-- [수정] rounded-xl 제거 -->
             <!-- 기존 header 제거 (새 헤더로 대체) -->
             <!-- <header class="bg-gradient-to-r from-green-600 to-green-800 p-6"> ... </header> -->
 
@@ -245,7 +245,7 @@
                 </div>
 
                 <!-- 데이터 편집 UI -->
-                <div id="edit-controls" class="hidden p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-3">
+                <div id="edit-controls" class="hidden p-4 border border-gray-200 bg-gray-50 space-y-3"> <!-- [수정] rounded-lg 제거 -->
                     <h2 class="text-lg font-semibold text-gray-700">데이터 편집</h2>
                     <div>
                         <label for="edit-path" class="block text-sm font-medium text-gray-600 mb-1">경로 (예: users/123456)</label>
@@ -594,7 +594,7 @@
              });
 
              if (fieldsContainer) fieldsContainer.appendChild(fieldRow);
-        }
+         }
 
         /**
          * 입력 필드의 값을 타입에 맞게 변환하는 함수
