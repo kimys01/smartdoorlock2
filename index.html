@@ -16,8 +16,8 @@
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <!-- ▼▼▼ [수정] Firebase Auth SDK 추가 ▼▼▼ -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <!-- ▼▼▼ [수정] Firebase Auth SDK 삭제 ▼▼▼ -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script> -->
     <!-- ▲▲▲ [수정 완료] ▲▲▲ -->
 
 </head>
@@ -27,37 +27,29 @@
         <h2>Admin Login</h2>
         <form id="login-form">
             <div class="input-group">
-                <label for="username">아이디 (또는 이메일)</label> <!-- [수정] 라벨 변경 -->
-                <input type="text" id="username" placeholder="아이디 또는 이메일을 입력하세요" required>
+                <label for="username">아이디</label> <!-- [수정] 라벨 통일 -->
+                <input type="text" id="username" placeholder="아이디를 입력하세요" required>
             </div>
             <div class="input-group">
-                <label for="password">비밀번호</label>
+                <label for="password">비밀번호</label> <!-- [수정] 라벨 통일 -->
                 <input type="password" id="password" placeholder="비밀번호를 입력하세요" required>
             </div>
             <button type="submit">로그인</button>
         </form>
         <div class="extra-links">
-             <!-- ▼▼▼ [수정] ID 추가 ▼▼▼ -->
-            <a href="#" id="forgot-password-link">비밀번호를 잊으셨나요?</a>
+             <!-- ▼▼▼ [수정] ID 제거 (기능 삭제) ▼▼▼ -->
+            <a href="#">비밀번호를 잊으셨나요?</a>
              <!-- ▲▲▲ [수정 완료] ▲▲▲ -->
         </div>
     </div>
 
-    <!-- ▼▼▼ [추가] 비밀번호 찾기 모달 ▼▼▼ -->
+    <!-- ▼▼▼ [수정] 비밀번호 찾기 모달 삭제 ▼▼▼ -->
+    <!-- 
     <div id="forgot-password-modal" class="hidden">
-        <h2>비밀번호 찾기</h2>
-        <form id="forgot-password-form">
-            <div class="input-group">
-                <label for="email">가입한 이메일</label>
-                <input type="email" id="email" placeholder="이메일 주소를 입력하세요" required>
-            </div>
-            <button type="submit">재설정 이메일 전송</button>
-        </form>
-        <div class="extra-links">
-            <a href="#" id="back-to-login-link">로그인으로 돌아가기</a>
-        </div>
+        ...
     </div>
-    <!-- ▲▲▲ [추가 완료] ▲▲▲ -->
+    -->
+    <!-- ▲▲▲ [수정 완료] ▲▲▲ -->
 
 
     <div id="header" class="hidden">
@@ -127,12 +119,12 @@
             const body = document.querySelector('body');
             const closeUserInfoButton = document.getElementById('closeUserInfoBtn');
             
-            // ▼▼▼ [추가] 비밀번호 찾기 모달 요소 ▼▼▼
-            const forgotPasswordModal = document.getElementById('forgot-password-modal');
-            const forgotPasswordForm = document.getElementById('forgot-password-form');
-            const forgotPasswordLink = document.getElementById('forgot-password-link');
-            const backToLoginLink = document.getElementById('back-to-login-link');
-            // ▲▲▲ [추가 완료] ▲▲▲
+            // ▼▼▼ [수정] 비밀번호 찾기 모달 요소 삭제 ▼▼▼
+            // const forgotPasswordModal = ...
+            // const forgotPasswordForm = ...
+            // const forgotPasswordLink = ...
+            // const backToLoginLink = ...
+            // ▲▲▲ [수정 완료] ▲▲▲
 
             
             // ▼▼▼ Firebase 설정 정보 ▼▼▼
@@ -149,7 +141,7 @@
             
             // 전역 변수
             let database;
-            let auth; // [수정] auth 변수 추가
+            // let auth; // [수정] auth 변수 삭제
             let map;
             let markers = [];
             let currentPolyline;
@@ -163,7 +155,7 @@
                 }
                 firebase.initializeApp(firebaseConfig);
                 database = firebase.database();
-                auth = firebase.auth(); // [수정] auth 서비스 초기화
+                // auth = firebase.auth(); // [수정] auth 서비스 초기화 삭제
                 console.log("Firebase initialized successfully.");
             } catch (e) {
                 console.error("Firebase 초기화 오류:", e);
@@ -196,7 +188,7 @@
                 console.log(`Showing main content. isAdmin: ${isAdmin}, UserID: ${loggedInUserId}`);
                 
                 if (loginContainer) loginContainer.classList.add('hidden');
-                if (forgotPasswordModal) forgotPasswordModal.classList.add('hidden'); // [추가] 비밀번호 찾기 모달도 숨김
+                // if (forgotPasswordModal) forgotPasswordModal.classList.add('hidden'); // [수정] 삭제
                 if (mainContent) mainContent.classList.remove('hidden');
                 if (header) header.classList.remove('hidden');
                 if (body) {
@@ -779,7 +771,7 @@
 
             // --- 이벤트 핸들러 함수 정의 ---
             
-            // ▼▼▼ [수정] 로그인 로직 (관리자 / 이메일 / 일반 사용자 분리) ▼▼▼
+            // ▼▼▼ [수정] 로그인 로직 (관리자 / 일반 사용자 분리) ▼▼▼
             function handleLoginSubmit(e) {
                 e.preventDefault();
                 console.log("Login submitted.");
@@ -791,8 +783,8 @@
                     return;
                 }
 
-                if (!database || !auth) {
-                    console.error("Firebase Database or Auth not initialized (Login Submit)");
+                if (!database) {
+                    console.error("Firebase Database not initialized (Login Submit)");
                     customAlert("데이터베이스 연결 오류");
                     return;
                 }
@@ -826,44 +818,12 @@
                         return; // 함수 종료
                     }
 
-                    // 2. 관리자 계정이 아니면 Firebase Auth (이메일) 로그인 시도
-                    // usernameInput이 이메일 형식인지 간단히 확인
-                    if (usernameInput.includes('@')) {
-                        return auth.signInWithEmailAndPassword(usernameInput, passwordInput)
-                            .catch(authError => {
-                                // Auth 로그인 실패 시, 3번(일반 사용자) 확인을 위해 null 반환
-                                console.warn("Firebase Auth login failed, trying legacy user DB.", authError.code);
-                                return null; 
-                            });
-                    } else {
-                        // 이메일 형식이 아니면 3번(일반 사용자) 확인으로 바로 이동
-                        return null;
-                    }
-
-                }).then((authResult) => {
-                    // 1번(관리자)에서 성공했으면 이 블록은 건너뜀
-                    if (loginSuccess) return; 
-
-                    if (authResult && authResult.user) {
-                        // 2-1. Firebase Auth (이메일) 로그인 성공
-                        loginSuccess = true;
-                        isAdmin = false; // Auth 유저는 일반 사용자로 간주
-                        loggedInUserId = authResult.user.uid; // Auth UID
-                        
-                        console.log("Firebase Auth User login successful.");
-                        sessionStorage.setItem('isLoggedIn', 'true');
-                        sessionStorage.setItem('isAdmin', 'false');
-                        sessionStorage.setItem('userId', loggedInUserId);
-                        showMainContent(false, loggedInUserId); // 사용자 UI 표시
-                        return; // 함수 종료
-                    }
-
-                    // 3. Auth 로그인도 실패했으면, 'users' (일반 ID/PW) 확인
+                    // 2. 관리자 계정이 아니면 일반 사용자('users') 확인
                     const usersRef = database.ref('users');
-                    return usersRef.once('value');
+                    return usersRef.once('value'); // 다음 .then()으로 연결
 
                 }).then((userSnapshot) => {
-                    // 1번(관리자) 또는 2번(Auth)에서 성공했으면 이 블록은 건너뜀
+                    // 1번(관리자)에서 성공했으면 이 블록은 건너뜀
                     if (loginSuccess) return; 
                     
                     if (userSnapshot && userSnapshot.exists()) {
@@ -880,26 +840,21 @@
                     }
 
                     if (loginSuccess) {
-                        // 3-1. 일반 사용자 로그인 성공
+                        // 2-1. 일반 사용자 로그인 성공
                         console.log("Legacy User login successful.");
                         sessionStorage.setItem('isLoggedIn', 'true');
                         sessionStorage.setItem('isAdmin', 'false');
                         sessionStorage.setItem('userId', loggedInUserId);
                         showMainContent(false, loggedInUserId); // 사용자 UI 표시
                     } else {
-                        // 4. 모든 로그인 방식 실패
+                        // 3. 둘 다 실패
                         console.log("Login failed.");
                         customAlert('아이디 또는 비밀번호가 일치하지 않습니다.');
                     }
 
                 }).catch(error => {
                     console.error("Login processing error:", error);
-                    // Firebase Auth 에러와 DB 에러를 구분
-                    if (error.code && error.code.startsWith('auth/')) {
-                         customAlert('이메일 또는 비밀번호가 일치하지 않습니다.');
-                    } else {
-                         customAlert("로그인 중 오류가 발생했습니다.");
-                    }
+                    customAlert("로그인 중 오류가 발생했습니다.");
                 });
             }
             // ▲▲▲ [수정 완료] ▲▲▲
@@ -965,7 +920,8 @@
                     }
                 } // <-- [수정] if (addLoginFormListener) 블록을 여기서 닫음
                 
-                // ▼▼▼ [수정] 비밀번호 찾기 리스너를 항상 추가하도록 밖으로 이동 ▼▼▼
+                // ▼▼▼ [수정] 비밀번호 찾기 리스너 (기능 삭제됨) ▼▼▼
+                /*
                 if (forgotPasswordLink) {
                     forgotPasswordLink.addEventListener('click', (e) => {
                         e.preventDefault();
@@ -984,32 +940,10 @@
 
                 if (forgotPasswordForm) {
                     forgotPasswordForm.addEventListener('submit', (e) => {
-                        e.preventDefault();
-                        const emailInput = document.getElementById('email');
-                        const email = emailInput.value.trim();
-
-                        if (!auth) {
-                            customAlert("인증 서비스가 초기화되지 않았습니다.");
-                            return;
-                        }
-
-                        auth.sendPasswordResetEmail(email)
-                            .then(() => {
-                                customAlert("비밀번호 재설정 이메일을 보냈습니다. 이메일 함을 확인해주세요.");
-                                // 성공 시 다시 로그인 창으로
-                                if (forgotPasswordModal) forgotPasswordModal.classList.add('hidden');
-                                if (loginContainer) loginContainer.classList.remove('hidden');
-                            })
-                            .catch((error) => {
-                                console.error("Password reset error:", error);
-                                if (error.code === 'auth/user-not-found') {
-                                    customAlert("가입되지 않은 이메일입니다.");
-                                } else {
-                                    customAlert("오류가 발생했습니다: " + error.message);
-                                }
-                            });
+                        // ... (이메일 전송 로직) ...
                     });
                 }
+                */
                 // ▲▲▲ [수정 완료] ▲▲▲
 
                 const modalCloseButton = document.querySelector('#custom-modal button');
