@@ -36,11 +36,13 @@
             </div>
             <button type="submit">로그인</button>
         </form>
+        <!-- ▼▼▼ [수정] 비밀번호 찾기 링크 삭제 ▼▼▼ -->
+        <!--
         <div class="extra-links">
-             <!-- ▼▼▼ [수정] ID 제거 (기능 삭제) ▼▼▼ -->
-            <a href="#">비밀번호를 잊으셨나요?</a>
-             <!-- ▲▲▲ [수정 완료] ▲▲▲ -->
+            <a href="#" id="forgot-password-link">비밀번호를 잊으셨나요?</a>
         </div>
+        -->
+        <!-- ▲▲▲ [수정 완료] ▲▲▲ -->
     </div>
 
     <!-- ▼▼▼ [수정] 비밀번호 찾기 모달 삭제 ▼▼▼ -->
@@ -783,7 +785,7 @@
                     return;
                 }
 
-                if (!database) {
+                if (!database) { // [수정] auth 제거
                     console.error("Firebase Database not initialized (Login Submit)");
                     customAlert("데이터베이스 연결 오류");
                     return;
@@ -826,6 +828,7 @@
                     // 1번(관리자)에서 성공했으면 이 블록은 건너뜀
                     if (loginSuccess) return; 
                     
+                    // [수정] userSnapshot이 null일 수 있으므로 (adminRef.once()가 실패하지 않고 그냥 값을 반환했을 때)
                     if (userSnapshot && userSnapshot.exists()) {
                         userSnapshot.forEach((childSnapshot) => {
                             const userData = childSnapshot.val();
@@ -918,32 +921,9 @@
                     } else {
                         console.error("loginForm element not found initially.");
                     }
-                } // <-- [수정] if (addLoginFormListener) 블록을 여기서 닫음
+                }
                 
                 // ▼▼▼ [수정] 비밀번호 찾기 리스너 (기능 삭제됨) ▼▼▼
-                /*
-                if (forgotPasswordLink) {
-                    forgotPasswordLink.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        if (loginContainer) loginContainer.classList.add('hidden');
-                        if (forgotPasswordModal) forgotPasswordModal.classList.remove('hidden');
-                    });
-                }
-
-                if (backToLoginLink) {
-                    backToLoginLink.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        if (forgotPasswordModal) forgotPasswordModal.classList.add('hidden');
-                        if (loginContainer) loginContainer.classList.remove('hidden');
-                    });
-                }
-
-                if (forgotPasswordForm) {
-                    forgotPasswordForm.addEventListener('submit', (e) => {
-                        // ... (이메일 전송 로직) ...
-                    });
-                }
-                */
                 // ▲▲▲ [수정 완료] ▲▲▲
 
                 const modalCloseButton = document.querySelector('#custom-modal button');
