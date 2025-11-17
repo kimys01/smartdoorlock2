@@ -188,9 +188,9 @@
                     if (userListDiv) userListDiv.classList.add('hidden'); // 사용자 목록 숨기기
                     if (newBtn) newBtn.classList.add('hidden'); // DB 편집 버튼 숨기기
                     
-                    // [수정] 관리자가 아니면, '사용자 정보' 창도 숨깁니다.
+                    // [수정] 사용자 정보 창을 표시합니다.
                     const userInfoDiv = document.getElementById('userInfo');
-                    if (userInfoDiv) userInfoDiv.classList.add('hidden');
+                    if (userInfoDiv) userInfoDiv.classList.remove('hidden'); // hidden을 제거합니다.
 
                     selectedUserId = loggedInUserId; // 전역 변수에 자기 ID 설정
                     
@@ -313,7 +313,7 @@
                 const userInfoDiv = document.getElementById('userInfo');
                 if (infoArea) infoArea.innerHTML = '';
                 
-                // [수정] 관리자가 아닐 경우 userInfoDiv를 숨긴 상태로 유지
+                // [수정] 관리자일 때만 userInfoDiv를 숨김 (사용자는 숨기지 않음)
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
                 if (isAdmin && userInfoDiv) {
                      userInfoDiv.classList.add('hidden');
@@ -404,13 +404,10 @@
                 const infoArea = document.getElementById('infoArea');
                 const userInfoDiv = document.getElementById('userInfo');
 
-                // [수정] 관리자일 때만 사용자 정보 UI를 표시
-                if (isAdmin && infoArea && userInfoDiv) {
+                // [수정] 관리자/사용자 모두 사용자 정보 UI를 표시
+                if (infoArea && userInfoDiv) {
                     infoArea.innerHTML = `<p><strong>사용자 ID:</strong> ${userId}</p><h3>전체 위치 기록</h3><div class="log-list"></div>`;
                     userInfoDiv.classList.remove('hidden');
-                } else if (!isAdmin) {
-                    // 일반 사용자인 경우, infoArea를 사용하지 않으므로 이 부분을 건너뜀
-                    console.log("User view: Skipping userInfo panel update.");
                 } else {
                     console.error("infoArea or userInfo element not found in selectUser.");
                     return;
@@ -426,8 +423,8 @@
 
                 locationsRef.once('value').then((snapshot) => {
                     
-                    // [수정] 관리자인 경우에만 사이드바 로그 목록 업데이트
-                    if (isAdmin && infoArea) {
+                    // [수정] 관리자/사용자 모두 사이드바 로그 목록 업데이트
+                    if (infoArea) {
                         const logListDiv = infoArea.querySelector('.log-list');
                         if (!logListDiv) return;
                         logListDiv.innerHTML = '';
