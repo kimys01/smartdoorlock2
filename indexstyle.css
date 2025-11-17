@@ -14,8 +14,9 @@ body {
 
 .hidden { display: none !important; }
 
-/* 로그인 컨테이너 */
-#login-container {
+/* ▼▼▼ [수정] 로그인 컨테이너 & 비밀번호 찾기 모달 공통 스타일 ▼▼▼ */
+#login-container,
+#forgot-password-modal {
     width: 100%;
     max-width: 400px;
     background-color: white;
@@ -30,19 +31,22 @@ body {
     z-index: 1000;
 }
 
-#login-container h2 {
+#login-container h2,
+#forgot-password-modal h2 {
     font-size: 28px;
     font-weight: 600;
     margin-bottom: 25px;
     color: #333;
 }
 
-.input-group {
+#login-container .input-group,
+#forgot-password-modal .input-group {
     margin-bottom: 20px;
     text-align: left;
 }
 
-.input-group label {
+#login-container .input-group label,
+#forgot-password-modal .input-group label {
     display: block;
     font-size: 14px;
     font-weight: 500;
@@ -50,7 +54,8 @@ body {
     color: #555;
 }
 
-.input-group input {
+#login-container .input-group input,
+#forgot-password-modal .input-group input {
     width: 100%;
     padding: 12px 15px;
     border: 1px solid #ccc;
@@ -59,12 +64,14 @@ body {
     transition: border-color 0.3s ease;
 }
 
-.input-group input:focus {
+#login-container .input-group input:focus,
+#forgot-password-modal .input-group input:focus {
     outline: none;
     border-color: #71b7e6;
 }
 
-#login-container button {
+#login-container button,
+#forgot-password-modal button {
     width: 100%;
     padding: 12px;
     background: linear-gradient(135deg, #71b7e6, #9b59b6);
@@ -77,22 +84,28 @@ body {
     transition: opacity 0.3s ease;
 }
 
-#login-container button:hover {
+#login-container button:hover,
+#forgot-password-modal button:hover {
     opacity: 0.9;
 }
 
-.extra-links {
+#login-container .extra-links,
+#forgot-password-modal .extra-links {
     margin-top: 20px;
     font-size: 14px;
 }
-.extra-links a {
+#login-container .extra-links a,
+#forgot-password-modal .extra-links a {
     color: #555;
     text-decoration: none;
 }
-.extra-links a:hover {
+#login-container .extra-links a:hover,
+#forgot-password-modal .extra-links a:hover {
     text-decoration: underline;
     color: #71b7e6;
 }
+/* ▲▲▲ [수정 완료] ▲▲▲ */
+
 
 /* --- [코드 1 스타일 적용] --- */
 /* 메인 콘텐츠 스타일 */
