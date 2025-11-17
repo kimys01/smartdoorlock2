@@ -9,7 +9,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     
+    <!-- ▼▼▼ [수정] 외부 CSS 파일 연결 ▼▼▼ -->
     <link rel="stylesheet" href="indexstyle.css">
+    <!-- ▲▲▲ [수정 완료] ▲▲▲ -->
 
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -194,6 +196,7 @@
                 console.log(`Showing main content. isAdmin: ${isAdmin}, UserID: ${loggedInUserId}`);
                 
                 if (loginContainer) loginContainer.classList.add('hidden');
+                if (forgotPasswordModal) forgotPasswordModal.classList.add('hidden'); // [추가] 비밀번호 찾기 모달도 숨김
                 if (mainContent) mainContent.classList.remove('hidden');
                 if (header) header.classList.remove('hidden');
                 if (body) {
@@ -776,7 +779,7 @@
 
             // --- 이벤트 핸들러 함수 정의 ---
             
-            // ▼▼▼ [수정] 로그인 로직 (관리자 / 사용자 분리) ▼▼▼
+            // ▼▼▼ [수정] 로그인 로직 (관리자 / 이메일 / 일반 사용자 분리) ▼▼▼
             function handleLoginSubmit(e) {
                 e.preventDefault();
                 console.log("Login submitted.");
@@ -788,8 +791,8 @@
                     return;
                 }
 
-                if (!database) {
-                    console.error("Firebase Database not initialized (Login Submit)");
+                if (!database || !auth) {
+                    console.error("Firebase Database or Auth not initialized (Login Submit)");
                     customAlert("데이터베이스 연결 오류");
                     return;
                 }
@@ -823,12 +826,44 @@
                         return; // 함수 종료
                     }
 
-                    // 2. 관리자 계정이 아니면 일반 사용자('users') 확인
+                    // 2. 관리자 계정이 아니면 Firebase Auth (이메일) 로그인 시도
+                    // usernameInput이 이메일 형식인지 간단히 확인
+                    if (usernameInput.includes('@')) {
+                        return auth.signInWithEmailAndPassword(usernameInput, passwordInput)
+                            .catch(authError => {
+                                // Auth 로그인 실패 시, 3번(일반 사용자) 확인을 위해 null 반환
+                                console.warn("Firebase Auth login failed, trying legacy user DB.", authError.code);
+                                return null; 
+                            });
+                    } else {
+                        // 이메일 형식이 아니면 3번(일반 사용자) 확인으로 바로 이동
+                        return null;
+                    }
+
+                }).then((authResult) => {
+                    // 1번(관리자)에서 성공했으면 이 블록은 건너뜀
+                    if (loginSuccess) return; 
+
+                    if (authResult && authResult.user) {
+                        // 2-1. Firebase Auth (이메일) 로그인 성공
+                        loginSuccess = true;
+                        isAdmin = false; // Auth 유저는 일반 사용자로 간주
+                        loggedInUserId = authResult.user.uid; // Auth UID
+                        
+                        console.log("Firebase Auth User login successful.");
+                        sessionStorage.setItem('isLoggedIn', 'true');
+                        sessionStorage.setItem('isAdmin', 'false');
+                        sessionStorage.setItem('userId', loggedInUserId);
+                        showMainContent(false, loggedInUserId); // 사용자 UI 표시
+                        return; // 함수 종료
+                    }
+
+                    // 3. Auth 로그인도 실패했으면, 'users' (일반 ID/PW) 확인
                     const usersRef = database.ref('users');
-                    return usersRef.once('value'); // 다음 .then()으로 연결
+                    return usersRef.once('value');
 
                 }).then((userSnapshot) => {
-                    // admin 로그인이 성공했으면 이 블록은 건너뜀
+                    // 1번(관리자) 또는 2번(Auth)에서 성공했으면 이 블록은 건너뜀
                     if (loginSuccess) return; 
                     
                     if (userSnapshot && userSnapshot.exists()) {
@@ -845,21 +880,26 @@
                     }
 
                     if (loginSuccess) {
-                        // 2-1. 일반 사용자 로그인 성공
-                        console.log("User login successful.");
+                        // 3-1. 일반 사용자 로그인 성공
+                        console.log("Legacy User login successful.");
                         sessionStorage.setItem('isLoggedIn', 'true');
                         sessionStorage.setItem('isAdmin', 'false');
                         sessionStorage.setItem('userId', loggedInUserId);
                         showMainContent(false, loggedInUserId); // 사용자 UI 표시
                     } else {
-                        // 3. 둘 다 실패
+                        // 4. 모든 로그인 방식 실패
                         console.log("Login failed.");
                         customAlert('아이디 또는 비밀번호가 일치하지 않습니다.');
                     }
 
                 }).catch(error => {
                     console.error("Login processing error:", error);
-                    customAlert("로그인 중 오류가 발생했습니다.");
+                    // Firebase Auth 에러와 DB 에러를 구분
+                    if (error.code && error.code.startsWith('auth/')) {
+                         customAlert('이메일 또는 비밀번호가 일치하지 않습니다.');
+                    } else {
+                         customAlert("로그인 중 오류가 발생했습니다.");
+                    }
                 });
             }
             // ▲▲▲ [수정 완료] ▲▲▲
@@ -923,7 +963,55 @@
                     } else {
                         console.error("loginForm element not found initially.");
                     }
+                    
+                    // ▼▼▼ [추가] 비밀번호 찾기 리스너 (로그인 화면일 때만 추가) ▼▼▼
+                    if (forgotPasswordLink) {
+                        forgotPasswordLink.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            if (loginContainer) loginContainer.classList.add('hidden');
+                            if (forgotPasswordModal) forgotPasswordModal.classList.remove('hidden');
+                        });
+                    }
+
+                    if (backToLoginLink) {
+                        backToLoginLink.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            if (forgotPasswordModal) forgotPasswordModal.classList.add('hidden');
+                            if (loginContainer) loginContainer.classList.remove('hidden');
+                        });
+                    }
+
+                    if (forgotPasswordForm) {
+                        forgotPasswordForm.addEventListener('submit', (e) => {
+                            e.preventDefault();
+                            const emailInput = document.getElementById('email');
+                            const email = emailInput.value.trim();
+
+                            if (!auth) {
+                                customAlert("인증 서비스가 초기화되지 않았습니다.");
+                                return;
+                            }
+
+                            auth.sendPasswordResetEmail(email)
+                                .then(() => {
+                                    customAlert("비밀번호 재설정 이메일을 보냈습니다. 이메일 함을 확인해주세요.");
+                                    // 성공 시 다시 로그인 창으로
+                                    if (forgotPasswordModal) forgotPasswordModal.classList.add('hidden');
+                                    if (loginContainer) loginContainer.classList.remove('hidden');
+                                })
+                                .catch((error) => {
+                                    console.error("Password reset error:", error);
+                                    if (error.code === 'auth/user-not-found') {
+                                        customAlert("가입되지 않은 이메일입니다.");
+                                    } else {
+                                        customAlert("오류가 발생했습니다: " + error.message);
+                                    }
+                                });
+                        });
+                    }
+                    // ▲▲▲ [추가 완료] ▲▲▲
                 }
+
                 const modalCloseButton = document.querySelector('#custom-modal button');
                 if (modalCloseButton) {
                     modalCloseButton.addEventListener('click', () => {
