@@ -963,54 +963,54 @@
                     } else {
                         console.error("loginForm element not found initially.");
                     }
-                    
-                    // ▼▼▼ [추가] 비밀번호 찾기 리스너 (로그인 화면일 때만 추가) ▼▼▼
-                    if (forgotPasswordLink) {
-                        forgotPasswordLink.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            if (loginContainer) loginContainer.classList.add('hidden');
-                            if (forgotPasswordModal) forgotPasswordModal.classList.remove('hidden');
-                        });
-                    }
-
-                    if (backToLoginLink) {
-                        backToLoginLink.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            if (forgotPasswordModal) forgotPasswordModal.classList.add('hidden');
-                            if (loginContainer) loginContainer.classList.remove('hidden');
-                        });
-                    }
-
-                    if (forgotPasswordForm) {
-                        forgotPasswordForm.addEventListener('submit', (e) => {
-                            e.preventDefault();
-                            const emailInput = document.getElementById('email');
-                            const email = emailInput.value.trim();
-
-                            if (!auth) {
-                                customAlert("인증 서비스가 초기화되지 않았습니다.");
-                                return;
-                            }
-
-                            auth.sendPasswordResetEmail(email)
-                                .then(() => {
-                                    customAlert("비밀번호 재설정 이메일을 보냈습니다. 이메일 함을 확인해주세요.");
-                                    // 성공 시 다시 로그인 창으로
-                                    if (forgotPasswordModal) forgotPasswordModal.classList.add('hidden');
-                                    if (loginContainer) loginContainer.classList.remove('hidden');
-                                })
-                                .catch((error) => {
-                                    console.error("Password reset error:", error);
-                                    if (error.code === 'auth/user-not-found') {
-                                        customAlert("가입되지 않은 이메일입니다.");
-                                    } else {
-                                        customAlert("오류가 발생했습니다: " + error.message);
-                                    }
-                                });
-                        });
-                    }
-                    // ▲▲▲ [추가 완료] ▲▲▲
+                } // <-- [수정] if (addLoginFormListener) 블록을 여기서 닫음
+                
+                // ▼▼▼ [수정] 비밀번호 찾기 리스너를 항상 추가하도록 밖으로 이동 ▼▼▼
+                if (forgotPasswordLink) {
+                    forgotPasswordLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (loginContainer) loginContainer.classList.add('hidden');
+                        if (forgotPasswordModal) forgotPasswordModal.classList.remove('hidden');
+                    });
                 }
+
+                if (backToLoginLink) {
+                    backToLoginLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (forgotPasswordModal) forgotPasswordModal.classList.add('hidden');
+                        if (loginContainer) loginContainer.classList.remove('hidden');
+                    });
+                }
+
+                if (forgotPasswordForm) {
+                    forgotPasswordForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const emailInput = document.getElementById('email');
+                        const email = emailInput.value.trim();
+
+                        if (!auth) {
+                            customAlert("인증 서비스가 초기화되지 않았습니다.");
+                            return;
+                        }
+
+                        auth.sendPasswordResetEmail(email)
+                            .then(() => {
+                                customAlert("비밀번호 재설정 이메일을 보냈습니다. 이메일 함을 확인해주세요.");
+                                // 성공 시 다시 로그인 창으로
+                                if (forgotPasswordModal) forgotPasswordModal.classList.add('hidden');
+                                if (loginContainer) loginContainer.classList.remove('hidden');
+                            })
+                            .catch((error) => {
+                                console.error("Password reset error:", error);
+                                if (error.code === 'auth/user-not-found') {
+                                    customAlert("가입되지 않은 이메일입니다.");
+                                } else {
+                                    customAlert("오류가 발생했습니다: " + error.message);
+                                }
+                            });
+                    });
+                }
+                // ▲▲▲ [수정 완료] ▲▲▲
 
                 const modalCloseButton = document.querySelector('#custom-modal button');
                 if (modalCloseButton) {
