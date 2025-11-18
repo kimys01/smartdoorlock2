@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Capstone Project</title>
 
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
@@ -746,7 +747,7 @@
                                      details = `<strong>[인증방식 변경]</strong><br><span style="margin-left: 10px;">${log.new_auth}</span>`;
                                  } else if (log.settingType === 'name' && log.new_name) {
                                      details = `<strong>[이름 변경]</strong><br><span style="margin-left: 10px;">${log.new_name}</span>`;
-                                 } else if (log.settingType === 'password' && log.new_password) {
+                                 } else if (log.settingType === 'password' && log.new_pw) { // [수정] 'log.new_password' -> 'log.new_pw'
                                      details = `<strong>[비밀번호 변경]</strong><br><span style="margin-left: 10px;">***</span>`; // (비밀번호는 마스킹 처리)
                                  } else {
                                      // 기타 'change' 하위 로그 (형식을 모를 경우)
@@ -1019,5 +1020,6 @@
     </script>
 </body>
 </html>
+
 
 
