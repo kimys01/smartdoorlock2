@@ -1,83 +1,153 @@
 @charset "UTF-8";
 
-/* --- 1. 기본 설정 --- */
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+/* =========================================
+   1. 기본 설정 (Global Reset & Body)
+   ========================================= */
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+    font-family: 'Poppins', sans-serif; 
+}
+
 body { 
     height: 100vh; 
-    background: linear-gradient(135deg, #71b7e6, #9b59b6); 
-    padding-top: 70px; 
+    background: linear-gradient(135deg, #71b7e6, #9b59b6); /* 메인 그라디언트 배경 */
+    padding-top: 70px; /* 헤더 높이만큼 여백 */
+    overflow: hidden; /* 전체 스크롤 방지 (내부 스크롤 사용) */
     transition: background-color 0.3s ease; 
-    overflow: hidden; 
 }
+
 .hidden { display: none !important; }
 
-/* --- 2. 로그인 화면 --- */
-#login-container {
-    width: 100%; max-width: 400px; background-color: white; padding: 40px;
-    border-radius: 10px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    text-align: center; position: absolute; left: 50%; top: 50%;
-    transform: translate(-50%, -50%); z-index: 1000;
+/* =========================================
+   2. 상단 헤더 (Header)
+   ========================================= */
+#header {
+    position: fixed; 
+    top: 0; left: 0; 
+    width: 100%; 
+    height: 70px; 
+    padding: 0 30px;
+    background-color: #fff; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    z-index: 1000;
 }
+
+#header h1 {
+    font-size: 24px; 
+    margin: 0; 
+    cursor: pointer; 
+    font-weight: 600;
+    background: linear-gradient(135deg, #71b7e6, #9b59b6);
+    -webkit-background-clip: text; 
+    background-clip: text; 
+    color: transparent;
+}
+
+#header .button-group { display: flex; gap: 0; }
+
+#header button {
+    padding: 10px 20px; 
+    border: none; 
+    color: #333; 
+    border-radius: 0; 
+    cursor: pointer;
+    font-weight: 500; 
+    transition: 0.3s; 
+    background-color: #f8f9fa;
+    font-size: 14px;
+}
+
+#header .button-group button + button { border-left: 1px solid #ddd; }
+
+#header button:hover:not(:disabled) {
+    background: linear-gradient(135deg, #71b7e6, #9b59b6);
+    color: white;
+}
+
+#header button:disabled { 
+    color: #aaa; 
+    cursor: not-allowed; 
+    background: #f8f9fa; /* disabled 상태 배경 복구 */
+}
+
+/* =========================================
+   3. 로그인 화면 (Login Container)
+   ========================================= */
+#login-container {
+    width: 100%; max-width: 400px; 
+    background-color: white; 
+    padding: 40px;
+    border-radius: 10px; 
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    text-align: center; 
+    position: absolute; 
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%); 
+    z-index: 2000;
+}
+
 #login-container h2 { font-size: 28px; font-weight: 600; margin-bottom: 25px; color: #333; }
 .input-group { margin-bottom: 20px; text-align: left; }
 .input-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; color: #555; }
 .input-group input { width: 100%; padding: 12px 15px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
 #login-container button { width: 100%; padding: 12px; background: linear-gradient(135deg, #71b7e6, #9b59b6); color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; transition: opacity 0.3s; }
 #login-container button:hover { opacity: 0.9; }
-#login-container .extra-links { margin-top: 20px; font-size: 14px; }
-#login-container .extra-links a { color: #555; text-decoration: none; }
-#login-container .extra-links a:hover { text-decoration: underline; color: #71b7e6; }
 
-/* --- 3. 상단 헤더 --- */
-#header {
-    position: fixed; top: 0; left: 0; width: 100%; height: 70px; padding: 0 30px;
-    background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    display: flex; justify-content: space-between; align-items: center; z-index: 500;
+/* =========================================
+   4. 메인 대시보드 (Main Content: Map & List)
+   ========================================= */
+#main-content { 
+    display: flex; 
+    padding: 10px; 
+    gap: 20px; 
+    width: 100%; 
+    height: calc(100vh - 70px); 
+    overflow: hidden; 
 }
-#header h1 {
-    font-size: 24px; margin: 0; cursor: pointer; font-weight: 600;
-    background: linear-gradient(135deg, #71b7e6, #9b59b6);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-}
-#header .button-group { display: flex; gap: 0; }
-#header button {
-    padding: 10px 20px; border: none; color: #333; border-radius: 0; cursor: pointer;
-    font-weight: 500; transition: 0.3s; background-color: #f8f9fa;
-}
-#header button:hover:not(:disabled) {
-    background-image: linear-gradient(135deg, #71b7e6, #9b59b6);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-}
-#header .button-group button + button { border-left: 1px solid #ddd; }
-#header button:disabled { color: #aaa; cursor: not-allowed; }
 
-/* --- 4. 메인 대시보드 --- */
-#main-content { display: flex; padding: 10px; gap: 20px; width: 100%; height: calc(100vh - 70px); overflow: hidden; }
-#sidebar { display: flex; flex-direction: column; width: 12.5%; gap: 15px; height: 100%; }
+#sidebar { display: flex; flex-direction: column; width: 250px; gap: 15px; height: 100%; min-width: 200px; }
+
 #userList, #userInfo, #mapArea {
-    border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.08); padding: 15px;
-    border-radius: 0; background-color: #fff; box-sizing: border-box;
+    border: none; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+    padding: 15px;
+    border-radius: 8px; /* 둥근 모서리 통일 */
+    background-color: #fff; 
+    box-sizing: border-box;
 }
-#userList { overflow-y: auto; flex-grow: 4; flex-basis: 0; min-height: 0; }
-#userInfo { overflow: hidden; flex-grow: 6; flex-basis: 0; min-height: 0; display: flex; flex-direction: column; }
+
+#userList { overflow-y: auto; flex-grow: 1; }
+#userInfo { overflow: hidden; flex-shrink: 0; display: flex; flex-direction: column; }
 #mapArea { flex-grow: 1; display: flex; flex-direction: column; }
 
-/* 섹션 제목 */
-#userList h2, #mapArea h2 {
-    font-weight: 600; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px; flex-shrink: 0;
-    background: linear-gradient(135deg, #71b7e6, #9b59b6); -webkit-background-clip: text; background-clip: text; color: transparent;
+/* 섹션 제목 공통 */
+h2, h3 {
+    font-weight: 600; 
+    margin-bottom: 10px;
+}
+
+#userList h2, #mapArea h2, .info-header h2 {
+    background: linear-gradient(135deg, #71b7e6, #9b59b6); 
+    -webkit-background-clip: text; 
+    background-clip: text; 
+    color: transparent;
+    border-bottom: 1px solid #eee; 
+    padding-bottom: 10px;
 }
 
 /* 사용자 리스트 아이템 */
-.user { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; }
+.user { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s; }
 .user:hover { background-color: #f0f0f0; }
 
-/* 사용자 정보창 */
-#infoArea { display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; min-height: 0; }
-#infoArea h3 { margin-top: 10px; margin-bottom: 5px; font-weight: 600; color: #555; flex-shrink: 0; }
-.info-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-.info-header h2 { font-weight: 600; margin: 0; background: linear-gradient(135deg, #71b7e6, #9b59b6); -webkit-background-clip: text; background-clip: text; color: transparent; }
-#closeUserInfoBtn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #6c757d; padding: 0 5px; }
+/* 사용자 정보창 내부 */
+#infoArea { display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; }
+.info-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+#closeUserInfoBtn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #6c757d; }
 #closeUserInfoBtn:hover { color: #dc3545; }
 
 /* 필터 버튼 */
@@ -86,38 +156,144 @@ body {
 .filter-btn:hover { background-color: #e9ecef; }
 .filter-btn.active { background-color: #e2e8f0; font-weight: bold; border-color: #adb5bd; color: #333; }
 
-/* 지도 */
-#map { width: 100%; margin-top: 10px; flex-grow: 1; min-height: 0; border-radius: 4px; }
-#mapArea p#mapUser { font-size: 14px; color: #777; margin-top: 5px; flex-shrink: 0; }
+/* 지도 요소 */
+#map { width: 100%; flex-grow: 1; border-radius: 4px; }
 
-/* 로그 리스트 (사이드바) */
-.log-list { flex-grow: 1; overflow-y: auto; min-height: 0; }
-.log-entry { padding: 8px; font-size: 14px; border-bottom: 1px solid #f0f0f0; cursor: pointer; border-radius: 4px; line-height: 1.5; }
+/* 사이드바 로그 리스트 */
+.log-list { flex-grow: 1; overflow-y: auto; }
+.log-entry { padding: 8px; font-size: 13px; border-bottom: 1px solid #f0f0f0; cursor: pointer; border-radius: 4px; line-height: 1.4; }
 .log-entry:hover { background-color: #e9ecef; }
 
-/* --- 5. 상세 로그 모달 --- */
-#log-content, #log-modal-content {
-    width: 100%; height: calc(100vh - 70px); padding: 20px;
-    display: flex; flex-direction: column; gap: 20px;
-    background-color: white; position: fixed; top: 70px; left: 0;
-    z-index: 600; box-sizing: border-box;
+/* =========================================
+   5. 상세 로그 화면 (Log Content)
+   ========================================= */
+#log-content {
+    width: 100%; 
+    height: calc(100vh - 70px); 
+    padding: 20px;
+    display: flex; 
+    flex-direction: column; 
+    gap: 20px;
+    background-color: #f4f6f9; /* 약간 어두운 배경으로 구분 */
+    position: fixed; 
+    top: 70px; left: 0;
+    z-index: 600;
 }
-.log-header { display: flex; align-items: center; gap: 20px; flex-shrink: 0; background-color: #fff; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-.log-header-bar { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; } /* 구조에 따라 이름 다를 수 있어 추가 */
-.log-header h2, .log-header-bar h2 { margin: 0; font-weight: 600; background: linear-gradient(135deg, #71b7e6, #9b59b6); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
-.log-container, .log-layout { display: flex; gap: 20px; flex-grow: 1; overflow: hidden; }
-.log-section, .log-box { width: 50%; flex: 1; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.08); background-color: #fff; padding: 15px; display: flex; flex-direction: column; }
-.log-section h3, .log-box h3 { margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px; font-weight: 600; background: linear-gradient(135deg, #71b7e6, #9b59b6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.log-header { 
+    background-color: #fff; 
+    padding: 15px; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+}
+.log-header h2 { margin: 0; }
+
+.log-container { display: flex; gap: 20px; flex-grow: 1; overflow: hidden; }
+.log-section { 
+    flex: 1; 
+    background-color: #fff; 
+    padding: 15px; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+    display: flex; 
+    flex-direction: column; 
+}
+
+.log-section h3 { color: #555; border-bottom: 1px solid #eee; padding-bottom: 10px; }
 .log-entries { overflow-y: auto; flex-grow: 1; }
-.full-log-entry { padding: 8px 5px; font-size: 14px; border-bottom: 1px solid #f0f0f0; line-height: 1.6; }
+.full-log-entry { padding: 10px 5px; font-size: 14px; border-bottom: 1px solid #f0f0f0; }
 
-/* --- 6. 모달 & 오버레이 --- */
-#custom-modal, #logout-confirm-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 2000; }
-.modal-content { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3); max-width: 350px; text-align: center; }
+/* =========================================
+   6. DB 조회 화면 (DB Content & Tree View)
+   ========================================= */
+#db-content {
+    width: 100%;
+    height: calc(100vh - 70px);
+    padding: 20px;
+    overflow-y: auto; /* 자체 스크롤 허용 */
+    background-color: #f4f6f9; /* 배경색 통일 */
+}
+
+/* 컨테이너 스타일 (기존 loge.html 스타일 통합) */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* 검색 영역 */
+.search-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 20px;
+    background-color: #f1f3f5;
+    border-radius: 8px;
+    align-items: center;
+}
+
+.search-container input[type="text"] {
+    flex: 1;
+    padding: 12px 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    outline: none;
+}
+
+.btn-search { background: linear-gradient(135deg, #71b7e6, #9b59b6); color: white; border: none; padding: 12px 25px; border-radius: 4px; cursor: pointer; font-weight: 600; }
+.btn-search:hover { opacity: 0.9; }
+
+.btn-reset { background-color: #6c757d; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-weight: 600; }
+.btn-reset:hover { opacity: 0.9; }
+
+/* 테이블 스타일 */
+.grid-wrapper { border: 1px solid #ccc; border-radius: 4px; overflow-x: auto; }
+.styled-table { width: 100%; border-collapse: collapse; font-size: 14px; background-color: white; }
+.styled-table th { background: linear-gradient(135deg, #71b7e6, #9b59b6); color: white; padding: 12px 15px; text-align: left; white-space: nowrap; }
+.styled-table td { padding: 12px 15px; border-bottom: 1px solid #ccc; border-right: 1px solid #eee; vertical-align: top; color: #333; }
+
+/* Firebase Tree View 스타일 */
+.firebase-view { font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.6; color: #333; }
+.fv-item { white-space: nowrap; }
+.fv-key-box { cursor: pointer; display: inline-block; user-select: none; }
+.fv-key-box:hover .fv-key { text-decoration: underline; color: #0056b3; }
+.fv-key { color: #000080; font-weight: bold; }
+.fv-arrow { display: inline-block; width: 14px; text-align: center; font-size: 10px; color: #555; margin-right: 4px; }
+.fv-children { display: block; padding-left: 5px; border-left: 1px solid #eee; }
+.fv-hidden { display: none !important; }
+.fv-indent { display: inline-block; width: 15px; }
+
+/* 값 색상 */
+.fv-string { color: #a31515; }
+.fv-number { color: #098658; }
+.fv-boolean { color: #0000ff; }
+.fv-null { color: #808080; }
+
+/* =========================================
+   7. 모달 및 오버레이 (Modals & Overlays)
+   ========================================= */
+#custom-modal, #logout-confirm-modal { 
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+    background: rgba(0, 0, 0, 0.5); 
+    display: flex; justify-content: center; align-items: center; 
+    z-index: 3000; 
+}
+
+.modal-content { 
+    background: white; 
+    padding: 30px; 
+    border-radius: 10px; 
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3); 
+    max-width: 350px; 
+    text-align: center; 
+}
 .modal-content p { margin-bottom: 20px; font-size: 16px; }
-.modal-content button { padding: 10px 20px; background-color: #71b7e6; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+.modal-content button { padding: 10px 20px; background-color: #71b7e6; color: white; border: none; border-radius: 5px; cursor: pointer; }
 
-.custom-overlay-info { padding: 5px 10px; font-size: 12px; text-align: left; background: white; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1px solid #ccc; }
+/* 지도 오버레이 핀/툴팁 */
+.custom-overlay-info { padding: 5px 10px; font-size: 12px; background: white; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1px solid #ccc; }
 .custom-marker-pin { width: 32px; height: 35px; transform: scale(1.5); transform-origin: bottom center; }
 .custom-marker-dot { width: 12px; height: 12px; transform: scale(1.8); transform-origin: center center; }
