@@ -16,15 +16,12 @@
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <!-- ▼▼▼ [수정] Firebase Auth SDK 삭제 (기능 제거됨) ▼▼▼ -->
-    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script> -->
-    <!-- ▲▲▲ [수정 완료] ▲▲▲ -->
 
 </head>
 <body>
 
     <div id="login-container">
-        <h2>SmartDoorLock</h2> <!-- [수정] 텍스트 변경 -->
+        <h2>SmartDoorLock</h2>
         <form id="login-form">
             <div class="input-group">
                 <label for="username">아이디</label>
@@ -36,19 +33,23 @@
             </div>
             <button type="submit">로그인</button>
         </form>
-        <!-- 비밀번호 찾기 링크 삭제됨 -->
     </div>
 
     <div id="header" class="hidden">
-        <!-- ▼▼▼ [수정] ID 추가 (클릭 이벤트를 위해) ▼▼▼ -->
         <h1 id="header-title">Smart Doorlock</h1> 
-        <!-- ▲▲▲ [수정 완료] ▲▲▲ -->
         <div class="button-group">
-            <!-- ▼▼▼ [수정] 지도 버튼 추가 및 순서 변경 ▼▼▼ -->
             <button id="mapBtn" disabled>지도</button>
             <button id="logBtn" disabled>로그 보기</button>
             <button id="newBtn">DB 편집</button>
-            <button id="logoutBtn">로그아웃</button>
+            
+            <!-- ▼▼▼ [수정] 로그아웃 버튼을 드롭다운 메뉴로 변경 ▼▼▼ -->
+            <div class="dropdown">
+                <button id="accountBtn" class="dropbtn">계정 관리 ▼</button>
+                <div class="dropdown-content">
+                    <a href="#" id="switchAccountAction">계정 변경</a>
+                    <a href="#" id="logoutAction">로그아웃</a>
+                </div>
+            </div>
             <!-- ▲▲▲ [수정 완료] ▲▲▲ -->
         </div>
     </div>
@@ -57,17 +58,17 @@
         <div id="sidebar">
             <div id="userInfo" class="hidden">
                 <div class="info-header">
-                    <h2>User Information</h2> <!-- [수정] 텍스트 변경 -->
+                    <h2>User Information</h2>
                     <button id="closeUserInfoBtn">X</button>
                 </div>
                 <div id="infoArea">사용자를 선택해주세요.</div>
             </div>
             <div id="userList">
-                <h2>User List</h2> <!-- [수정] 텍스트 변경 -->
+                <h2>User List</h2>
             </div>
         </div>
         <div id="mapArea">
-            <h2>Map</h2> <!-- [수정] 텍스트 변경 -->
+            <h2>Map</h2>
             <p id="mapUser">사용자를 선택하면 이동 경로가 표시됩니다.</p>
             <div id="map"></div> 
         </div>
@@ -75,18 +76,15 @@
 
     <div id="log-content" class="hidden">
         <div class="log-header">
-            <!-- ▼▼▼ [수정] 지도로 돌아가기 버튼 삭제 ▼▼▼ -->
-            <!-- <button id="backToMapBtn">&larr; 지도로 돌아가기</button> -->
-            <!-- ▲▲▲ [수정 완료] ▲▲▲ -->
             <h2 id="logUserTitle">전체 로그</h2>
         </div>
         <div class="log-container">
             <div id="doorLockLogs" class="log-section">
-                <h3>DoorLock Logs</h3> <!-- [수정] 텍스트 변경 -->
+                <h3>DoorLock Logs</h3>
                 <div class="log-entries"></div>
             </div>
             <div id="appLogs" class="log-section">
-                <h3>App Logs</h3> <!-- [수정] 텍스트 변경 -->
+                <h3>App Logs</h3>
                 <div class="log-entries"></div>
             </div>
         </div>
@@ -98,6 +96,18 @@
             <button onclick="document.getElementById('custom-modal').style.display='none';">확인</button>
         </div>
     </div>
+
+    <!-- ▼▼▼ [추가] 로그아웃 확인 모달 ▼▼▼ -->
+    <div id="logout-confirm-modal" class="hidden">
+        <div class="modal-content">
+            <p>로그아웃 하시겠습니까?</p>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                <button id="confirmLogoutBtn" style="flex: 1;">확인</button>
+                <button id="cancelLogoutBtn" style="flex: 1; background-color: #aaa;">취소</button>
+            </div>
+        </div>
+    </div>
+    <!-- ▲▲▲ [추가 완료] ▲▲▲ -->
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -187,11 +197,10 @@
                 const newBtn = document.getElementById('newBtn'); 
                 const userInfoDiv = document.getElementById('userInfo');
                 
-                // [수정] 버튼 초기 상태 설정
                 const mapBtn = document.getElementById('mapBtn');
                 const logBtn = document.getElementById('logBtn');
-                if (mapBtn) mapBtn.disabled = true; // 메인은 지도화면이므로 지도버튼 비활성
-                if (logBtn) logBtn.disabled = true; // 사용자 선택 전까지 로그버튼 비활성
+                if (mapBtn) mapBtn.disabled = true; 
+                if (logBtn) logBtn.disabled = true; 
 
                 if (isAdmin) {
                     // 관리자
@@ -244,7 +253,6 @@
             function drawDoorlockZones() {
                 const doorlockPosition = new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG);
                 
-                // 도어락 마커
                 const markerImage = new kakao.maps.MarkerImage(
                     'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
                     new kakao.maps.Size(35, 35)
@@ -256,7 +264,6 @@
                     title: "우리집 도어락"
                 });
 
-                // 반경 원
                 const radii = [
                     { r: 1000, color: '#FF0000' }, 
                     { r: 2000, color: '#FFA500' }, 
@@ -301,7 +308,7 @@
                 });
             }
 
-            // 지도 초기화 (사용자 경로 지우기)
+            // 지도 초기화
             function clearMapAndInfo() {
                 markers.forEach(marker => {
                     if (marker.customOverlay) marker.customOverlay.setMap(null);
@@ -317,18 +324,23 @@
                     if (selectedLogMarker.infoBox) selectedLogMarker.infoBox.setMap(null);
                     selectedLogMarker = null;
                 }
-                // *주의* zoneCircles와 doorlockMarker는 지우지 않음 (고정)
 
                 const infoArea = document.getElementById('infoArea');
                 if (infoArea) infoArea.innerHTML = '';
                 
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+                const userInfoDiv = document.getElementById('userInfo');
+                if (isAdmin && userInfoDiv) {
+                     userInfoDiv.classList.add('hidden');
+                }
+                
                 const logBtnElem = document.getElementById('logBtn');
                 if (logBtnElem) logBtnElem.disabled = true;
+                
                 if (isAdmin) selectedUserId = null;
             }
 
-            // [추가] 사용자 정보 닫기 함수
+            // 사용자 정보 닫기 함수
             function closeUserInfo() {
                 console.log("closeUserInfo called.");
                 clearMapAndInfo();
@@ -374,7 +386,7 @@
                 map.panTo(position);
             }
 
-            // 사용자 선택 및 경로 표시 (거리 계산 포함)
+            // 사용자 선택
             function selectUser(userId) {
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
                 if (isAdmin) clearMapAndInfo();
@@ -404,13 +416,12 @@
                         const logs = [];
                         snapshot.forEach(childSnapshot => logs.push(childSnapshot.val()));
                         
-                        logs.reverse().forEach((pos) => { // 최신순
+                        logs.reverse().forEach((pos) => { 
                             if (!pos || !pos.latitude || !pos.longitude) return;
                             const lat = parseFloat(pos.latitude);
                             const lng = parseFloat(pos.longitude);
                             if (isNaN(lat) || isNaN(lng)) return;
 
-                            // 거리 계산 및 구역 판별
                             const distKm = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
                             let zoneBadge = '';
                             let rowStyle = '';
@@ -459,7 +470,6 @@
                         path.push(latlng);
                         bounds.extend(latlng);
 
-                        // 경로 점 찍기
                         const dist = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
                         const dotContent = `<div class="custom-overlay-info">
                                                 ${dist.toFixed(2)}km 지점
@@ -491,7 +501,7 @@
                 });
             }
 
-            // 전체 로그 로드 (모달창)
+            // 전체 로그 로드
             function loadAllLogs(userId) {
                 const doorLockLogContainer = document.querySelector('#doorLockLogs .log-entries');
                 const appLogContainer = document.querySelector('#appLogs .log-entries');
@@ -529,7 +539,7 @@
                     }
                 });
 
-                // 2. 앱 로그 (하위 폴더 전체)
+                // 2. 앱 로그
                 const appLogRef = database.ref('users/' + userId + '/app_logs');
                 appLogRef.once('value').then((snapshot) => {
                     appLogContainer.innerHTML = '';
@@ -648,24 +658,33 @@
                 });
             }
 
-            function handleLogout() {
+            // ▼▼▼ [수정] 로그아웃 확인 모달 로직 추가 ▼▼▼
+            function confirmLogout() {
+                const logoutModal = document.getElementById('logout-confirm-modal');
+                if (logoutModal) logoutModal.classList.remove('hidden');
+            }
+
+            function executeLogout() {
+                console.log("Logout executed.");
                 sessionStorage.removeItem('isLoggedIn');
                 sessionStorage.removeItem('isAdmin');
                 sessionStorage.removeItem('userId');
                 window.location.reload();
             }
+            // ▲▲▲ [수정 완료] ▲▲▲
 
             function handleLogView() {
                 const currentMainContent = document.getElementById('main-content');
                 const currentLogContent = document.getElementById('log-content');
-                const mapBtn = document.getElementById('mapBtn');
-                const logBtn = document.getElementById('logBtn');
                 const userIdToLoad = selectedUserId || sessionStorage.getItem('userId');
 
                 if (userIdToLoad) {
                     if (currentMainContent) currentMainContent.classList.add('hidden');
                     if (currentLogContent) currentLogContent.classList.remove('hidden');
                     
+                    // 지도 버튼 활성화, 로그 버튼 비활성화
+                    const mapBtn = document.getElementById('mapBtn');
+                    const logBtn = document.getElementById('logBtn');
                     if (mapBtn) mapBtn.disabled = false;
                     if (logBtn) logBtn.disabled = true;
 
@@ -678,12 +697,13 @@
             function handleBackToMap() {
                 const currentMainContent = document.getElementById('main-content');
                 const currentLogContent = document.getElementById('log-content');
-                const mapBtn = document.getElementById('mapBtn');
-                const logBtn = document.getElementById('logBtn');
-
+                
                 if (currentLogContent) currentLogContent.classList.add('hidden');
                 if (currentMainContent) currentMainContent.classList.remove('hidden');
 
+                // 지도 버튼 비활성화, 로그 버튼 활성화
+                const mapBtn = document.getElementById('mapBtn');
+                const logBtn = document.getElementById('logBtn');
                 if (mapBtn) mapBtn.disabled = true;
                 if (logBtn) logBtn.disabled = false;
             }
@@ -697,24 +717,38 @@
                 }
                 const modalClose = document.querySelector('#custom-modal button');
                 if (modalClose) modalClose.onclick = () => document.getElementById('custom-modal').style.display = 'none';
+                
                 if (closeUserInfoButton) closeUserInfoButton.onclick = closeUserInfo;
+
+                // ▼▼▼ [수정] 로그아웃 확인 모달 버튼 리스너 ▼▼▼
+                const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+                const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+                const logoutModal = document.getElementById('logout-confirm-modal');
+
+                if (confirmLogoutBtn) confirmLogoutBtn.onclick = executeLogout;
+                if (cancelLogoutBtn && logoutModal) cancelLogoutBtn.onclick = () => logoutModal.classList.add('hidden');
+                // ▲▲▲ [수정 완료] ▲▲▲
             }
 
             function setupMainUIEventListeners() {
-                const logoutBtn = document.getElementById('logoutBtn');
+                // ▼▼▼ [수정] 드롭다운 메뉴 클릭 리스너 ▼▼▼
+                const logoutAction = document.getElementById('logoutAction');
+                const switchAccountAction = document.getElementById('switchAccountAction');
+
+                // 둘 다 로그아웃 확인 모달을 띄움
+                if (logoutAction) logoutAction.onclick = confirmLogout;
+                if (switchAccountAction) switchAccountAction.onclick = confirmLogout;
+                // ▲▲▲ [수정 완료] ▲▲▲
+
                 const logBtn = document.getElementById('logBtn');
                 const newBtn = document.getElementById('newBtn');
-                const mapBtn = document.getElementById('mapBtn'); // [수정] 지도 버튼
-                
+                const mapBtn = document.getElementById('mapBtn');
                 const headerTitle = document.getElementById('header-title');
-                if (headerTitle) {
-                    headerTitle.onclick = () => window.location.reload();
-                }
 
-                if (logoutBtn) logoutBtn.onclick = handleLogout;
+                if (headerTitle) headerTitle.onclick = () => window.location.reload();
                 if (logBtn) logBtn.onclick = handleLogView;
                 if (newBtn) newBtn.onclick = handleNewButtonClick;
-                if (mapBtn) mapBtn.onclick = handleBackToMap; // [수정] 지도 버튼 클릭시
+                if (mapBtn) mapBtn.onclick = handleBackToMap;
             }
 
             const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
