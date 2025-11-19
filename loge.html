@@ -3,139 +3,273 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>실시간 데이터베이스 뷰어/편집기</title>
-    <!-- Tailwind CSS 로드 -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Inter & Poppins 폰트 사용 -->
+    <title>DB Editor - Capstone</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    
-    <!-- ▼▼▼ [수정] 외부 CSS 파일 연결 ▼▼▼ -->
-    <link rel="stylesheet" href="logestyle.css">
-    <!-- ▲▲▲ [수정 완료] ▲▲▲ -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            background-color: #f4f6f9;
+            padding-top: 70px; /* 헤더 공간 확보 */
+            overflow: hidden; /* 스크롤은 내부 패널에서 처리 */
+        }
+
+        /* --- 헤더 스타일 (메인 페이지와 통일) --- */
+        #header {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 70px;
+            padding: 0 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #71b7e6, #9b59b6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin: 0;
+        }
+
+        #backBtn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 0;
+            background-color: #f8f9fa;
+            color: #333;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        #backBtn:hover {
+            background-image: linear-gradient(135deg, #71b7e6, #9b59b6);
+            color: white;
+        }
+
+        /* --- 메인 레이아웃 (좌우 분할) --- */
+        #container {
+            display: flex;
+            width: 100%;
+            height: calc(100vh - 70px);
+            padding: 20px;
+            gap: 20px;
+        }
+
+        /* 좌측 트리 뷰 */
+        #tree-panel {
+            width: 35%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+            color: #555;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #tree-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        /* 우측 에디터 */
+        #editor-panel {
+            width: 65%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #editor-area {
+            flex-grow: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* 현재 경로 표시 */
+        .path-display {
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            color: #333;
+            font-family: monospace;
+            font-size: 14px;
+            word-break: break-all;
+        }
+
+        /* JSON 텍스트 영역 */
+        #json-editor {
+            flex-grow: 1;
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace; /* 코드 폰트 */
+            font-size: 14px;
+            line-height: 1.5;
+            resize: none;
+            background-color: #fafafa;
+            color: #333;
+        }
+        #json-editor:focus {
+            outline: 2px solid #71b7e6;
+            background-color: #fff;
+        }
+
+        /* 버튼 그룹 */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            padding-top: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: white;
+            transition: opacity 0.3s;
+        }
+        .btn:hover { opacity: 0.9; }
+
+        .btn-save { background: #28a745; } /* 초록색 */
+        .btn-add { background: #17a2b8; }  /* 청록색 */
+        .btn-delete { background: #dc3545; } /* 빨간색 */
+        .btn-refresh { background: #6c757d; } /* 회색 */
+
+        /* 트리 노드 스타일 */
+        .tree-node {
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .tree-node:hover {
+            background-color: #f0f0f0;
+        }
+        .tree-node.selected {
+            background-color: #e3f2fd;
+            color: #007bff;
+            font-weight: 500;
+        }
+        .tree-children {
+            padding-left: 20px; /* 들여쓰기 */
+            border-left: 1px solid #eee;
+            display: none; /* 기본적으로 숨김 */
+        }
+        .tree-children.open {
+            display: block;
+        }
+        .toggle-icon {
+            display: inline-block;
+            width: 20px;
+            text-align: center;
+            color: #999;
+            margin-right: 5px;
+        }
+        .node-icon {
+            margin-right: 5px;
+            color: #f0ad4e; /* 폴더 색상 */
+        }
+        .node-icon.file {
+            color: #5bc0de; /* 파일 색상 */
+        }
+
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 </head>
-<body class="min-h-screen"> 
+<body>
 
-    <div id="header" style="position: fixed; top: 0; left: 0; width: 100%; padding: 10px 20px; background-color: #f8f9fa; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 500;">
-        <h1 style="margin: 0; font-size: 24px; background: linear-gradient(135deg, #71b7e6, #9b59b6); -webkit-background-clip: text; background-clip: text; color: transparent;">실시간 DB 편집기</h1>
-        <div class="button-group">
-            <button id="backBtn" class="action-button back-button">&larr; 뒤로 가기</button>
-        </div>
+    <div id="header">
+        <h1>데이터베이스 편집기</h1>
+        <button id="backBtn" onclick="window.location.href='index.html'">메인으로 돌아가기</button>
     </div>
 
-    <div id="custom-modal" class="hidden">
-        <div class="modal-content">
-            <p id="modal-message"></p>
-            <button onclick="document.getElementById('custom-modal').style.display='none';">확인</button>
+    <div id="container">
+        <div id="tree-panel">
+            <div class="panel-header">
+                <span>DB 탐색기</span>
+                <button class="btn btn-refresh" onclick="loadDatabase()" style="padding: 5px 10px; font-size:12px;">
+                    <i class="fas fa-sync-alt"></i> 새로고침
+                </button>
+            </div>
+            <div id="tree-content">
+                <div style="text-align:center; margin-top:20px; color:#999;">데이터 로딩 중...</div>
+            </div>
         </div>
-    </div>
 
-    <div class="container mx-auto max-w-4xl p-4 md:p-8">
-        <div class="bg-white shadow-lg overflow-hidden"> 
-            <div id="data-container" class="p-6 space-y-4 min-h-[calc(100vh-100px)]"> 
-                <!-- 로딩 상태 -->
-                <div id="loading-state" class="flex flex-col items-center justify-center text-gray-500 py-10">
-                    <div class="spinner mb-4"></div>
-                    <p>Firebase Realtime Database에 연결하고 데이터를 불러오는 중...</p>
+        <div id="editor-panel">
+            <div class="panel-header">데이터 수정</div>
+            <div id="editor-area">
+                <div>
+                    <label style="font-size:12px; color:#777;">현재 경로:</label>
+                    <div id="current-path" class="path-display">/</div>
                 </div>
+                
+                <label style="font-size:12px; color:#777;">JSON 데이터 (직접 수정 가능):</label>
+                <textarea id="json-editor" spellcheck="false"></textarea>
 
-                <!-- 비어있는 상태 -->
-                <div id="empty-state" class="hidden flex flex-col items-center justify-center text-gray-500 py-10">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                    </svg>
-                    <p class="font-medium">데이터베이스가 비어 있습니다.</p>
-                    <p class="text-sm">Realtime Database 콘솔에서 데이터를 추가하거나 아래 편집기를 사용하세요.</p>
-                </div>
-
-                <!-- 데이터 편집 UI -->
-                <div id="edit-controls" class="hidden p-4 border border-gray-200 bg-gray-50 space-y-3"> 
-                    <h2 class="text-lg font-semibold text-gray-700">데이터 편집</h2>
-                    <div>
-                        <label for="edit-path" class="block text-sm font-medium text-gray-600 mb-1">경로 (예: users/123456)</label>
-                        <input type="text" id="edit-path" class="form-input" placeholder="/">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-1">필드 (Key-Value)</label>
-                        <div id="fields-container" class="space-y-2">
-                             <p id="no-fields-msg" class="text-sm text-gray-400 italic">추가할 필드가 없습니다. '+ 필드 추가' 버튼을 누르세요.</p>
-                        </div>
-                        <button id="add-field-button" class="mt-2 action-button add-field-button">+ 필드 추가</button>
-                    </div>
-                    <div class="flex space-x-2">
-                        <button id="set-button" class="action-button set-button flex-1">Set (추가/덮어쓰기)</button>
-                        <button id="update-button" class="action-button update-button flex-1">Update (수정)</button>
-                        <button id="delete-button" class="action-button delete-button flex-1">Delete (경로 삭제)</button>
-                    </div>
-                </div>
-
-                <!-- 데이터 표시 영역 -->
-                <div id="json-viewer-container" class="hidden">
-                     <h2 class="text-lg font-semibold mb-2 text-gray-700">데이터베이스 내용:</h2>
-                     <div id="json-viewer"></div> 
+                <div class="action-buttons">
+                    <button class="btn btn-add" onclick="addChildNode()">
+                        <i class="fas fa-plus"></i> 자식 추가
+                    </button>
+                    <button class="btn btn-delete" onclick="deleteCurrentNode()">
+                        <i class="fas fa-trash"></i> 현재 경로 삭제
+                    </button>
+                    <button class="btn btn-save" onclick="saveCurrentData()">
+                        <i class="fas fa-save"></i> 변경사항 저장
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set, remove, child, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
-
-        let dataContainer, jsonViewerContainer, jsonViewer, loadingState, emptyState, editControls, editPathInput, fieldsContainer, addFieldButton, noFieldsMsg, setButton, updateButton, deleteButton, backBtn;
-
-        document.addEventListener('DOMContentLoaded', () => {
-             dataContainer = document.getElementById('data-container');
-             jsonViewerContainer = document.getElementById('json-viewer-container');
-             jsonViewer = document.getElementById('json-viewer');
-             loadingState = document.getElementById('loading-state');
-             emptyState = document.getElementById('empty-state');
-             editControls = document.getElementById('edit-controls');
-             editPathInput = document.getElementById('edit-path');
-             fieldsContainer = document.getElementById('fields-container');
-             addFieldButton = document.getElementById('add-field-button');
-             noFieldsMsg = document.getElementById('no-fields-msg');
-             setButton = document.getElementById('set-button');
-             updateButton = document.getElementById('update-button');
-             deleteButton = document.getElementById('delete-button');
-             backBtn = document.getElementById('backBtn'); 
-
-             if (addFieldButton) addFieldButton.addEventListener('click', addField);
-             if (setButton) setButton.addEventListener('click', handleSet);
-             if (updateButton) updateButton.addEventListener('click', handleUpdate);
-             if (deleteButton) deleteButton.addEventListener('click', handleDelete);
-             if (backBtn) backBtn.addEventListener('click', () => {
-                 window.history.back(); 
-             });
-
-             const modalCloseButton = document.querySelector('#custom-modal button');
-             if (modalCloseButton) {
-                 modalCloseButton.addEventListener('click', () => {
-                     const modal = document.getElementById('custom-modal');
-                     if(modal) modal.style.display = 'none';
-                 });
-             }
-
-             initializeFirebase();
-        });
-
-
-        function customAlert(message, isError = false) {
-            const modal = document.getElementById('custom-modal');
-            const messageElem = document.getElementById('modal-message');
-            if (modal && messageElem) {
-                messageElem.textContent = message;
-                messageElem.style.color = isError ? 'red' : 'inherit';
-                modal.style.display = 'flex';
-            } else {
-                console.error("Custom modal elements not found, using standard alert.");
-                alert(message);
-            }
-        }
-
+    <script>
+        // --- Firebase 설정 (메인 페이지와 동일) ---
         const firebaseConfig = {
             apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
             authDomain: "smartdoorlock-b4636.firebaseapp.com",
@@ -147,327 +281,206 @@
             measurementId: "G-4TH9MB9WPM"
         };
 
-        let db;
+        // Firebase 초기화
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
-        function censorSensitiveData(obj) {
-            if (typeof obj !== 'object' || obj === null) {
-                return obj;
-            }
-            if (Array.isArray(obj)) {
-                return obj.map(item => censorSensitiveData(item));
-            }
-            const newObj = {};
-            for (const key in obj) {
-                if (Object.prototype.hasOwnProperty.call(obj, key)) {
-                    if (key !== 'admin_pass' && key !== 'password') {
-                        newObj[key] = censorSensitiveData(obj[key]);
-                    }
-                }
-            }
-            return newObj;
+        // 전역 변수
+        let fullData = null; // DB 전체 데이터
+        let currentPath = "/"; // 현재 선택된 경로
+
+        // 페이지 로드 시 실행
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDatabase();
+        });
+
+        // --- 1. DB 전체 데이터 로드 및 트리 생성 ---
+        function loadDatabase() {
+            const treeContent = document.getElementById('tree-content');
+            treeContent.innerHTML = '<div style="text-align:center; margin-top:20px; color:#999;"><i class="fas fa-spinner fa-spin"></i> 데이터 불러오는 중...</div>';
+
+            // 루트 경로(/)에서 모든 데이터를 가져옴
+            database.ref('/').once('value').then(snapshot => {
+                fullData = snapshot.val();
+                renderTree();
+                selectNode('/'); // 초기에는 루트 선택
+            }).catch(err => {
+                console.error(err);
+                treeContent.innerHTML = '<div style="color:red; text-align:center; margin-top:20px;">데이터 로드 실패</div>';
+                alert('데이터를 불러오지 못했습니다: ' + err.message);
+            });
         }
 
-        function initializeFirebase() {
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getDatabase(app);
-                console.log("Firebase initialized.");
-                setupDataListener();
-            } catch (e) {
-                console.error("Firebase initialization error:", e);
-                if (loadingState) {
-                     loadingState.innerHTML = `<p class="text-red-500">Firebase 초기화 오류. F12를 눌러 콘솔을 확인하세요.</p>`;
-                } else {
-                     alert("Firebase 초기화 오류. 콘솔을 확인하세요.");
-                }
-            }
+        // --- 2. 트리 뷰 렌더링 (재귀 함수) ---
+        function renderTree() {
+            const treeContent = document.getElementById('tree-content');
+            treeContent.innerHTML = '';
+
+            const rootUl = document.createElement('div');
+            // 루트 노드 생성
+            rootUl.appendChild(createTreeNode('Root', fullData, ''));
+            treeContent.appendChild(rootUl);
         }
 
-        function buildJsonTree(data, container) {
-            container.innerHTML = ''; 
+        function createTreeNode(key, data, parentPath) {
+            // 현재 경로 계산
+            const currentPathStr = parentPath === '' ? key : (parentPath === '/' ? '/' + key : parentPath + '/' + key);
+            const actualPath = parentPath === '' ? '/' : currentPathStr; // Root는 '/'로 취급
 
-            if (data === null || data === undefined) {
-                 container.innerHTML = '<span class="json-value-null">null</span>';
-                 return;
-            }
-
-            const rootUl = document.createElement('ul');
-            rootUl.className = 'json-tree'; 
-
-            if (Array.isArray(data)) {
-                data.forEach((item, index) => {
-                    rootUl.appendChild(createTreeItem(index, item));
-                });
-            } else if (typeof data === 'object') {
-                for (const key in data) {
-                    if (Object.prototype.hasOwnProperty.call(data, key)) {
-                        rootUl.appendChild(createTreeItem(key, data[key]));
-                    }
-                }
-            } else {
-                 const li = document.createElement('li');
-                 li.innerHTML = `<span class="json-value-string">"${data}"</span>`; 
-                 rootUl.appendChild(li);
-            }
-            container.appendChild(rootUl);
-        }
-
-        function createTreeItem(key, value) {
-            const li = document.createElement('li');
+            const container = document.createElement('div');
             
-            const isExpandable = (typeof value === 'object' && value !== null && Object.keys(value).length > 0);
-            
-            const toggle = document.createElement('span');
-            if (isExpandable) {
-                toggle.className = 'json-toggle';
-                toggle.textContent = '►'; 
-            } else {
-                toggle.className = 'json-toggle-placeholder'; 
-            }
-            li.appendChild(toggle);
-
-            const keySpan = document.createElement('span');
-            keySpan.className = 'json-key';
-            keySpan.textContent = `${key}: `;
-            li.appendChild(keySpan);
-
-            if (isExpandable) {
-                const summary = document.createElement('span');
-                summary.className = 'json-summary';
-                if (Array.isArray(value)) {
-                    summary.textContent = `[${value.length} items]`;
-                } else {
-                    summary.textContent = `{${Object.keys(value).length} keys}`;
-                }
-                li.appendChild(summary);
-
-                const nestedUl = document.createElement('ul');
-                nestedUl.className = 'json-nested hidden'; 
+            // 노드 헤더 (아이콘 + 이름)
+            const header = document.createElement('div');
+            header.className = 'tree-node';
+            header.dataset.path = actualPath;
+            header.onclick = (e) => {
+                e.stopPropagation(); // 부모 클릭 방지
+                selectNode(actualPath);
                 
-                if (Array.isArray(value)) {
-                    value.forEach((item, index) => {
-                        nestedUl.appendChild(createTreeItem(index, item));
-                    });
-                } else {
-                    for (const subKey in value) {
-                        if (Object.prototype.hasOwnProperty.call(value, subKey)) {
-                            nestedUl.appendChild(createTreeItem(subKey, value[subKey]));
-                        }
+                // 폴더면 열고 닫기 토글
+                const childrenDiv = container.querySelector('.tree-children');
+                const toggleIcon = header.querySelector('.toggle-icon i');
+                if (childrenDiv) {
+                    const isOpen = childrenDiv.classList.contains('open');
+                    if (isOpen) {
+                        childrenDiv.classList.remove('open');
+                        toggleIcon.className = 'fas fa-chevron-right';
+                    } else {
+                        childrenDiv.classList.add('open');
+                        toggleIcon.className = 'fas fa-chevron-down';
                     }
                 }
-                li.appendChild(nestedUl);
+            };
 
-                const toggleFn = () => {
-                    nestedUl.classList.toggle('hidden');
-                    summary.classList.toggle('hidden');
-                    toggle.classList.toggle('expanded');
-                    toggle.textContent = toggle.classList.contains('expanded') ? '▼' : '►';
-                };
+            // 아이콘 결정
+            const isObject = data !== null && typeof data === 'object';
+            const toggleIconHtml = isObject 
+                ? `<span class="toggle-icon"><i class="fas fa-chevron-right"></i></span>` 
+                : `<span class="toggle-icon"></span>`; // 빈 공간
+            
+            const nodeIconClass = isObject ? 'fas fa-folder node-icon' : 'fas fa-file-alt node-icon file';
+            
+            header.innerHTML = `${toggleIconHtml}<i class="${nodeIconClass}"></i> ${key}`;
+            container.appendChild(header);
 
-                toggle.addEventListener('click', toggleFn);
-                keySpan.addEventListener('click', toggleFn); 
+            // 자식 노드 생성 (객체일 경우만)
+            if (isObject) {
+                const childrenContainer = document.createElement('div');
+                childrenContainer.className = 'tree-children';
+                
+                // 객체의 키들을 순회하며 자식 생성
+                Object.keys(data).forEach(childKey => {
+                    const childNode = createTreeNode(childKey, data[childKey], actualPath);
+                    childrenContainer.appendChild(childNode);
+                });
+                container.appendChild(childrenContainer);
+            }
 
+            return container;
+        }
+
+        // --- 3. 노드 선택 (에디터에 표시) ---
+        function selectNode(path) {
+            currentPath = path;
+            
+            // 1. 트리에서 하이라이트 처리
+            document.querySelectorAll('.tree-node').forEach(el => el.classList.remove('selected'));
+            const selectedEl = document.querySelector(`.tree-node[data-path="${path}"]`);
+            if (selectedEl) selectedEl.classList.add('selected');
+
+            // 2. 경로 표시 업데이트
+            document.getElementById('current-path').textContent = path;
+
+            // 3. 데이터 가져와서 에디터에 표시
+            let targetData = fullData;
+            if (path !== '/') {
+                // 경로 문자열(/users/123)을 배열(['users', '123'])로 변환하여 탐색
+                const keys = path.split('/').filter(k => k);
+                for (let k of keys) {
+                    if (targetData && targetData[k] !== undefined) {
+                        targetData = targetData[k];
+                    } else {
+                        targetData = null; // 데이터가 없는 경우
+                        break;
+                    }
+                }
+            }
+
+            // JSON 포맷팅하여 텍스트 영역에 넣기
+            const editor = document.getElementById('json-editor');
+            if (targetData !== undefined) {
+                editor.value = JSON.stringify(targetData, null, 4); // 4칸 들여쓰기
             } else {
-                const valueSpan = document.createElement('span');
-                let valueType = typeof value;
-                let displayValue = value;
-
-                if (value === null) {
-                    valueType = 'null';
-                    displayValue = 'null';
-                } else if (valueType === 'string') {
-                    displayValue = `"${value}"`;
-                }
-
-                valueSpan.className = `json-value json-value-${valueType}`;
-                valueSpan.textContent = displayValue;
-                li.appendChild(valueSpan);
+                editor.value = "null";
             }
-
-            return li;
         }
 
-        function setupDataListener() {
-            const dbRootRef = ref(db, '/');
-            console.log(`Listening for data at root path '/'`);
+        // --- 4. 데이터 저장 (Update) ---
+        function saveCurrentData() {
+            const editor = document.getElementById('json-editor');
+            let newData;
 
-            onValue(dbRootRef, (snapshot) => {
-                if (loadingState) loadingState.classList.add('hidden');
-                if (editControls) editControls.classList.remove('hidden');
-                const data = snapshot.val();
-
-                if (data) {
-                    if (emptyState) emptyState.classList.add('hidden');
-                    if (jsonViewerContainer) jsonViewerContainer.classList.remove('hidden');
-                    
-                    const censoredData = censorSensitiveData(data); 
-                    if (jsonViewer) {
-                        buildJsonTree(censoredData, jsonViewer); 
-                    }
-                } else {
-                    if (jsonViewerContainer) jsonViewerContainer.classList.add('hidden');
-                    if (emptyState) emptyState.classList.remove('hidden');
-                    if (jsonViewer) jsonViewer.innerHTML = ''; 
-                }
-
-            }, (error) => {
-                console.error("Error listening to database:", error);
-                if (loadingState) loadingState.classList.remove('hidden');
-                if (editControls) editControls.classList.add('hidden');
-                if (emptyState) emptyState.classList.add('hidden');
-                if (jsonViewerContainer) jsonViewerContainer.classList.add('hidden');
-
-                const errorMsg = (error.code === 'PERMISSION_DENIED')
-                    ? `<p class="text-red-500">데이터 접근 권한이 없습니다 (PERMISSION_DENIED).<br>Firebase Realtime Database의 '규칙' 탭에서 루트 경로('.read' 및 '.write')가 true로 설정되어 있는지 확인하세요.</p>`
-                    : `<p class="text-red-500">데이터를 불러오는 중 오류가 발생했습니다: ${error.message}</p>`;
-
-                if (loadingState) loadingState.innerHTML = errorMsg;
-                else customAlert(error.message, true); 
-            });
-        }
-
-        function addField() {
-             if (noFieldsMsg) noFieldsMsg.classList.add('hidden');
-             const fieldRow = document.createElement('div');
-             fieldRow.className = 'field-row';
-
-             fieldRow.innerHTML = `
-                 <label>키:</label>
-                 <input type="text" class="form-input field-key" placeholder="필드 이름">
-                 <label>값:</label>
-                 <input type="text" class="form-input field-value" placeholder="값 (숫자, true/false, null 가능)">
-                 <button class="action-button remove-field-button">X</button>
-             `;
-
-             const removeButton = fieldRow.querySelector('.remove-field-button');
-             removeButton.addEventListener('click', () => {
-                 fieldRow.remove();
-                 if (fieldsContainer && fieldsContainer.querySelectorAll('.field-row').length === 0 && noFieldsMsg) {
-                     noFieldsMsg.classList.remove('hidden');
-                 }
-             });
-
-             if (fieldsContainer) fieldsContainer.appendChild(fieldRow);
-         }
-
-        function getValueFromInput(valueString) {
-            const trimmedValue = valueString.trim();
-            if (!isNaN(trimmedValue) && trimmedValue !== '') {
-                return parseFloat(trimmedValue);
-            }
-            if (trimmedValue.toLowerCase() === 'true') return true;
-            if (trimmedValue.toLowerCase() === 'false') return false;
-            if (trimmedValue.toLowerCase() === 'null') return null;
-            return trimmedValue; 
-        }
-
-        function collectDataFromFields() {
-            const dataObject = {};
-            const fieldRows = fieldsContainer?.querySelectorAll('.field-row');
-            let hasError = false;
-
-            if (!fieldRows || fieldRows.length === 0) {
-                 customAlert('추가/수정할 필드가 없습니다. 먼저 필드를 추가해주세요.', true);
-                 return null;
-            }
-
-            fieldRows.forEach(row => {
-                 if (hasError) return; 
-                const keyInput = row.querySelector('.field-key');
-                const valueInput = row.querySelector('.field-value');
-                const key = keyInput.value.trim();
-
-                if (!key) {
-                    customAlert('모든 필드의 키(이름)를 입력해주세요.', true);
-                    keyInput.focus();
-                    hasError = true;
-                    return;
-                }
-                 if (/[.#$\[\]]/.test(key)) {
-                     customAlert(`키 "${key}"에 유효하지 않은 문자(. # $ [ ])가 포함되어 있습니다.`, true);
-                     keyInput.focus();
-                     hasError = true;
-                     return;
-                 }
-
-                const value = getValueFromInput(valueInput.value);
-                dataObject[key] = value;
-            });
-
-            return hasError ? null : dataObject;
-        }
-
-        function handleSet() {
-            const path = editPathInput.value.trim();
-            const dataToSet = collectDataFromFields();
-            if (dataToSet === null) return;
-
-            console.log(`Setting path '${path || '/'}' with value:`, dataToSet);
-            if (setButton) setButton.disabled = true;
-
-            set(ref(db, path || '/'), dataToSet)
-                .then(() => {
-                    customAlert(`경로 '${path || '/'}'에 데이터 추가/덮어쓰기 성공!`);
-                     if (fieldsContainer) fieldsContainer.innerHTML = '';
-                     if (noFieldsMsg) noFieldsMsg.classList.remove('hidden');
-                })
-                .catch((error) => {
-                    console.error("Error setting data:", error);
-                    customAlert(`데이터 추가/덮어쓰기 실패: ${error.message}`, true);
-                })
-                .finally(() => {
-                    if (setButton) setButton.disabled = false;
-                });
-        }
-
-        function handleUpdate() {
-            const path = editPathInput.value.trim();
-            if (path === '' || path === '/') {
-                customAlert('수정할 경로를 입력해주세요. 루트(/) 경로는 수정할 수 없습니다.', true);
-                return;
-            }
-            const dataToUpdate = collectDataFromFields();
-            if (dataToUpdate === null) return;
-
-            console.log(`Updating path '${path}' with value:`, dataToUpdate);
-            if (updateButton) updateButton.disabled = true;
-            update(ref(db, path), dataToUpdate)
-                .then(() => {
-                    customAlert(`경로 '${path}'의 데이터 수정 성공!`);
-                     if (fieldsContainer) fieldsContainer.innerHTML = '';
-                     if (noFieldsMsg) noFieldsMsg.classList.remove('hidden');
-                })
-                .catch((error) => {
-                    console.error("Error updating data:", error);
-                    customAlert(`데이터 수정 실패: ${error.message}`, true);
-                })
-                .finally(() => {
-                    if (updateButton) updateButton.disabled = false;
-                });
-        }
-
-        function handleDelete() {
-            const path = editPathInput.value.trim();
-            if (path === '' || path === '/') {
-                customAlert('삭제할 경로를 입력해주세요. 루트(/) 경로는 삭제할 수 없습니다.', true);
+            try {
+                newData = JSON.parse(editor.value);
+            } catch (e) {
+                alert("유효하지 않은 JSON 형식입니다.\n" + e.message);
                 return;
             }
 
-            console.log(`Removing path '${path}'`);
-            if (deleteButton) deleteButton.disabled = true;
-            remove(ref(db, path))
+            if (!confirm(`정말로 '${currentPath}' 경로의 데이터를 수정하시겠습니까?`)) return;
+
+            database.ref(currentPath).set(newData)
                 .then(() => {
-                    customAlert(`경로 '${path}'의 데이터 삭제 성공!`);
-                     if (fieldsContainer) fieldsContainer.innerHTML = '';
-                     if (noFieldsMsg) noFieldsMsg.classList.remove('hidden');
-                     if (editPathInput) editPathInput.value = '';
+                    alert("성공적으로 저장되었습니다.");
+                    loadDatabase(); // 트리 새로고침
                 })
-                .catch((error) => {
-                    console.error("Error removing data:", error);
-                    customAlert(`데이터 삭제 실패: ${error.message}`, true);
+                .catch(err => {
+                    alert("저장 실패: " + err.message);
+                });
+        }
+
+        // --- 5. 현재 노드 삭제 (Delete) ---
+        function deleteCurrentNode() {
+            if (currentPath === '/') {
+                alert("루트(Root)는 삭제할 수 없습니다.");
+                return;
+            }
+
+            if (!confirm(`경고! 정말로 '${currentPath}' 경로와 그 하위 데이터를 모두 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+
+            database.ref(currentPath).remove()
+                .then(() => {
+                    alert("삭제되었습니다.");
+                    loadDatabase(); // 트리 새로고침
                 })
-                .finally(() => {
-                    if (deleteButton) deleteButton.disabled = false;
+                .catch(err => {
+                    alert("삭제 실패: " + err.message);
+                });
+        }
+
+        // --- 6. 자식 노드 추가 (Add) ---
+        function addChildNode() {
+            const keyName = prompt("추가할 키(Key) 이름을 입력하세요:", "new_key");
+            if (!keyName) return;
+
+            // 경로 문자열에 '/'가 포함되어 있으면 안됨
+            if (keyName.includes('/') || keyName.includes('.') || keyName.includes('#') || keyName.includes('$') || keyName.includes('[')) {
+                alert("키 이름에는 '.', '#', '$', '[', ']' 문자를 포함할 수 없습니다.");
+                return;
+            }
+
+            const newPath = currentPath === '/' ? `/${keyName}` : `${currentPath}/${keyName}`;
+            
+            // 기본값으로 "value" 문자열 저장 (사용자가 나중에 에디터로 수정 가능)
+            database.ref(newPath).set("initial_value")
+                .then(() => {
+                    // 트리를 새로고침하고, 새로 생성된 노드를 선택
+                    // (비동기 처리를 위해 간단히 전체 리로드 후 선택 로직은 생략하거나 개선 가능)
+                    loadDatabase(); 
+                    alert(`'${keyName}'이(가) 추가되었습니다.`);
+                })
+                .catch(err => {
+                    alert("추가 실패: " + err.message);
                 });
         }
 
