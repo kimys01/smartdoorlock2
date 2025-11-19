@@ -14,8 +14,9 @@ body {
 
 .hidden { display: none !important; }
 
-/* 로그인 컨테이너 */
-#login-container {
+/* 로그인 컨테이너 & 로그아웃 모달 공통 스타일 */
+#login-container,
+#logout-confirm-modal .modal-content {
     width: 100%;
     max-width: 400px;
     background-color: white;
@@ -23,12 +24,28 @@ body {
     border-radius: 10px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     text-align: center;
-    position: absolute; /* 화면 중앙 배치 */
+}
+
+/* 로그인 컨테이너 위치 */
+#login-container {
+    position: absolute; 
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
     z-index: 1000;
 }
+
+/* 로그아웃 모달 전체 화면 덮기 */
+#logout-confirm-modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex; /* 중요: flex로 중앙 정렬 */
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
 
 #login-container h2 {
     font-size: 28px;
@@ -64,7 +81,9 @@ body {
     border-color: #71b7e6;
 }
 
-#login-container button {
+/* 공통 버튼 스타일 */
+#login-container button,
+#logout-confirm-modal button {
     width: 100%;
     padding: 12px;
     background: linear-gradient(135deg, #71b7e6, #9b59b6);
@@ -77,7 +96,8 @@ body {
     transition: opacity 0.3s ease;
 }
 
-#login-container button:hover {
+#login-container button:hover,
+#logout-confirm-modal button:hover {
     opacity: 0.9;
 }
 
@@ -94,8 +114,7 @@ body {
     color: #71b7e6;
 }
 
-/* --- [코드 1 스타일 적용] --- */
-/* 메인 콘텐츠 스타일 */
+/* --- 메인 콘텐츠 스타일 --- */
 #header {
     position: fixed;
     top: 0; left: 0;
@@ -110,7 +129,6 @@ body {
     z-index: 500;
 }
 
-/* --- [사용자 요청] 헤더 제목 그라데이션 적용 --- */
 #header h1 { 
     margin: 0; 
     font-size: 24px; 
@@ -118,115 +136,113 @@ body {
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    /* ▼▼▼ [수정] 커서 포인터 추가 ▼▼▼ */
     cursor: pointer; 
-    /* ▲▲▲ [수정 완료] ▲▲▲ */
 }
-/* --- [사용자 요청] 적용 완료 --- */
-
 
 /* 헤더 버튼 그룹 */
 #header .button-group {
     display: flex;
-    /* gap: 10px; */ /* 제거 */
-    gap: 0; /* 경계선을 위해 gap 제거 */
+    gap: 0; 
 }
 
-/* --- [사용자 요청] 스타일 수정 --- */
-/* 헤더 버튼 공통 스타일 (새 버튼 포함) */
-/* [수정] #mapBtn 추가 */
-#logoutBtn, #logBtn, #newBtn, #mapBtn {
-    /* padding: 8px 15px; */ /* 헤더 높이에 맞게 수정 */
-    /* [수정] 가로 길이를 늘리기 위해 좌우 패딩 15px -> 20px */
+/* 헤더 버튼 공통 스타일 */
+#logBtn, #newBtn, #mapBtn, #accountBtn {
     padding: 10px 20px; 
     border: none;
-    color: #333; /* 어두운 글자색 */
+    color: #333; 
     border-radius: 0; 
     cursor: pointer;
     font-weight: 500; 
-    transition: background-color 0.3s ease, color 0.3s ease, background-image 0.3s ease; /* [수정] transition 속성 보완 */
-    position: relative; /* 가상요소(경계선) 배치를 위해 추가 */
-    /* background-color: #ffffff; */ /* 헤더 색상과 동일하게 수정 */
+    transition: background-color 0.3s ease, color 0.3s ease; 
+    position: relative; 
     background-color: #f8f9fa;
-    background-image: none; /* [추가] 호버 아웃 시 그라데이션 제거 */
+    background-image: none; 
 }
 
-/* 각 버튼 색상 (배경색은 공통 스타일로 이동) */
-#logoutBtn { /* background-color: #dc3545; */ }
-#logBtn { /* background-color: #007bff; */ }
-#newBtn { /* background-color: #ffc107; */ }
-#mapBtn { } /* [수정] 지도 버튼 스타일 */
-
-
-/* 각 버튼 hover 효과 (통합) */
-/* [수정] #logoutBtn:hover 분리 */
-/* [수정] #mapBtn 추가 */
+/* 각 버튼 hover 효과 */
 #logBtn:hover, 
 #newBtn:hover,
-#mapBtn:hover { 
-    /* [수정] 배경색은 타이틀 바 색상으로 */
+#mapBtn:hover,
+#accountBtn:hover { 
     background-color: #f8f9fa; 
-    
-    /* [수정] 글자색은 그라데이션으로 */
     background-image: linear-gradient(135deg, #71b7e6, #9b59b6);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    /* 참고: 그라데이션 텍스트가 지원되지 않는 브라우저에서는 글자가 보이지 않을 수 있습니다. */
 }
-/* --- [사용자 요청] 수정 완료 --- */
 
-/* --- [사용자 요청] 로그아웃 버튼 hover 시 스타일 수정 --- */
-#logoutBtn:hover {
-    background-color: #f8f9fa; /* [수정] 타이틀 바 배경색과 동일하게 */
-    background-image: none; /* [추가] 그라데이션 제거 */
-    color: #dc3545; /* [수정] 빨간색 글씨 */
+/* 버튼 사이 경계선 */
+#header .button-group button + button,
+#header .button-group .dropdown { /* 드롭다운 앞에도 경계선 */
+    border-left: 1px solid #ddd;
 }
-/* --- [사용자 요청] 적용 완료 --- */
-
-/* --- [사용자 요청] 버튼 사이 경계선 추가 --- */
-#header .button-group button + button::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    height: 16px; /* 버튼 높이보다 짧게 (padding 8px * 2) */
-    width: 1px;
-    background-color: #ddd; /* 경계선 색상 */
-}
-/* --- [사용자 요청] 추가 완료 --- */
+/* 드롭다운 내부 버튼에는 경계선 제거 */
+.dropdown button { border-left: none !important; }
 
 
-/* 로그 버튼 비활성화 스타일 */
-/* [수정] #mapBtn 추가 */
+/* 비활성화 스타일 */
 #logBtn:disabled, #mapBtn:disabled {
-    /* background-color: #ccc; */ /* 헤더와 동일하게 수정 */
     background-color: #f8f9fa;
     cursor: not-allowed;
-    /* opacity: 0.6; */ /* 글자색으로 비활성 표현 */
     opacity: 1;
-    color: #aaa; /* 비활성화 시 연한 글자색 */
+    color: #aaa; 
 }
-/* 비활성화 시 hover 효과 방지 */
-/* [수정] #mapBtn 추가 */
 #logBtn:disabled:hover, #mapBtn:disabled:hover {
-    /* background-color: #ccc; */ /* hover 효과 없음 */
     background-color: #f8f9fa;
-    background-image: none; /* [추가] 그라데이션 제거 */
-    color: #aaa; /* [수정] hover 시 색상 유지 */
+    background-image: none; 
+    color: #aaa; 
 }
+
+
+/* ▼▼▼ [추가] 드롭다운 스타일 ▼▼▼ */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.dropdown-content a:hover {background-color: #f1f1f1;}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown:hover .dropbtn {
+    background-color: #f8f9fa; 
+    background-image: linear-gradient(135deg, #71b7e6, #9b59b6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+/* ▲▲▲ [추가 완료] ▲▲▲ */
+
 
 #main-content {
     display: flex;
     padding: 10px;
     gap: 20px;
     width: 100%;
-    height: calc(100vh - 70px); /* 헤더 높이 제외 */
-    /* [코드 1] background-color: #fff; 제거 -> body 배경색 따름 */
+    height: calc(100vh - 70px); 
     overflow: hidden;
 }
-
 
 #sidebar {
     display: flex;
@@ -236,17 +252,15 @@ body {
     height: 100%;
 }
 
-/* [코드 1] box-shadow 스타일 적용 */
 #userList, #userInfo, #mapArea {
     border: none;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     padding: 15px;
-    border-radius: 0; /* [수정] 8px -> 0 */
+    border-radius: 0; 
     background-color: #fff;
     box-sizing: border-box;
 }
 
-/* [코드 1] flex-grow 4 (40%) 적용 */
 #userList {
     overflow-y: auto;
     flex-grow: 4; 
@@ -254,7 +268,6 @@ body {
     min-height: 0;
 }
 
-/* [코드 1] flex-grow 6 (60%) 적용 */
 #userInfo {
     overflow: hidden; 
     flex-grow: 6; 
@@ -265,7 +278,6 @@ body {
     flex-direction: column;
 }
 
-/* [코드 1] flex 레이아웃 적용 */
 #mapArea { 
     flex-grow: 1; 
     display: flex;
@@ -279,7 +291,6 @@ body {
 }
 .user:hover { background-color: #f0f0f0; }
 
-/* 사용자 정보 영역 Flexbox 레이아웃 */
 #infoArea {
     display: flex;
     flex-direction: column;
@@ -295,22 +306,18 @@ body {
 #infoArea h3 {
     margin-top: 10px;
     margin-bottom: 5px;
-    font-weight: 600; /* [코드 1] 스타일 */
-    color: #555; /* [코드 1] 스타일 */
+    font-weight: 600; 
+    color: #555; 
 }
 
-/* JS로 추가되는 로그 목록 div */
 .log-list {
     flex-grow: 1;
     overflow-y: auto; 
     min-height: 0;
 }
 
-/* [코드 1] 각 창의 제목 스타일 */
-/* --- [사용자 요청] 그라데이션 적용 --- */
 #userList h2, #mapArea h2 {
     font-weight: 600;
-    /* color: #9b59b6; */ /* Gradient purple - 그라데이션으로 대체됨 */
     border-bottom: 1px solid #eee;
     padding-bottom: 10px;
     margin-bottom: 10px; 
@@ -327,26 +334,19 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 10px;
-    border-bottom: 1px solid #eee; /* [코드 1] 스타일 */
-    padding-bottom: 10px; /* [코드 1] 스타일 */
+    border-bottom: 1px solid #eee; 
+    padding-bottom: 10px; 
 }
 
-/* [코드 1] 정보창 제목 스타일 */
-/* --- [사용자 요청] 그라데이션 적용 --- */
 .info-header h2 {
     font-weight: 600;
-    /* color: #9b59b6; */ /* Gradient purple - 그라데이션으로 대체됨 */
     margin: 0;
-    
     background: linear-gradient(135deg, #71b7e6, #9b59b6);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
 }
-/* --- [코드 1 스타일 적용 완료] --- */
 
-
-/* 닫기 버튼 스타일 */
 #closeUserInfoBtn {
     background: none;
     border: none;
@@ -359,16 +359,14 @@ body {
     color: #dc3545;
 }
 
-/* [코드 1] flex-grow로 지도 높이 조절 */
 #map {
     width: 100%;
     margin-top: 10px;
-    flex-grow: 1; /* 남은 공간을 모두 채움 */
-    min-height: 0; /* flex 아이템이 올바르게 축소되도록 함 */
-    border-radius: 4px; /* [추가] 지도 모서리 둥글게 */
+    flex-grow: 1; 
+    min-height: 0; 
+    border-radius: 4px; 
 }
 
-/* [코드 1] 지도 아래 설명 텍스트 */
 #mapArea p#mapUser {
     font-size: 14px;
     color: #777;
@@ -388,7 +386,6 @@ body {
     background-color: #e9ecef;
 }
 
-/* 로그 페이지 스타일 */
 #log-content {
     width: 100%;
     height: calc(100vh - 70px);
@@ -396,7 +393,6 @@ body {
     display: flex; 
     flex-direction: column;
     gap: 20px;
-    /* background-color: #fff; */ /* <<< 스타일 변경: 배경색 제거 */
     background-color: transparent;
     position: fixed;
     top: 70px;
@@ -410,21 +406,15 @@ body {
     align-items: center;
     gap: 20px;
     flex-shrink: 0;
-    /* <<< 스타일 추가: 헤더 배경 및 패딩 */
     background-color: #fff;
     padding: 15px;
-    border-radius: 0; /* [수정] 8px -> 0 */
+    border-radius: 0; 
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
-/* [수정] backToMapBtn 제거됨 */
-
-/* <<< 스타일 추가: 로그 헤더 h2 스타일 --- [사용자 요청] 그라데이션 적용 --- */
 .log-header h2 {
     margin: 0;
     font-weight: 600;
-    /* color: #9b59b6; */ /* 그라데이션으로 대체 */
-    
     background: linear-gradient(135deg, #71b7e6, #9b59b6);
     -webkit-background-clip: text;
     background-clip: text;
@@ -441,14 +431,11 @@ body {
 
 .log-section {
     width: 50%;
-    /* border: 1px solid #ccc; */ /* <<< 스타일 변경: border 제거 */
-    /* <<< 스타일 추가: #mapArea 등과 동일한 스타일 적용 */
     border: none;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     background-color: #fff;
     box-sizing: border-box;
-    /* --- */
-    border-radius: 0; /* [수정] 8px -> 0 */
+    border-radius: 0; 
     padding: 15px;
     display: flex;
     flex-direction: column;
@@ -458,9 +445,7 @@ body {
     margin-bottom: 10px;
     border-bottom: 1px solid #eee;
     padding-bottom: 10px;
-     /* <<< 스타일 추가: 제목 색상 */
     font-weight: 600;
-    /* color: #555; */ /* [수정] 그라데이션 적용 */
     background: linear-gradient(135deg, #71b7e6, #9b59b6);
     -webkit-background-clip: text;
     background-clip: text;
@@ -476,10 +461,10 @@ body {
     padding: 8px 5px;
     font-size: 14px;
     border-bottom: 1px solid #f0f0f0;
-    line-height: 1.6; /* [코드 2] 스타일 유지 */
+    line-height: 1.6; 
 }
 
-/* 커스텀 모달 스타일 */
+/* 커스텀 알림 모달 */
 #custom-modal {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -511,7 +496,6 @@ body {
     font-size: 16px;
 }
 
-/* 커스텀 오버레이(정보창) 스타일 */
 .custom-overlay-info {
     padding: 5px 10px;
     font-size: 12px;
@@ -522,7 +506,6 @@ body {
     border: 1px solid #ccc;
 }
 
-/* 커스텀 마커 오버레이 스타일 */
 .custom-marker-pin {
     width: 32px;
     height: 35px;
