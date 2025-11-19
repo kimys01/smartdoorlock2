@@ -18,7 +18,8 @@
 
     <div id="login-container">
         <h2>SmartDoorLock</h2>
-        <form id="login-form" onsubmit="handleLoginSubmit(event)"> <div class="input-group">
+        <form id="login-form">
+            <div class="input-group">
                 <label for="username">아이디</label>
                 <input type="text" id="username" placeholder="아이디를 입력하세요" required>
             </div>
@@ -109,7 +110,7 @@
 
     <script>
         // ====================================================
-        // [1] 전역 변수 및 설정 (Global Variables)
+        // [1] 전역 변수 및 설정
         // ====================================================
         const DOORLOCK_LAT = 37.566826; 
         const DOORLOCK_LNG = 126.9786567;
@@ -144,9 +145,8 @@
             alert("Firebase Init Error: " + e);
         }
 
-
         // ====================================================
-        // [2] 전역 함수 정의 (Global Functions)
+        // [2] 전역 함수 정의 (HTML에서 바로 호출 가능하도록)
         // ====================================================
 
         function customAlert(msg) {
@@ -181,7 +181,6 @@
                 userListDiv.classList.remove('hidden');
                 userInfoDiv.classList.add('hidden');
                 
-                // 지도 로드
                 if (!map && typeof kakao !== 'undefined') {
                     kakao.maps.load(initMap);
                 } else if (map) {
@@ -265,7 +264,7 @@
                             setSession(true, false, id); 
                             showDashboard(false, id); 
                         } else {
-                            customAlert('로그인 실패: 아이디 또는 비밀번호 확인');
+                            customAlert('로그인 실패: 아이디 또는 비밀번호를 확인하세요.');
                         }
                     });
                 }
@@ -319,7 +318,6 @@
         function loadUserList() {
             database.ref('users').once('value').then(snap => {
                 const list = document.getElementById('userList');
-                // 기존 목록 초기화 (h2 제목 유지)
                 while (list.childNodes.length > 2) { list.removeChild(list.lastChild); }
                 
                 snap.forEach(c => {
@@ -362,7 +360,7 @@
             });
         }
 
-        // 전역으로 노출 (HTML onclick에서 호출)
+        // 전역 노출 함수
         window.renderLocationLogs = function(filterRange, btn) {
             if(btn) {
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -373,7 +371,6 @@
             if (!listDiv) return;
             listDiv.innerHTML = '';
             
-            // 마커 초기화
             markers.forEach(m => { if(m.co) m.co.setMap(null); m.setMap(null); });
             markers = [];
             if (currentPolyline) { currentPolyline.setMap(null); currentPolyline = null; }
@@ -488,7 +485,7 @@
                 });
             });
 
-            // 앱 로그
+            // 앱 로그 (범용)
             database.ref('users/' + userId + '/app_logs').once('value').then(snap => {
                 appDiv.innerHTML = '';
                 if (!snap.exists()) { appDiv.innerHTML = '없음'; return; }
@@ -622,8 +619,11 @@
 
 
         // ====================================================
-        // [3] 초기 실행 (Entry Point)
+        // [3] 이벤트 연결 (DOMContentLoaded 내부)
         // ====================================================
+        document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
+        
+        // 초기 실행
         const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
         if (isLoggedIn) {
             const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
@@ -633,7 +633,7 @@
             document.getElementById('login-container').classList.remove('hidden');
         }
 
-    });
+    }); // DOMContentLoaded End
     </script>
 </body>
 </html>
