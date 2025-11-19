@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>사용자 검색</title>
+    <title>데이터베이스 조회</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="logestyle.css">
+    <link rel="stylesheet" href="loge.css">
 
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -15,16 +15,17 @@
     <div class="container">
         <a href="index.html" class="back-link">&larr; 메인으로 돌아가기</a>
 
-        <h2>사용자 검색</h2>
+        <h2>데이터베이스 조회</h2>
 
         <div class="search-container">
             <input type="text" id="search-input" placeholder="검색할 사용자 ID를 입력하세요 (예: 123456)">
             <button class="btn-search" onclick="searchUser()">검색</button>
+            <button class="btn-reset" onclick="loadAllData()" style="background:#6c757d; margin-left:5px;">전체 목록</button>
         </div>
 
-        <h3>검색 결과:</h3>
+        <h3 id="result-title">전체 사용자 목록:</h3>
         <div id="result-area">
-            <div class="message-box">사용자 ID를 입력하고 검색 버튼을 누르세요.</div>
+            <div class="message-box">데이터를 불러오는 중입니다...</div>
         </div>
     </div>
 
@@ -44,10 +45,37 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // --- 사용자 검색 함수 ---
+        // --- [핵심] 페이지 로드 시 전체 데이터 불러오기 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllData();
+        });
+
+        // --- 1. 전체 사용자 목록 로드 함수 ---
+        function loadAllData() {
+            const resultArea = document.getElementById('result-area');
+            const title = document.getElementById('result-title');
+            
+            title.textContent = "전체 사용자 목록 (users 경로):";
+            resultArea.innerHTML = '<div class="message-box">전체 데이터를 불러오는 중...</div>';
+            document.getElementById('search-input').value = ''; // 검색창 초기화
+
+            // 'users' 경로의 모든 데이터를 가져옴
+            database.ref('users').once('value').then((snapshot) => {
+                if (snapshot.exists()) {
+                    renderTable(snapshot.val());
+                } else {
+                    resultArea.innerHTML = '<div class="message-box">저장된 사용자 데이터가 없습니다.</div>';
+                }
+            }).catch((error) => {
+                resultArea.innerHTML = `<div class="message-box" style="color: red;">데이터 로드 실패: ${error.message}</div>`;
+            });
+        }
+
+        // --- 2. 특정 사용자 검색 함수 ---
         function searchUser() {
             const input = document.getElementById('search-input');
             const resultArea = document.getElementById('result-area');
+            const title = document.getElementById('result-title');
             const userId = input.value.trim();
 
             if (!userId) {
@@ -55,19 +83,22 @@
                 return;
             }
 
+            title.textContent = `'${userId}' 검색 결과:`;
             resultArea.innerHTML = '<div class="message-box">검색 중...</div>';
 
             const userRef = database.ref('users/' + userId);
             
             userRef.once('value').then((snapshot) => {
                 if (snapshot.exists()) {
-                    // 데이터가 있으면 테이블 생성 함수 호출
-                    renderTable(snapshot.val());
+                    // 검색 결과는 해당 ID를 키로 가지는 객체 형태로 래핑해서 전달
+                    // (그래야 표에서 Key가 사용자ID로 나옵니다)
+                    const wrapper = {};
+                    wrapper[userId] = snapshot.val();
+                    renderTable(wrapper);
                 } else {
                     resultArea.innerHTML = `
                         <div class="message-box" style="color: #dc3545;">
-                            '${userId}' 사용자에 대한 정보를 찾을 수 없습니다.<br>
-                            <small>(경로: users/${userId})</small>
+                            '${userId}' 사용자를 찾을 수 없습니다.
                         </div>
                     `;
                 }
@@ -76,7 +107,7 @@
             });
         }
 
-        // --- [핵심] 데이터를 그리드(테이블)로 그려주는 함수 ---
+        // --- 3. 데이터를 표(Grid)로 그려주는 함수 ---
         function renderTable(data) {
             const resultArea = document.getElementById('result-area');
             
@@ -85,25 +116,27 @@
                     <table class="styled-table">
                         <thead>
                             <tr>
-                                <th>항목 (Key)</th>
-                                <th>내용 (Value)</th>
+                                <th style="width: 20%;">사용자 ID (Key)</th>
+                                <th style="width: 80%;">세부 데이터 (Value)</th>
                             </tr>
                         </thead>
                         <tbody>
             `;
 
             // 데이터 객체의 키-값을 순회하며 행(Row) 추가
+            // 여기서 Key는 '사용자ID'가 되고, Value는 '사용자 정보 객체'가 됩니다.
             for (const [key, value] of Object.entries(data)) {
                 let displayValue = value;
 
                 // 만약 값이 객체(Object)라면 보기 좋게 JSON 형태로 변환
                 if (typeof value === 'object' && value !== null) {
+                    // JSON.stringify(값, replacer, 들여쓰기)
                     displayValue = `<pre class="json-value">${JSON.stringify(value, null, 4)}</pre>`;
                 }
 
                 tableHtml += `
                     <tr>
-                        <td>${key}</td>
+                        <td style="font-weight:bold; color:#007bff;">${key}</td>
                         <td>${displayValue}</td>
                     </tr>
                 `;
