@@ -134,7 +134,8 @@ body {
 
 /* --- [사용자 요청] 스타일 수정 --- */
 /* 헤더 버튼 공통 스타일 (새 버튼 포함) */
-#logoutBtn, #logBtn, #newBtn {
+/* [수정] #mapBtn 추가 */
+#logoutBtn, #logBtn, #newBtn, #mapBtn {
     /* padding: 8px 15px; */ /* 헤더 높이에 맞게 수정 */
     /* [수정] 가로 길이를 늘리기 위해 좌우 패딩 15px -> 20px */
     padding: 10px 20px; 
@@ -154,12 +155,15 @@ body {
 #logoutBtn { /* background-color: #dc3545; */ }
 #logBtn { /* background-color: #007bff; */ }
 #newBtn { /* background-color: #ffc107; */ }
+#mapBtn { } /* [수정] 지도 버튼 스타일 */
 
 
 /* 각 버튼 hover 효과 (통합) */
 /* [수정] #logoutBtn:hover 분리 */
+/* [수정] #mapBtn 추가 */
 #logBtn:hover, 
-#newBtn:hover { 
+#newBtn:hover,
+#mapBtn:hover { 
     /* [수정] 배경색은 타이틀 바 색상으로 */
     background-color: #f8f9fa; 
     
@@ -195,7 +199,8 @@ body {
 
 
 /* 로그 버튼 비활성화 스타일 */
-#logBtn:disabled {
+/* [수정] #mapBtn 추가 */
+#logBtn:disabled, #mapBtn:disabled {
     /* background-color: #ccc; */ /* 헤더와 동일하게 수정 */
     background-color: #f8f9fa;
     cursor: not-allowed;
@@ -204,7 +209,8 @@ body {
     color: #aaa; /* 비활성화 시 연한 글자색 */
 }
 /* 비활성화 시 hover 효과 방지 */
-#logBtn:disabled:hover {
+/* [수정] #mapBtn 추가 */
+#logBtn:disabled:hover, #mapBtn:disabled:hover {
     /* background-color: #ccc; */ /* hover 효과 없음 */
     background-color: #f8f9fa;
     background-image: none; /* [추가] 그라데이션 제거 */
@@ -411,26 +417,7 @@ body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
-#backToMapBtn {
-    /* [수정] #logBtn 스타일과 동일하게 변경 */
-    padding: 10px 20px; 
-    border: none;
-    color: #333; 
-    border-radius: 0; 
-    cursor: pointer;
-    font-weight: 500; 
-    transition: background-color 0.3s ease, color 0.3s ease, background-image 0.3s ease; /* [수정] transition 보완 */
-    background-color: #f8f9fa;
-    background-image: none; /* [추가] 호버 아웃 시 그라데이션 제거 */
-}
-#backToMapBtn:hover {
-     /* [수정] #logBtn:hover 스타일과 동일하게 변경 */
-    background-color: #f8f9fa; 
-    background-image: linear-gradient(135deg, #71b7e6, #9b59b6);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-}
+/* [수정] backToMapBtn 제거됨 */
 
 /* <<< 스타일 추가: 로그 헤더 h2 스타일 --- [사용자 요청] 그라데이션 적용 --- */
 .log-header h2 {
