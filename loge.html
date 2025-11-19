@@ -6,16 +6,29 @@
     <title>데이터베이스 조회</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="logestyle.css">
-
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    
+    <style>
+        /* 그리드 셀 안의 내용이 한 줄로 나오게 처리 (줄바꿈 방지) */
+        .styled-table td {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px; /* 너무 길면 ... 처리 */
+        }
+        .styled-table th {
+            white-space: nowrap;
+            background: linear-gradient(135deg, #71b7e6, #9b59b6);
+            color: white;
+        }
+    </style>
 </head>
 <body>
 
-    <div class="container">
-        <a href="index.html" class="back-link">&larr; 메인으로 돌아가기</a>
+    <div class="container" style="max-width: 1200px;"> <a href="index.html" class="back-link">&larr; 메인으로 돌아가기</a>
 
-        <h2>데이터베이스 조회</h2>
+        <h2>데이터베이스 조회 (String Grid View)</h2>
 
         <div class="search-container">
             <input type="text" id="search-input" placeholder="검색할 사용자 ID를 입력하세요 (예: 123456)">
@@ -23,14 +36,14 @@
             <button class="btn-reset" onclick="loadAllData()" style="background:#6c757d; margin-left:5px;">전체 목록</button>
         </div>
 
-        <h3 id="result-title">전체 사용자 목록:</h3>
-        <div id="result-area">
+        <h3 id="result-title">사용자 목록:</h3>
+        
+        <div id="result-area" style="overflow-x: auto;">
             <div class="message-box">데이터를 불러오는 중입니다...</div>
         </div>
     </div>
 
     <script>
-        // --- Firebase 설정 ---
         const firebaseConfig = {
             apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
             authDomain: "smartdoorlock-b4636.firebaseapp.com",
@@ -45,24 +58,21 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // --- [핵심] 페이지 로드 시 전체 데이터 불러오기 ---
         document.addEventListener('DOMContentLoaded', () => {
             loadAllData();
         });
 
-        // --- 1. 전체 사용자 목록 로드 함수 ---
         function loadAllData() {
             const resultArea = document.getElementById('result-area');
             const title = document.getElementById('result-title');
             
-            title.textContent = "전체 사용자 목록 (users 경로):";
+            title.textContent = "전체 사용자 목록:";
             resultArea.innerHTML = '<div class="message-box">전체 데이터를 불러오는 중...</div>';
-            document.getElementById('search-input').value = ''; // 검색창 초기화
+            document.getElementById('search-input').value = '';
 
-            // 'users' 경로의 모든 데이터를 가져옴
             database.ref('users').once('value').then((snapshot) => {
                 if (snapshot.exists()) {
-                    renderTable(snapshot.val());
+                    renderGrid(snapshot.val());
                 } else {
                     resultArea.innerHTML = '<div class="message-box">저장된 사용자 데이터가 없습니다.</div>';
                 }
@@ -71,7 +81,6 @@
             });
         }
 
-        // --- 2. 특정 사용자 검색 함수 ---
         function searchUser() {
             const input = document.getElementById('search-input');
             const resultArea = document.getElementById('result-area');
@@ -90,75 +99,99 @@
             
             userRef.once('value').then((snapshot) => {
                 if (snapshot.exists()) {
-                    // 검색 결과는 해당 ID를 키로 가지는 객체 형태로 래핑해서 전달
-                    // (그래야 표에서 Key가 사용자ID로 나옵니다)
                     const wrapper = {};
                     wrapper[userId] = snapshot.val();
-                    renderTable(wrapper);
+                    renderGrid(wrapper);
                 } else {
-                    resultArea.innerHTML = `
-                        <div class="message-box" style="color: #dc3545;">
-                            '${userId}' 사용자를 찾을 수 없습니다.
-                        </div>
-                    `;
+                    resultArea.innerHTML = `<div class="message-box" style="color: #dc3545;">'${userId}' 사용자를 찾을 수 없습니다.</div>`;
                 }
             }).catch((error) => {
                 resultArea.innerHTML = `<div class="message-box" style="color: red;">에러 발생: ${error.message}</div>`;
             });
         }
 
-        // --- 3. 데이터를 표(Grid)로 그려주는 함수 ---
-        function renderTable(data) {
+        // --- [핵심] 진짜 스트링 그리드 형태로 렌더링하는 함수 ---
+        function renderGrid(data) {
             const resultArea = document.getElementById('result-area');
             
+            // 1. 테이블 헤더 정의 (보여주고 싶은 컬럼들)
+            // 여기서 원하는 컬럼을 추가하거나 뺄 수 있습니다.
+            const columns = [
+                { header: '사용자 ID', key: 'uid' }, // 키(Key) 자체
+                { header: '인증 방식', key: 'authMethod' },
+                { header: '자동 잠금', key: 'detailSettings.autoLockEnabled' },
+                { header: '잠금 시간(초)', key: 'detailSettings.autoLockTime' },
+                { header: '알림 설정', key: 'detailSettings.notifyOnLock' },
+                { header: '앱 로그 수', key: 'app_logs_count' }, // 계산된 값
+                { header: '위치 로그 수', key: 'location_logs_count' } // 계산된 값
+            ];
+
             let tableHtml = `
-                <div class="grid-wrapper">
-                    <table class="styled-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 20%;">사용자 ID (Key)</th>
-                                <th style="width: 80%;">세부 데이터 (Value)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                <table class="styled-table">
+                    <thead>
+                        <tr>
             `;
 
-            // 데이터 객체의 키-값을 순회하며 행(Row) 추가
-            // 여기서 Key는 '사용자ID'가 되고, Value는 '사용자 정보 객체'가 됩니다.
-            for (const [key, value] of Object.entries(data)) {
-                let displayValue = value;
+            // 헤더 생성
+            columns.forEach(col => {
+                tableHtml += `<th>${col.header}</th>`;
+            });
 
-                // 만약 값이 객체(Object)라면 보기 좋게 JSON 형태로 변환
-                if (typeof value === 'object' && value !== null) {
-                    // JSON.stringify(값, replacer, 들여쓰기)
-                    displayValue = `<pre class="json-value">${JSON.stringify(value, null, 4)}</pre>`;
-                }
+            tableHtml += `
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
 
-                tableHtml += `
-                    <tr>
-                        <td style="font-weight:bold; color:#007bff;">${key}</td>
-                        <td>${displayValue}</td>
-                    </tr>
-                `;
+            // 2. 데이터 행 생성
+            for (const [userId, userData] of Object.entries(data)) {
+                tableHtml += `<tr>`;
+
+                // 각 컬럼에 맞는 데이터를 추출해서 셀(td) 생성
+                columns.forEach(col => {
+                    let cellValue = '-'; // 기본값
+
+                    if (col.key === 'uid') {
+                        // 사용자 ID
+                        cellValue = `<strong>${userId}</strong>`;
+                    } else if (col.key === 'app_logs_count') {
+                        // 로그 개수 카운트 (데이터가 있으면 개수 표시)
+                        cellValue = userData.app_logs ? Object.keys(userData.app_logs).length + ' 개' : '0 개';
+                    } else if (col.key === 'location_logs_count') {
+                        cellValue = userData.location_logs ? Object.keys(userData.location_logs).length + ' 개' : '0 개';
+                    } else {
+                        // 일반 데이터 (중첩된 객체 탐색: detailSettings.autoLockEnabled 등)
+                        const keys = col.key.split('.'); // 점(.)으로 분리
+                        let val = userData;
+                        for (let k of keys) {
+                            val = val ? val[k] : undefined;
+                        }
+                        
+                        // 값이 존재하면 표시 (true/false 등 처리)
+                        if (val !== undefined) {
+                            if (val === true) cellValue = '<span style="color:green">ON</span>';
+                            else if (val === false) cellValue = '<span style="color:gray">OFF</span>';
+                            else cellValue = val;
+                        }
+                    }
+
+                    tableHtml += `<td>${cellValue}</td>`;
+                });
+
+                tableHtml += `</tr>`;
             }
 
             tableHtml += `
-                        </tbody>
-                    </table>
-                </div>
+                    </tbody>
+                </table>
             `;
 
             resultArea.innerHTML = tableHtml;
         }
 
-        // 엔터키 이벤트
         document.getElementById('search-input').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                searchUser();
-            }
+            if (e.key === 'Enter') searchUser();
         });
-
     </script>
 </body>
 </html>
-
