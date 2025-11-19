@@ -171,3 +171,76 @@ button:hover { opacity: 0.9; }
     font-weight: 500;
 }
 .back-link:hover { text-decoration: underline; color: #333; }
+
+/* --- Firebase 콘솔 스타일 뷰어 (수정됨) --- */
+.firebase-view {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #333;
+    text-align: left;
+}
+
+.fv-item {
+    white-space: nowrap;
+}
+
+/* 클릭 가능한 키 (폴더) */
+.fv-key-box {
+    cursor: pointer;
+    display: inline-block;
+}
+.fv-key-box:hover .fv-key {
+    text-decoration: underline;
+}
+
+.fv-key {
+    color: #000080; /* 짙은 파란색 (Key) */
+    font-weight: bold;
+}
+
+/* 화살표 아이콘 */
+.fv-arrow {
+    display: inline-block;
+    width: 15px;
+    text-align: center;
+    font-size: 10px;
+    color: #666;
+    transition: transform 0.2s;
+    margin-right: 2px;
+}
+
+/* 접혀있을 때 화살표 (▶) */
+.fv-collapsed .fv-arrow {
+    transform: rotate(-90deg);
+}
+
+/* 펼쳐져 있을 때 화살표 (▼) - 기본값 */
+.fv-expanded .fv-arrow {
+    transform: rotate(0deg); 
+}
+
+/* 자식 노드 컨테이너 */
+.fv-children {
+    display: block; /* 기본은 보임 */
+    padding-left: 5px; /* 살짝 들여쓰기 */
+}
+
+/* 숨김 클래스 */
+.fv-hidden {
+    display: none !important;
+}
+
+/* 값 색상들 */
+.fv-string { color: #a31515; }
+.fv-number, .fv-boolean { color: #0000ff; }
+.fv-null { color: #808080; }
+
+/* 들여쓰기 가이드라인 */
+.fv-indent {
+    display: inline-block;
+    width: 15px;
+    border-left: 1px solid #f0f0f0;
+    height: 100%;
+    vertical-align: top;
+}
