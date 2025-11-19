@@ -9,11 +9,55 @@
 
 body {
     background-color: #f9f9f9;
-    padding: 20px;
+    /* 헤더 높이(70px) + 여백(30px) 만큼 상단 패딩 확보 */
+    padding: 100px 20px 20px 20px;
 }
 
+/* --- [추가됨] 상단 고정 헤더 스타일 --- */
+#header {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 70px;
+    padding: 0 30px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+}
+
+#header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+    background: linear-gradient(135deg, #71b7e6, #9b59b6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+#header .button-group button {
+    padding: 8px 20px;
+    border: none;
+    background-color: #f8f9fa;
+    color: #333;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.3s;
+    font-size: 14px;
+}
+
+#header .button-group button:hover {
+    background: linear-gradient(135deg, #71b7e6, #9b59b6);
+    color: white;
+}
+
+/* --- 메인 컨테이너 --- */
 .container {
-    max-width: 1200px; /* 넓은 테이블을 위해 폭 확보 */
+    max-width: 1200px;
     margin: 0 auto;
     background: white;
     padding: 30px;
@@ -22,18 +66,25 @@ body {
     box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
 
-h2, h3 {
+h2 {
     color: #333;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     font-size: 20px;
     font-weight: 600;
 }
 
-/* 검색 영역 스타일 */
+h3 {
+    color: #555;
+    margin-bottom: 10px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* --- 검색 영역 --- */
 .search-container {
     display: flex;
     gap: 10px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     padding: 20px;
     background-color: #f1f3f5;
     border-radius: 8px;
@@ -54,7 +105,7 @@ input[type="text"]:focus {
     box-shadow: 0 0 0 2px rgba(113, 183, 230, 0.2);
 }
 
-button {
+.btn-search {
     padding: 12px 25px;
     border: none;
     border-radius: 4px;
@@ -62,24 +113,32 @@ button {
     font-weight: 600;
     cursor: pointer;
     font-size: 15px;
+    background: linear-gradient(135deg, #71b7e6, #9b59b6);
     transition: opacity 0.2s;
 }
-button:hover { opacity: 0.9; }
-
-.btn-search {
-    background: linear-gradient(135deg, #71b7e6, #9b59b6);
-}
+.btn-search:hover { opacity: 0.9; }
 
 .btn-reset {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 15px;
     background-color: #6c757d;
+    transition: opacity 0.2s;
+}
+.btn-reset:hover { opacity: 0.9; }
+
+/* --- 결과 영역 & 테이블 --- */
+#result-area {
+    overflow-x: auto;
 }
 
-/* --- 스트링 그리드(테이블) 스타일 --- */
 .grid-wrapper {
-    margin-top: 15px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    overflow-x: auto; /* 가로 스크롤 허용 */
 }
 
 .styled-table {
@@ -102,59 +161,16 @@ button:hover { opacity: 0.9; }
     border-bottom: 1px solid #ccc;
     border-right: 1px solid #eee;
     color: #333;
-    vertical-align: top; /* 데이터가 위쪽부터 시작되도록 */
+    vertical-align: top;
 }
 
 .styled-table td:last-child {
     border-right: none;
 }
 
-/* 사용자 ID 열 강조 */
-.styled-table td:first-child {
-    font-weight: bold;
-    color: #007bff;
-    background-color: #fdfdfd;
-    width: 150px;
-}
-
-/* --- Firebase 콘솔 스타일 뷰어 --- */
-.firebase-view {
-    font-family: 'Consolas', 'Monaco', monospace;
-    font-size: 13px;
-    line-height: 1.6;
-    color: #333;
-    text-align: left;
-}
-
-.fv-item {
-    white-space: nowrap; /* 줄바꿈 방지 */
-}
-
-.fv-key {
-    color: #000080; /* 짙은 파란색 (Key) */
-    font-weight: bold;
-}
-
-.fv-string {
-    color: #a31515; /* 붉은 갈색 (String Value) */
-}
-
-.fv-number, .fv-boolean {
-    color: #0000ff; /* 파란색 (Number/Boolean Value) */
-}
-
-.fv-null {
-    color: #808080; /* 회색 (Null) */
-}
-
-.fv-indent {
-    display: inline-block;
-    width: 20px; /* 들여쓰기 간격 */
-    border-left: 1px solid #f0f0f0; /* 미세한 가이드라인 */
-}
-
+/* 메시지 박스 */
 .message-box {
-    padding: 20px;
+    padding: 30px;
     text-align: center;
     color: #666;
     background-color: #f8f9fa;
@@ -162,17 +178,7 @@ button:hover { opacity: 0.9; }
     border-radius: 4px;
 }
 
-.back-link {
-    display: inline-block;
-    margin-bottom: 20px;
-    text-decoration: none;
-    color: #666;
-    font-size: 14px;
-    font-weight: 500;
-}
-.back-link:hover { text-decoration: underline; color: #333; }
-
-/* --- Firebase 콘솔 스타일 뷰어 (수정됨) --- */
+/* --- [이동됨] Firebase 트리 뷰 스타일 --- */
 .firebase-view {
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 13px;
@@ -189,41 +195,34 @@ button:hover { opacity: 0.9; }
 .fv-key-box {
     cursor: pointer;
     display: inline-block;
+    user-select: none;
 }
 .fv-key-box:hover .fv-key {
     text-decoration: underline;
+    color: #0056b3;
 }
 
 .fv-key {
-    color: #000080; /* 짙은 파란색 (Key) */
+    color: #000080; /* 진한 파란색 */
     font-weight: bold;
 }
 
 /* 화살표 아이콘 */
 .fv-arrow {
     display: inline-block;
-    width: 15px;
+    width: 14px;
     text-align: center;
     font-size: 10px;
-    color: #666;
-    transition: transform 0.2s;
-    margin-right: 2px;
-}
-
-/* 접혀있을 때 화살표 (▶) */
-.fv-collapsed .fv-arrow {
-    transform: rotate(-90deg);
-}
-
-/* 펼쳐져 있을 때 화살표 (▼) - 기본값 */
-.fv-expanded .fv-arrow {
-    transform: rotate(0deg); 
+    color: #555;
+    transition: transform 0.2s ease;
+    margin-right: 4px;
 }
 
 /* 자식 노드 컨테이너 */
 .fv-children {
-    display: block; /* 기본은 보임 */
-    padding-left: 5px; /* 살짝 들여쓰기 */
+    display: block;
+    padding-left: 5px;
+    border-left: 1px solid #eee;
 }
 
 /* 숨김 클래스 */
@@ -231,16 +230,14 @@ button:hover { opacity: 0.9; }
     display: none !important;
 }
 
-/* 값 색상들 */
+/* 값 색상 */
 .fv-string { color: #a31515; }
-.fv-number, .fv-boolean { color: #0000ff; }
+.fv-number { color: #098658; }
+.fv-boolean { color: #0000ff; }
 .fv-null { color: #808080; }
 
-/* 들여쓰기 가이드라인 */
+/* 들여쓰기 */
 .fv-indent {
     display: inline-block;
     width: 15px;
-    border-left: 1px solid #f0f0f0;
-    height: 100%;
-    vertical-align: top;
 }
