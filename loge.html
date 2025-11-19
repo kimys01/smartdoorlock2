@@ -6,44 +6,32 @@
     <title>데이터베이스 조회</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="logestyle.css">
+
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    
-    <style>
-        /* 그리드 셀 안의 내용이 한 줄로 나오게 처리 (줄바꿈 방지) */
-        .styled-table td {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 200px; /* 너무 길면 ... 처리 */
-        }
-        .styled-table th {
-            white-space: nowrap;
-            background: linear-gradient(135deg, #71b7e6, #9b59b6);
-            color: white;
-        }
-    </style>
 </head>
 <body>
 
-    <div class="container" style="max-width: 1200px;"> <a href="index.html" class="back-link">&larr; 메인으로 돌아가기</a>
+    <div class="container">
+        <a href="index.html" class="back-link">&larr; 메인으로 돌아가기</a>
 
-        <h2>데이터베이스 조회 (String Grid View)</h2>
+        <h2>데이터베이스 조회 (Tree View)</h2>
 
         <div class="search-container">
             <input type="text" id="search-input" placeholder="검색할 사용자 ID를 입력하세요 (예: 123456)">
             <button class="btn-search" onclick="searchUser()">검색</button>
-            <button class="btn-reset" onclick="loadAllData()" style="background:#6c757d; margin-left:5px;">전체 목록</button>
+            <button class="btn-reset" onclick="loadAllData()" style="margin-left:5px;">전체 목록</button>
         </div>
 
         <h3 id="result-title">사용자 목록:</h3>
         
-        <div id="result-area" style="overflow-x: auto;">
+        <div id="result-area">
             <div class="message-box">데이터를 불러오는 중입니다...</div>
         </div>
     </div>
 
     <script>
+        // --- Firebase 설정 ---
         const firebaseConfig = {
             apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
             authDomain: "smartdoorlock-b4636.firebaseapp.com",
@@ -58,15 +46,17 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
+        // 페이지 로드 시 전체 데이터 로드
         document.addEventListener('DOMContentLoaded', () => {
             loadAllData();
         });
 
+        // --- 1. 전체 목록 로드 ---
         function loadAllData() {
             const resultArea = document.getElementById('result-area');
             const title = document.getElementById('result-title');
             
-            title.textContent = "전체 사용자 목록:";
+            title.textContent = "전체 사용자 목록 (users):";
             resultArea.innerHTML = '<div class="message-box">전체 데이터를 불러오는 중...</div>';
             document.getElementById('search-input').value = '';
 
@@ -81,6 +71,7 @@
             });
         }
 
+        // --- 2. 사용자 검색 ---
         function searchUser() {
             const input = document.getElementById('search-input');
             const resultArea = document.getElementById('result-area');
@@ -110,85 +101,89 @@
             });
         }
 
-        // --- [핵심] 진짜 스트링 그리드 형태로 렌더링하는 함수 ---
+        // --- 3. 그리드 렌더링 함수 ---
         function renderGrid(data) {
             const resultArea = document.getElementById('result-area');
             
-            // 1. 테이블 헤더 정의 (보여주고 싶은 컬럼들)
-            // 여기서 원하는 컬럼을 추가하거나 뺄 수 있습니다.
-            const columns = [
-                { header: '사용자 ID', key: 'uid' }, // 키(Key) 자체
-                { header: '인증 방식', key: 'authMethod' },
-                { header: '자동 잠금', key: 'detailSettings.autoLockEnabled' },
-                { header: '잠금 시간(초)', key: 'detailSettings.autoLockTime' },
-                { header: '알림 설정', key: 'detailSettings.notifyOnLock' },
-                { header: '앱 로그 수', key: 'app_logs_count' }, // 계산된 값
-                { header: '위치 로그 수', key: 'location_logs_count' } // 계산된 값
-            ];
-
             let tableHtml = `
-                <table class="styled-table">
-                    <thead>
-                        <tr>
+                <div class="grid-wrapper">
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 150px;">사용자 ID</th>
+                                <th>데이터 상세 내용 (Firebase View)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
             `;
 
-            // 헤더 생성
-            columns.forEach(col => {
-                tableHtml += `<th>${col.header}</th>`;
-            });
-
-            tableHtml += `
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            // 2. 데이터 행 생성
+            // 데이터 반복문
             for (const [userId, userData] of Object.entries(data)) {
-                tableHtml += `<tr>`;
+                // [핵심] 데이터를 재귀적으로 파싱하여 HTML 트리로 변환
+                const formattedData = createFirebaseView(userData);
 
-                // 각 컬럼에 맞는 데이터를 추출해서 셀(td) 생성
-                columns.forEach(col => {
-                    let cellValue = '-'; // 기본값
-
-                    if (col.key === 'uid') {
-                        // 사용자 ID
-                        cellValue = `<strong>${userId}</strong>`;
-                    } else if (col.key === 'app_logs_count') {
-                        // 로그 개수 카운트 (데이터가 있으면 개수 표시)
-                        cellValue = userData.app_logs ? Object.keys(userData.app_logs).length + ' 개' : '0 개';
-                    } else if (col.key === 'location_logs_count') {
-                        cellValue = userData.location_logs ? Object.keys(userData.location_logs).length + ' 개' : '0 개';
-                    } else {
-                        // 일반 데이터 (중첩된 객체 탐색: detailSettings.autoLockEnabled 등)
-                        const keys = col.key.split('.'); // 점(.)으로 분리
-                        let val = userData;
-                        for (let k of keys) {
-                            val = val ? val[k] : undefined;
-                        }
-                        
-                        // 값이 존재하면 표시 (true/false 등 처리)
-                        if (val !== undefined) {
-                            if (val === true) cellValue = '<span style="color:green">ON</span>';
-                            else if (val === false) cellValue = '<span style="color:gray">OFF</span>';
-                            else cellValue = val;
-                        }
-                    }
-
-                    tableHtml += `<td>${cellValue}</td>`;
-                });
-
-                tableHtml += `</tr>`;
+                tableHtml += `
+                    <tr>
+                        <td>${userId}</td>
+                        <td>
+                            <div class="firebase-view">
+                                ${formattedData}
+                            </div>
+                        </td>
+                    </tr>
+                `;
             }
 
             tableHtml += `
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
             `;
 
             resultArea.innerHTML = tableHtml;
         }
 
+        // --- 4. 재귀적 데이터 뷰 생성 함수 (이미지와 같은 형태 구현) ---
+        function createFirebaseView(data, depth = 0) {
+            let html = '';
+            // 들여쓰기용 span 생성
+            const indent = '<span class="fv-indent"></span>'.repeat(depth);
+
+            if (typeof data === 'object' && data !== null) {
+                // 객체인 경우 키-값을 순회
+                for (const [key, value] of Object.entries(data)) {
+                    const isObject = typeof value === 'object' && value !== null;
+                    
+                    html += `<div class="fv-item">`;
+                    html += `${indent}<span class="fv-key">${key}:</span> `;
+                    
+                    if (isObject) {
+                        // 값이 객체면 줄바꿈 후 재귀 호출
+                        html += `</div>`;
+                        html += createFirebaseView(value, depth + 1);
+                    } else {
+                        // 값이 기본타입이면 한 줄에 표시
+                        html += formatValue(value);
+                        html += `</div>`;
+                    }
+                }
+            } else {
+                // (예외) 데이터 자체가 객체가 아닌 경우
+                html += `<div class="fv-item">${indent}${formatValue(data)}</div>`;
+            }
+            return html;
+        }
+
+        // 값의 타입에 따라 색상을 입히는 헬퍼 함수
+        function formatValue(val) {
+            if (typeof val === 'string') return `<span class="fv-string">"${val}"</span>`;
+            if (typeof val === 'number') return `<span class="fv-number">${val}</span>`;
+            if (typeof val === 'boolean') return `<span class="fv-boolean">${val}</span>`;
+            if (val === null) return `<span class="fv-null">null</span>`;
+            return val;
+        }
+
+        // 엔터키 이벤트
         document.getElementById('search-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') searchUser();
         });
