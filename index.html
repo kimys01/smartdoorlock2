@@ -6,11 +6,9 @@
     <title>Smart Doorlock Admin</title>
 
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔒</text></svg>">
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="indexstyle.css">
 
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
@@ -21,8 +19,7 @@
 
     <div id="login-container">
         <h2>SmartDoorLock</h2>
-        <form id="login-form" onsubmit="handleLoginSubmit(event)">
-            <div class="input-group">
+        <form id="login-form"> <div class="input-group">
                 <label for="username">아이디</label>
                 <input type="text" id="username" placeholder="아이디를 입력하세요" required>
             </div>
@@ -113,7 +110,7 @@
 
     <script>
         // ====================================================
-        // [1] 전역 변수 및 초기화
+        // [1] 전역 변수 및 설정
         // ====================================================
         const DOORLOCK_LAT = 37.566826; 
         const DOORLOCK_LNG = 126.9786567;
@@ -138,6 +135,7 @@
         let selectedUserId = null;
         let currentUserLocationLogs = [];
 
+        // Firebase 초기화
         try {
             if (typeof firebase === 'undefined' || !firebase.initializeApp) throw new Error("Firebase SDK missing.");
             firebase.initializeApp(firebaseConfig);
@@ -149,19 +147,19 @@
 
 
         // ====================================================
-        // [2] 전역 함수 정의 (window 객체에 등록)
+        // [2] 전역 함수 정의 (어디서든 접근 가능)
         // ====================================================
 
-        window.customAlert = function(msg) {
+        function customAlert(msg) {
             const el = document.getElementById('modal-message');
             if(el) {
                 el.textContent = msg;
                 document.getElementById('custom-modal').style.display = 'flex';
             } else alert(msg);
-        };
+        }
 
         // --- 화면 전환 ---
-        window.showDashboard = function(isAdmin, loggedInUserId) {
+        function showDashboard(isAdmin, loggedInUserId) {
             if (isAdmin === undefined) isAdmin = sessionStorage.getItem('isAdmin') === 'true';
             if (loggedInUserId === undefined) loggedInUserId = sessionStorage.getItem('userId');
 
@@ -182,8 +180,9 @@
             if (isAdmin) {
                 userListDiv.classList.remove('hidden');
                 userInfoDiv.classList.add('hidden');
+                
                 if (!map && typeof kakao !== 'undefined') {
-                    kakao.maps.load(window.initMap);
+                    kakao.maps.load(initMap);
                 } else if (map) {
                     setTimeout(() => { 
                         map.relayout(); 
@@ -195,12 +194,12 @@
                 userInfoDiv.classList.remove('hidden');
                 selectedUserId = loggedInUserId;
                 if (!map && typeof kakao !== 'undefined') {
-                    kakao.maps.load(() => { window.initMap(); window.selectUser(loggedInUserId); });
+                    kakao.maps.load(() => { initMap(); selectUser(loggedInUserId); });
                 }
             }
-        };
+        }
 
-        window.showDbViewer = function() {
+        function showDbViewer() {
             document.getElementById('main-content').classList.add('hidden');
             document.getElementById('log-modal-content').classList.add('hidden');
             document.getElementById('db-viewer-content').classList.remove('hidden');
@@ -209,12 +208,12 @@
             document.getElementById('mapBtn').disabled = false; 
             document.getElementById('dbEditBtn').disabled = true;
             
-            window.loadAllDbData();
-        };
+            loadAllDbData();
+        }
 
-        window.showLogView = function() {
+        function showLogView() {
             const userId = selectedUserId || sessionStorage.getItem('userId');
-            if (!userId) return window.customAlert("사용자를 선택해주세요.");
+            if (!userId) return customAlert("사용자를 선택해주세요.");
 
             document.getElementById('main-content').classList.add('hidden');
             document.getElementById('log-modal-content').classList.remove('hidden');
@@ -223,25 +222,29 @@
             document.getElementById('mapBtn').disabled = false; 
             document.getElementById('logBtn').disabled = true;
 
-            window.loadAllLogs(userId);
-        };
+            loadAllLogs(userId);
+        }
 
-        window.hideLogView = function() { window.showDashboard(); };
+        function hideLogView() { showDashboard(); }
 
-        window.confirmLogout = function() {
+        function confirmLogout() {
             document.getElementById('logout-confirm-modal').classList.remove('hidden');
-        };
+        }
 
-        window.executeLogout = function() {
+        function executeLogout() {
             sessionStorage.clear(); 
             window.location.reload();
-        };
+        }
 
-        // --- 로그인 ---
-        window.handleLoginSubmit = function(e) {
-            e.preventDefault();
+        // --- 로그인 로직 (중요) ---
+        function handleLoginSubmit(e) {
+            e.preventDefault(); // 폼 제출 방지
+            console.log("Login Attempt...");
+
             const id = document.getElementById('username').value.trim();
             const pw = document.getElementById('password').value.trim();
+
+            if(!database) return customAlert("DB 연결 오류");
 
             database.ref('admin_pass').once('value').then(snap => {
                 let isAdmin = false;
@@ -250,53 +253,61 @@
                         if (c.val().adminId === id && c.val().password === pw) isAdmin = true; 
                     }); 
                 }
+                
                 if (isAdmin) {
-                    window.setSession(true, true, id); 
-                    window.showDashboard(true, id);
+                    setSession(true, true, id); 
+                    showDashboard(true, id);
                 } else {
+                    // 일반 유저 체크
                     database.ref('users').once('value').then(userSnap => {
                         let isUser = false;
                         if (userSnap.exists()) { 
+                            // users 경로에 해당 ID가 키(Key)로 존재하는지 확인
                             userSnap.forEach(c => { if(c.key === id) isUser = true; }); 
                         }
                         if (isUser) { 
-                            window.setSession(true, false, id); 
-                            window.showDashboard(false, id); 
+                            setSession(true, false, id); 
+                            showDashboard(false, id); 
                         } else {
-                            window.customAlert('로그인 실패: 아이디 또는 비밀번호를 확인하세요.');
+                            customAlert('로그인 실패: 아이디 또는 비밀번호를 확인하세요.');
                         }
                     });
                 }
+            }).catch(err => {
+                console.error(err);
+                customAlert("로그인 중 오류 발생");
             });
-        };
+        }
 
-        window.setSession = function(loggedIn, admin, uid) {
+        function setSession(loggedIn, admin, uid) {
             sessionStorage.setItem('isLoggedIn', loggedIn);
             sessionStorage.setItem('isAdmin', admin);
             sessionStorage.setItem('userId', uid);
-        };
+        }
+
 
         // --- 지도 기능 ---
-        window.initMap = function() {
+        function initMap() {
             const container = document.getElementById('map');
             if(!container) return;
             map = new kakao.maps.Map(container, { center: new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG), level: 7 });
             map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
             map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
-            window.drawDoorlockZones();
-            if (sessionStorage.getItem('isAdmin') === 'true') window.loadUserList();
-        };
+            drawDoorlockZones();
+            
+            if (sessionStorage.getItem('isAdmin') === 'true') loadUserList();
+        }
 
-        window.drawDoorlockZones = function() {
+        function drawDoorlockZones() {
             const pos = new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG);
             new kakao.maps.Marker({ position: pos, map: map, title: "Home" });
             [1000, 2000, 3000].forEach((r, i) => {
                 const color = ['#FF0000', '#FFA500', '#008000'][i];
                 new kakao.maps.Circle({ center: pos, radius: r, strokeWeight: 1, strokeColor: color, strokeOpacity: 0.8, strokeStyle: 'dashed', fillColor: color, fillOpacity: 0.1, map: map });
             });
-        };
+        }
 
-        window.clearMapAndInfo = function() {
+        function clearMapAndInfo() {
             markers.forEach(m => { if(m.co) m.co.setMap(null); m.setMap(null); });
             markers = [];
             if (currentPolyline) { currentPolyline.setMap(null); currentPolyline = null; }
@@ -305,9 +316,9 @@
             document.getElementById('userInfo').classList.add('hidden');
             document.getElementById('logBtn').disabled = true;
             if (sessionStorage.getItem('isAdmin') === 'true') selectedUserId = null;
-        };
+        }
 
-        window.loadUserList = function() {
+        function loadUserList() {
             database.ref('users').once('value').then(snap => {
                 const list = document.getElementById('userList');
                 while (list.childNodes.length > 2) { list.removeChild(list.lastChild); }
@@ -315,14 +326,14 @@
                     const div = document.createElement('div');
                     div.className = 'user';
                     div.textContent = c.key;
-                    div.onclick = () => window.selectUser(c.key);
+                    div.onclick = () => selectUser(c.key);
                     list.appendChild(div);
                 });
             });
-        };
+        }
 
-        window.selectUser = function(userId) {
-            window.clearMapAndInfo();
+        function selectUser(userId) {
+            clearMapAndInfo();
             selectedUserId = userId;
             document.getElementById('logBtn').disabled = false;
             const infoArea = document.getElementById('infoArea');
@@ -346,11 +357,11 @@
                         return tb - ta;
                     });
                 }
-                window.renderLocationLogs(false);
+                renderLocationLogs(false);
             });
-        };
+        }
 
-        window.renderLocationLogs = function(filterRange, btn) {
+        function renderLocationLogs(filterRange, btn) {
             if(btn) {
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -374,7 +385,7 @@
                 if (!pos.latitude || !pos.longitude) return;
                 const lat = parseFloat(pos.latitude);
                 const lng = parseFloat(pos.longitude);
-                const dist = window.getDist(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
+                const dist = getDist(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
 
                 if (filterRange && dist > MAX_DISTANCE_KM) return;
 
@@ -384,7 +395,7 @@
                 item.innerHTML = `<small>${time}</small><br>거리: <b>${dist.toFixed(2)}km</b>`;
                 item.onclick = () => { 
                     if(map) map.panTo(new kakao.maps.LatLng(lat, lng)); 
-                    window.showSingleLogMarker(lat, lng, time, dist);
+                    showSingleLogMarker(lat, lng, time, dist);
                 };
                 listDiv.appendChild(item);
 
@@ -408,9 +419,9 @@
                 });
                 map.setBounds(bounds);
             }
-        };
+        }
 
-        window.showSingleLogMarker = function(lat, lng, time, dist) {
+        function showSingleLogMarker(lat, lng, time, dist) {
             if (selectedLogMarker) {
                 selectedLogMarker.setMap(null);
                 if(selectedLogMarker.infoBox) selectedLogMarker.infoBox.setMap(null);
@@ -426,32 +437,33 @@
             marker.setMap(map);
             selectedLogMarker = marker;
             selectedLogMarker.infoBox = infoBox;
-        };
+        }
 
-        window.getDist = function(lat1, lon1, lat2, lon2) {
+        function getDist(lat1, lon1, lat2, lon2) {
             const R = 6371; 
             const dLat = (lat2-lat1) * Math.PI/180;
             const dLon = (lon2-lon1) * Math.PI/180;
             const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        };
+        }
 
-        window.loadAllLogs = function(userId) {
+        function loadAllLogs(userId) {
             const doorDiv = document.querySelector('#doorLockLogs .log-entries');
             const appDiv = document.querySelector('#appLogs .log-entries');
             document.getElementById('logUserTitle').textContent = `${userId} 전체 로그`;
-            doorDiv.innerHTML = 'Loading...'; appDiv.innerHTML = 'Loading...';
+            doorDiv.innerHTML = 'Loading...'; 
+            appDiv.innerHTML = 'Loading...';
 
-            // 1. 도어락 로그
+            // 도어락 로그
             database.ref('doorlock_logs/' + userId).once('value').then(snap => {
                 doorDiv.innerHTML = '';
                 if (!snap.exists()) { doorDiv.innerHTML = '없음'; return; }
                 const logs = [];
                 snap.forEach(c => logs.push(c.val()));
                 logs.sort((a, b) => {
-                    const ta = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
-                    const tb = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
-                    return tb - ta;
+                    const timeA = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
+                    const timeB = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
+                    return timeB - timeA;
                 });
                 logs.forEach(log => {
                     const div = document.createElement('div');
@@ -462,26 +474,27 @@
                 });
             });
 
-            // 2. 앱 로그 (범용)
+            // 앱 로그
             database.ref('users/' + userId + '/app_logs').once('value').then(snap => {
                 appDiv.innerHTML = '';
                 if (!snap.exists()) { appDiv.innerHTML = '없음'; return; }
                 const logs = [];
-                snap.forEach(cat => {
-                    const catData = cat.val();
-                    if(typeof catData === 'object' && catData !== null) {
+                snap.forEach(categorySnap => {
+                    const catData = categorySnap.val();
+                    if (typeof catData === 'object' && catData !== null) {
                         Object.keys(catData).forEach(key => {
                             const detail = catData[key];
                             if(typeof detail === 'object' && detail !== null) {
-                                logs.push({ ...detail, _cat: cat.key, _type: key });
+                                const logItem = { ...detail, _cat: categorySnap.key, _type: key };
+                                logs.push(logItem);
                             }
                         });
                     }
                 });
                 logs.sort((a, b) => {
-                    const ta = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
-                    const tb = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
-                    return tb - ta;
+                    const timeA = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
+                    const timeB = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
+                    return timeB - timeA;
                 });
                 if(logs.length === 0) appDiv.innerHTML = '형식 맞는 로그 없음';
                 logs.forEach(log => {
@@ -498,44 +511,44 @@
                     appDiv.appendChild(div);
                 });
             });
-        };
+        }
 
         // --- DB 조회 ---
-        window.loadAllDbData = function() {
+        function loadAllDbData() {
             const resultArea = document.getElementById('result-area');
             document.getElementById('result-title').textContent = "전체 사용자 목록 (users):";
             resultArea.innerHTML = '<div class="message-box">불러오는 중...</div>';
             document.getElementById('search-input').value = '';
             database.ref('users').once('value').then(snap => {
-                if(snap.exists()) window.renderGrid(snap.val());
+                if(snap.exists()) renderGrid(snap.val());
                 else resultArea.innerHTML = '<div class="message-box">데이터 없음</div>';
             });
-        };
+        }
 
-        window.searchUser = function() {
+        function searchUser() {
             const userId = document.getElementById('search-input').value.trim();
-            if(!userId) return window.customAlert("ID 입력");
+            if(!userId) return alert("ID 입력");
             const resultArea = document.getElementById('result-area');
             document.getElementById('result-title').textContent = `'${userId}' 검색 결과:`;
             resultArea.innerHTML = '<div class="message-box">검색 중...</div>';
             database.ref('users/' + userId).once('value').then(snap => {
-                if(snap.exists()) { const wrap = {}; wrap[userId] = snap.val(); window.renderGrid(wrap); }
+                if(snap.exists()) { const wrap = {}; wrap[userId] = snap.val(); renderGrid(wrap); }
                 else resultArea.innerHTML = '<div class="message-box">결과 없음</div>';
             });
-        };
+        }
 
-        window.renderGrid = function(data) {
+        function renderGrid(data) {
             const resultArea = document.getElementById('result-area');
             let html = `<div class="grid-wrapper"><table class="styled-table"><thead><tr><th style="width:150px;">ID</th><th>Data Tree</th></tr></thead><tbody>`;
             for (const [id, val] of Object.entries(data)) {
-                const treeHtml = window.createFirebaseView(val, 0);
+                const treeHtml = createFirebaseView(val, 0);
                 html += `<tr><td style="vertical-align:top; font-weight:bold; color:#007bff;">${id}</td><td><div class="firebase-view">${treeHtml}</div></td></tr>`;
             }
             html += `</tbody></table></div>`;
             resultArea.innerHTML = html;
-        };
+        }
 
-        window.createFirebaseView = function(data, depth) {
+        function createFirebaseView(data, depth) {
             let html = '';
             const indent = '<span class="fv-indent"></span>'.repeat(depth);
             if (typeof data === 'object' && data !== null) {
@@ -546,18 +559,18 @@
                         const arrow = isExpanded ? '▼' : '▶';
                         const rotate = isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
                         const cls = isExpanded ? '' : 'fv-hidden';
-                        html += `<div class="fv-item">${indent}<div class="fv-key-box" onclick="toggleNode(this)"><span class="fv-arrow" style="transform:${rotate}">${arrow}</span><span class="fv-key">${key}</span></div><div class="fv-children ${cls}">${window.createFirebaseView(value, depth + 1)}</div></div>`;
+                        html += `<div class="fv-item">${indent}<div class="fv-key-box" onclick="toggleNode(this)"><span class="fv-arrow" style="transform:${rotate}">${arrow}</span><span class="fv-key">${key}</span></div><div class="fv-children ${cls}">${createFirebaseView(value, depth + 1)}</div></div>`;
                     } else {
-                        html += `<div class="fv-item">${indent}<span style="display:inline-block;width:16px;"></span><span class="fv-key">${key}:</span> ${window.formatValue(value)}</div>`;
+                        html += `<div class="fv-item">${indent}<span style="display:inline-block;width:16px;"></span><span class="fv-key">${key}:</span> ${formatValue(value)}</div>`;
                     }
                 }
             } else {
-                html += `<div class="fv-item">${indent}${window.formatValue(data)}</div>`;
+                html += `<div class="fv-item">${indent}${formatValue(data)}</div>`;
             }
             return html;
-        };
+        }
 
-        window.toggleNode = function(el) {
+        function toggleNode(el) {
             const child = el.nextElementSibling;
             const arrow = el.querySelector('.fv-arrow');
             if(child) {
@@ -567,27 +580,32 @@
                     child.classList.add('fv-hidden'); arrow.textContent = '▶'; arrow.style.transform = 'rotate(-90deg)';
                 }
             }
-        };
+        }
 
-        window.formatValue = function(v) {
+        function formatValue(v) {
             if (typeof v === 'string') return `<span class="fv-string">"${v}"</span>`;
             if (typeof v === 'number') return `<span class="fv-number">${v}</span>`;
             if (v === true || v === false) return `<span class="fv-boolean">${v}</span>`;
             return v;
-        };
+        }
 
         // ====================================================
-        // [3] 초기 실행
+        // [3] 초기 실행 (DOMContentLoaded)
         // ====================================================
-        const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
-        if (isLoggedIn) {
-            const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
-            const userId = sessionStorage.getItem('userId');
-            window.showDashboard(isAdmin, userId);
-        } else {
-            document.getElementById('login-container').classList.remove('hidden');
-        }
-    });
+        document.addEventListener('DOMContentLoaded', () => {
+            // 로그인 이벤트 리스너 (JS 연결)
+            document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
+
+            // 초기 로그인 상태 체크
+            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+            if (isLoggedIn) {
+                const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+                const userId = sessionStorage.getItem('userId');
+                showDashboard(isAdmin, userId);
+            } else {
+                document.getElementById('login-container').classList.remove('hidden');
+            }
+        });
     </script>
 </body>
 </html>
