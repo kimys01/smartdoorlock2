@@ -5,89 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>데이터베이스 조회</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="logestyle.css">
 
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-
-    <style>
-        /* 트리 뷰 컨테이너 */
-        .firebase-view {
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 13px;
-            line-height: 1.6;
-            color: #333;
-            text-align: left;
-        }
-
-        /* 각 라인 */
-        .fv-item {
-            white-space: nowrap;
-        }
-
-        /* 클릭 가능한 키 영역 */
-        .fv-key-box {
-            cursor: pointer;
-            display: inline-block;
-            user-select: none; /* 더블클릭 방지 */
-        }
-        .fv-key-box:hover .fv-key {
-            text-decoration: underline;
-            color: #0056b3;
-        }
-
-        /* 키(Key) 색상 */
-        .fv-key {
-            color: #000080; /* 진한 파랑 */
-            font-weight: bold;
-        }
-
-        /* 화살표 아이콘 */
-        .fv-arrow {
-            display: inline-block;
-            width: 12px;
-            font-size: 10px;
-            color: #555;
-            transition: transform 0.2s ease;
-            text-align: center;
-            margin-right: 3px;
-        }
-
-        /* 자식 요소 컨테이너 */
-        .fv-children {
-            display: block; /* 기본은 보임 */
-            padding-left: 5px; /* 살짝 들여쓰기 */
-            border-left: 1px solid #eee; /* 계층 가이드라인 */
-        }
-
-        /* 숨김 클래스 (접었을 때) */
-        .fv-hidden {
-            display: none !important;
-        }
-
-        /* 값(Value) 색상 */
-        .fv-string { color: #a31515; } /* 붉은 갈색 */
-        .fv-number { color: #098658; } /* 녹색 */
-        .fv-boolean { color: #0000ff; } /* 파랑 */
-        .fv-null { color: #808080; } /* 회색 */
-
-        /* 들여쓰기 공백 */
-        .fv-indent {
-            display: inline-block;
-            width: 15px;
-        }
-
-        /* 검색창 스타일 보완 */
-        .search-container { margin-bottom: 20px; }
-        #result-area { overflow-x: auto; }
-    </style>
 </head>
 <body>
 
-    <div class="container">
-        <a href="index.html" class="back-link">&larr; 메인으로 돌아가기</a>
+    <div id="header">
+        <h1>Smart Doorlock DB Viewer</h1>
+        <div class="button-group">
+            <button onclick="location.href='index.html'">메인으로 돌아가기</button>
+        </div>
+    </div>
 
+    <div class="container">
         <h2>데이터베이스 조회 (Interactive Tree)</h2>
 
         <div class="search-container">
@@ -184,14 +116,14 @@
                         <thead>
                             <tr>
                                 <th style="width: 150px;">사용자 ID</th>
-                                <th>데이터 상세 내용</th>
+                                <th>데이터 상세 내용 (Interactive Tree)</th>
                             </tr>
                         </thead>
                         <tbody>
             `;
 
             for (const [userId, userData] of Object.entries(data)) {
-                // [수정됨] depth 0부터 시작하여 재귀적으로 HTML 생성
+                // [핵심] depth 0부터 시작
                 const formattedData = createFirebaseView(userData, 0);
 
                 tableHtml += `
@@ -217,26 +149,22 @@
             resultArea.innerHTML = tableHtml;
         }
 
-        // --- 4. [수정됨] 데이터 뷰 생성 재귀 함수 (확장/축소 로직 포함) ---
+        // --- 4. 재귀적 데이터 뷰 생성 (확장/축소 로직 포함) ---
         function createFirebaseView(data, depth) {
             let html = '';
             const indent = '<span class="fv-indent"></span>'.repeat(depth);
 
             if (typeof data === 'object' && data !== null) {
-                // 객체인 경우: 키-값을 순회
                 for (const [key, value] of Object.entries(data)) {
                     const isObject = typeof value === 'object' && value !== null;
 
                     if (isObject) {
-                        // --- [중요] 여기가 확장/축소를 결정하는 곳입니다 ---
+                        // --- [중요] 확장/축소 결정 로직 ---
                         // depth 0 (최상위: app_logs 등) -> 펼침
-                        // depth 1 (그 아래: change 등) -> 펼침
-                        // depth 2 이상 (그 하위 상세) -> 접음 (hidden)
-                        // 숫자를 2에서 3으로 바꾸면 더 깊게 펼쳐집니다.
+                        // depth 1 (그 아래: change, 로그ID 등) -> 펼침
+                        // depth 2 이상 (상세 내용) -> 접음
                         const isExpanded = depth < 2; 
 
-                        // 펼쳐져 있으면 화살표 아래(▼), 접혀있으면 옆(▶)
-                        // 주의: CSS transform은 클래스 토글로 제어하는 것이 더 안정적입니다.
                         const arrowIcon = isExpanded ? '▼' : '▶';
                         const arrowTransform = isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
                         const childrenClass = isExpanded ? '' : 'fv-hidden';
@@ -253,33 +181,30 @@
                             </div>
                         </div>`;
                     } else {
-                        // 값이 기본 타입(문자, 숫자 등)인 경우
+                        // 값이 기본타입인 경우
                         html += `
                         <div class="fv-item">
                             ${indent}
-                            <span class="fv-indent"></span> <span class="fv-key">${key}:</span>
+                            <span style="display:inline-block; width:16px;"></span>
+                            <span class="fv-key">${key}:</span>
                             ${formatValue(value)}
                         </div>`;
                     }
                 }
             } else {
-                // 예외 처리
                 html += `<div class="fv-item">${indent}${formatValue(data)}</div>`;
             }
             return html;
         }
 
-        // --- [수정됨] 토글 기능 (화살표 회전 및 내용 숨김/보임) ---
+        // --- 토글 함수 ---
         function toggleNode(element) {
-            // 클릭한 키 박스(fv-key-box)의 다음 형제인 자식 컨테이너(fv-children)
+            // 클릭된 키의 바로 다음 형제(자식 컨테이너)를 찾음
             const childrenDiv = element.nextElementSibling;
             const arrowSpan = element.querySelector('.fv-arrow');
 
             if (childrenDiv) {
-                // 현재 숨겨져 있는지 확인
-                const isHidden = childrenDiv.classList.contains('fv-hidden');
-
-                if (isHidden) {
+                if (childrenDiv.classList.contains('fv-hidden')) {
                     // 펼치기
                     childrenDiv.classList.remove('fv-hidden');
                     arrowSpan.textContent = '▼';
@@ -287,7 +212,7 @@
                 } else {
                     // 접기
                     childrenDiv.classList.add('fv-hidden');
-                    arrowSpan.textContent = '▶'; // 텍스트도 변경하여 확실하게 처리
+                    arrowSpan.textContent = '▶';
                     arrowSpan.style.transform = 'rotate(-90deg)';
                 }
             }
@@ -302,7 +227,6 @@
             return val;
         }
 
-        // 엔터키 이벤트
         document.getElementById('search-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') searchUser();
         });
