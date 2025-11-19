@@ -14,7 +14,7 @@ body {
 
 .hidden { display: none !important; }
 
-/* ▼▼▼ [수정] 로그인 컨테이너 (비밀번호 찾기 모달 스타일 제거) ▼▼▼ */
+/* 로그인 컨테이너 */
 #login-container {
     width: 100%;
     max-width: 400px;
@@ -93,8 +93,6 @@ body {
     text-decoration: underline;
     color: #71b7e6;
 }
-/* ▲▲▲ [수정 완료] ▲▲▲ */
-
 
 /* --- [코드 1 스타일 적용] --- */
 /* 메인 콘텐츠 스타일 */
@@ -120,6 +118,9 @@ body {
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+    /* ▼▼▼ [수정] 커서 포인터 추가 ▼▼▼ */
+    cursor: pointer; 
+    /* ▲▲▲ [수정 완료] ▲▲▲ */
 }
 /* --- [사용자 요청] 적용 완료 --- */
 
