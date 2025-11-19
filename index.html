@@ -113,7 +113,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             console.log("App Started.");
 
-            // 전역 설정 및 변수
+            // 전역 설정
             const DOORLOCK_LAT = 37.566826; 
             const DOORLOCK_LNG = 126.9786567;
             const MAX_DISTANCE_KM = 3.0;
@@ -146,7 +146,8 @@
                 alert("Firebase Init Error: " + e);
                 return;
             }
-            // 버튼 이벤트 연결
+
+            // 버튼 이벤트
             document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
             document.getElementById('logoutBtn').onclick = () => document.getElementById('logout-confirm-modal').classList.remove('hidden');
             document.getElementById('confirmLogoutBtn').onclick = executeLogout;
@@ -185,7 +186,16 @@
                 if (isAdmin) {
                     userListDiv.classList.remove('hidden');
                     userInfoDiv.classList.add('hidden');
-                    if (!map && typeof kakao !== 'undefined') kakao.maps.load(initMap);
+                    
+                    // [수정됨] 지도 로드 및 리레이아웃(깨짐 방지)
+                    if (!map && typeof kakao !== 'undefined') {
+                        kakao.maps.load(initMap);
+                    } else if (map) {
+                        setTimeout(() => { 
+                            map.relayout(); 
+                            map.setCenter(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG)); 
+                        }, 0);
+                    }
                 } else {
                     userListDiv.classList.add('hidden');
                     userInfoDiv.classList.remove('hidden');
@@ -226,7 +236,7 @@
 
 
             // ==================
-            // 기능 로직 (지도/로그인)
+            // 지도 및 사용자 로직
             // ==================
             function initMap() {
                 const container = document.getElementById('map');
@@ -287,7 +297,13 @@
                     currentUserLocationLogs = [];
                     if (snap.exists()) {
                         snap.forEach(c => currentUserLocationLogs.push(c.val()));
-                        currentUserLocationLogs.sort((a, b) => b.timestamp - a.timestamp);
+                        
+                        // [수정됨] 날짜 정렬 오류 해결 (문자열 날짜 처리)
+                        currentUserLocationLogs.sort((a, b) => {
+                            const timeA = a.timestamp ? new Date(String(a.timestamp).replace(" ", "T")).getTime() : 0;
+                            const timeB = b.timestamp ? new Date(String(b.timestamp).replace(" ", "T")).getTime() : 0;
+                            return timeB - timeA;
+                        });
                     }
                     renderLocationLogs(false);
                 });
@@ -317,7 +333,7 @@
 
                     const item = document.createElement('div');
                     item.className = 'log-entry';
-                    const time = pos.timestamp ? new Date(pos.timestamp).toLocaleString() : '-';
+                    const time = pos.timestamp ? new Date(String(pos.timestamp).replace(" ", "T")).toLocaleString() : '-';
                     item.innerHTML = `<small>${time}</small><br>거리: <b>${dist.toFixed(2)}km</b>`;
                     item.onclick = () => { if(map) map.panTo(new kakao.maps.LatLng(lat, lng)); };
                     listDiv.appendChild(item);
@@ -362,7 +378,7 @@
                 return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             }
 
-            // 상세 로그 (도어락/앱)
+            // 로그 로드
             function loadAllLogs(userId) {
                 const doorDiv = document.querySelector('#doorLockLogs .log-entries');
                 const appDiv = document.querySelector('#appLogs .log-entries');
@@ -378,8 +394,8 @@
                         const div = document.createElement('div');
                         div.className = 'full-log-entry';
                         let t = '시간없음';
-                        if (typeof log.timestamp === 'string') t = log.timestamp.replace(" ", "T");
-                        div.innerHTML = `<strong>${t}</strong><br>방식: ${log.method}<br>상태: ${log.status}`;
+                        if (log.timestamp) t = new Date(String(log.timestamp).replace(" ", "T")).toLocaleString('ko-KR');
+                        div.innerHTML = `<strong>${t}</strong><br>방식: ${log.method || '?'}<br>상태: ${log.status || '?'}`;
                         doorDiv.appendChild(div);
                     });
                 });
@@ -394,7 +410,8 @@
                     arr.forEach(log => {
                         const div = document.createElement('div');
                         div.className = 'full-log-entry';
-                        div.innerHTML = `<strong>${log.timestamp}</strong>: ${log.new_auth || '이벤트'}`;
+                        let t = log.timestamp ? new Date(String(log.timestamp).replace(" ", "T")).toLocaleString('ko-KR') : '-';
+                        div.innerHTML = `<strong>${t}</strong>: ${log.new_auth || '이벤트'}`;
                         appDiv.appendChild(div);
                     });
                 });
@@ -509,25 +526,28 @@
                     }
                 });
             }
+
             function setSession(loggedIn, admin, uid) {
                 sessionStorage.setItem('isLoggedIn', loggedIn);
                 sessionStorage.setItem('isAdmin', admin);
                 sessionStorage.setItem('userId', uid);
             }
+
             function executeLogout() {
                 sessionStorage.clear(); window.location.reload();
             }
+
+            // --- [수정됨] 스크립트 맨 마지막으로 이동하여 함수 정의 후 실행 ---
             const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
             if (isLoggedIn) {
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
                 const userId = sessionStorage.getItem('userId');
-                // 이제 showDashboard 함수가 위에서 이미 만들어졌으므로 에러가 나지 않습니다.
                 showDashboard(isAdmin, userId);
             } else {
                 document.getElementById('login-container').classList.remove('hidden');
             }
+
         });
     </script>
 </body>
 </html>
-
