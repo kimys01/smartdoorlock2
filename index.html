@@ -334,6 +334,7 @@
 
             // 사용자 정보 닫기 함수
             function closeUserInfo() {
+                console.log("closeUserInfo called.");
                 clearMapAndInfo();
             }
 
@@ -351,7 +352,7 @@
                 
                 const overlayContent = `<div class="custom-overlay-info">
                                             <strong>선택된 위치</strong><br>
-                                            도어락과의 거리: <span style="color:blue; font-weight:bold;">${distStr}</span><br>
+                                            거리: <span style="color:blue; font-weight:bold;">${distStr}</span><br>
                                             위도: ${lat.toFixed(6)}<br>경도: ${lng.toFixed(6)}
                                            </div>`;
                 const infoOverlay = new kakao.maps.CustomOverlay({
@@ -377,7 +378,7 @@
                 map.panTo(position);
             }
 
-            // ▼▼▼ [핵심 수정] 사용자 선택 및 데이터 로딩 ▼▼▼
+            // ▼▼▼ 사용자 선택 및 데이터 로딩 ▼▼▼
             function selectUser(userId) {
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
                 if (isAdmin) clearMapAndInfo();
@@ -416,7 +417,7 @@
                     };
                 }
 
-                // [수정] 데이터 전체 가져오기 (limitToLast 제거)
+                // [수정] 데이터 전체 가져오기
                 const locationsRef = database.ref('users/' + userId + '/location_logs');
 
                 locationsRef.once('value').then((snapshot) => {
@@ -438,7 +439,7 @@
                 });
             }
 
-            // ▼▼▼ [핵심 수정] 위치 로그 및 지도 렌더링 함수 (필터 적용) ▼▼▼
+            // ▼▼▼ 위치 로그 및 지도 렌더링 함수 (필터 적용) ▼▼▼
             function renderLocationLogs(filterRange) {
                 const logListDiv = document.querySelector('.log-list');
                 if (!logListDiv) return;
@@ -498,7 +499,7 @@
 
                     const timeStr = pos.timestamp ? new Date(pos.timestamp).toLocaleString('ko-KR') : '시간 없음';
                     
-                    // ▼▼▼ 상세 정보 표시 (위도, 경도, 고도, 거리) ▼▼▼
+                    // 상세 정보 표시 (위도, 경도, 고도, 거리)
                     let entryContent = `${zoneBadge ? zoneBadge + '<br>' : ''}`;
                     entryContent += `<small>${timeStr}</small><br>`;
                     entryContent += `거리: <strong>${distKm.toFixed(2)}km</strong><br>`;
@@ -506,14 +507,13 @@
                     if (pos.altitude !== undefined && pos.altitude !== null && !isNaN(parseFloat(pos.altitude))) {
                         entryContent += `<br>고도: ${parseFloat(pos.altitude).toFixed(2)}m`;
                     }
-                    // ▲▲▲ 수정 완료 ▲▲▲
                     
                     logEntry.innerHTML = entryContent;
                     logEntry.addEventListener('click', () => showLocationOnMap(lat, lng));
                     logListDiv.appendChild(logEntry);
 
 
-                    // 지도 경로 추가 (지도 성능을 위해 필터된 데이터 중 최대 50개만 표시)
+                    // 지도 경로 추가 (지도 성능을 위해 최대 50개 점만 표시)
                     if (mapCount < 50) {
                         const latlng = new kakao.maps.LatLng(lat, lng);
                         path.push(latlng); 
@@ -544,16 +544,19 @@
                     }
                 });
 
-                // 지도에 선 그리기
-                if (path.length > 0) {
+                // ▼▼▼ [수정] 전체 기록 볼 때는 선 안 그리기 ▼▼▼
+                // filterRange가 true(범위 내 보기)일 때만 선을 그림
+                if (filterRange && path.length > 0) {
                     currentPolyline = new kakao.maps.Polyline({
                         path: path, strokeWeight: 4, strokeColor: '#CC00CC', strokeOpacity: 0.8, strokeStyle: 'solid', map: map
                     });
                     map.setBounds(bounds);
+                } else if (!filterRange && path.length > 0) {
+                    // 전체 보기일 때는 선은 안 그리고, 마커들이 다 보이도록 범위만 맞춤
+                    map.setBounds(bounds);
                 }
+                // ▲▲▲ [수정 완료] ▲▲▲
             }
-            // ▲▲▲ [수정 완료] ▲▲▲
-
 
             // 전체 로그 로드 (모달창)
             function loadAllLogs(userId) {
