@@ -9,13 +9,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     
+    <!-- ▼▼▼ 외부 CSS 파일 연결 ▼▼▼ -->
     <link rel="stylesheet" href="indexstyle.css">
+    <!-- ▲▲▲ 연결 완료 ▲▲▲ -->
 
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <!-- Firebase Auth SDK -->
-    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script> -->
 
 </head>
 <body>
@@ -114,7 +114,7 @@
             // ▼▼▼ [설정] 도어락 고정 위치 (실제 위치로 변경 필요) ▼▼▼
             const DOORLOCK_LAT = 37.566826; 
             const DOORLOCK_LNG = 126.9786567;
-            const MAX_DISTANCE_KM = 3.0; // 표시할 최대 반경 (3km)
+            const MAX_DISTANCE_KM = 3.0; // 필터링 기준 반경 (3km)
             // ▲▲▲ [설정 끝] ▲▲▲
 
             // Firebase 설정
@@ -136,6 +136,7 @@
             let currentPolyline;
             let selectedLogMarker;
             let selectedUserId = null;
+            let currentUserLocationLogs = []; // 현재 선택된 사용자의 전체 위치 로그 저장
 
             // Firebase 초기화
             try {
@@ -243,7 +244,6 @@
             function drawDoorlockZones() {
                 const doorlockPosition = new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG);
                 
-                // 도어락 마커
                 const markerImage = new kakao.maps.MarkerImage(
                     'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
                     new kakao.maps.Size(35, 35)
@@ -255,7 +255,6 @@
                     title: "우리집 도어락"
                 });
 
-                // 반경 원
                 const radii = [
                     { r: 1000, color: '#FF0000' }, 
                     { r: 2000, color: '#FFA500' }, 
@@ -316,20 +315,24 @@
                     if (selectedLogMarker.infoBox) selectedLogMarker.infoBox.setMap(null);
                     selectedLogMarker = null;
                 }
-                // *주의* zoneCircles와 doorlockMarker는 지우지 않음 (고정)
 
                 const infoArea = document.getElementById('infoArea');
                 if (infoArea) infoArea.innerHTML = '';
                 
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+                const userInfoDiv = document.getElementById('userInfo');
+                if (isAdmin && userInfoDiv) {
+                     userInfoDiv.classList.add('hidden');
+                }
+                
                 const logBtnElem = document.getElementById('logBtn');
                 if (logBtnElem) logBtnElem.disabled = true;
+                
                 if (isAdmin) selectedUserId = null;
             }
 
             // 사용자 정보 닫기 함수
             function closeUserInfo() {
-                console.log("closeUserInfo called.");
                 clearMapAndInfo();
             }
 
@@ -373,7 +376,7 @@
                 map.panTo(position);
             }
 
-            // 사용자 선택
+            // ▼▼▼ [수정] 사용자 선택 및 로그 렌더링 로직 통합 ▼▼▼
             function selectUser(userId) {
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
                 if (isAdmin) clearMapAndInfo();
@@ -386,111 +389,140 @@
                 const userInfoDiv = document.getElementById('userInfo');
 
                 if (infoArea && userInfoDiv) {
-                    infoArea.innerHTML = `<p><strong>User ID:</strong> ${userId}</p><h3>위치 기록</h3><div class="log-list"></div>`;
+                    // [수정] 필터링 버튼 추가
+                    infoArea.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <p style="margin:0;"><strong>User ID:</strong> ${userId}</p>
+                        </div>
+                        <div class="filter-group">
+                            <button id="showAllBtn" class="filter-btn active">전체 기록</button>
+                            <button id="showRangeBtn" class="filter-btn">범위 내(3km)</button>
+                        </div>
+                        <h3>위치 기록</h3>
+                        <div class="log-list"></div>
+                    `;
                     userInfoDiv.classList.remove('hidden');
+                    
+                    document.getElementById('showAllBtn').onclick = () => renderLocationLogs(false);
+                    document.getElementById('showRangeBtn').onclick = () => renderLocationLogs(true);
                 }
 
                 const locationsRef = database.ref('users/' + userId + '/location_logs');
 
                 locationsRef.once('value').then((snapshot) => {
-                    const logListDiv = infoArea.querySelector('.log-list');
-                    if (!logListDiv) return;
-                    logListDiv.innerHTML = '';
-                    
-                    if (!snapshot.exists()) {
-                        logListDiv.innerHTML = '표시할 위치 기록이 없습니다.';
-                    } else {
-                        const logs = [];
-                        snapshot.forEach(childSnapshot => logs.push(childSnapshot.val()));
-                        
-                        logs.reverse().forEach((pos) => { 
-                            if (!pos || !pos.latitude || !pos.longitude) return;
-                            const lat = parseFloat(pos.latitude);
-                            const lng = parseFloat(pos.longitude);
-                            if (isNaN(lat) || isNaN(lng)) return;
-
-                            // 거리 계산
-                            const distKm = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
-                            
-                            // ▼▼▼ [수정] 3km 이내만 표시 필터링 ▼▼▼
-                            if (distKm > MAX_DISTANCE_KM) {
-                                return; // 3km 넘으면 건너뜀
-                            }
-                            // ▲▲▲ [수정 완료] ▲▲▲
-
-                            let zoneBadge = '';
-                            let rowStyle = '';
-
-                            if (distKm <= 1.0) {
-                                zoneBadge = '<span style="color:red; font-weight:bold;">[1km 내 진입]</span>';
-                                rowStyle = 'background-color: #ffeaea;'; 
-                            } else if (distKm <= 2.0) {
-                                zoneBadge = '<span style="color:orange; font-weight:bold;">[2km 내 진입]</span>';
-                                rowStyle = 'background-color: #fff8e1;'; 
-                            } else if (distKm <= 3.0) {
-                                zoneBadge = '<span style="color:green; font-weight:bold;">[3km 내 진입]</span>';
-                            }
-
-                            const logEntry = document.createElement('div');
-                            logEntry.className = 'log-entry';
-                            if (rowStyle) logEntry.style = rowStyle; 
-
-                            const timeStr = pos.timestamp ? new Date(pos.timestamp).toLocaleString('ko-KR') : '시간 없음';
-                            
-                            // 위도, 경도, 고도, 거리 표시
-                            let entryContent = `${zoneBadge ? zoneBadge + '<br>' : ''}`;
-                            entryContent += `<small>${timeStr}</small><br>`;
-                            entryContent += `위도: ${lat.toFixed(6)}<br>`;
-                            entryContent += `경도: ${lng.toFixed(6)}<br>`;
-                            
-                            if (pos.altitude !== undefined && pos.altitude !== null && !isNaN(parseFloat(pos.altitude))) {
-                                entryContent += `고도: ${parseFloat(pos.altitude).toFixed(2)}m<br>`;
-                            }
-                            entryContent += `거리: <strong>${distKm.toFixed(2)}km</strong>`;
-                            
-                            logEntry.innerHTML = entryContent;
-                            
-                            logEntry.addEventListener('click', () => showLocationOnMap(lat, lng));
-                            logListDiv.appendChild(logEntry);
-                        });
+                    currentUserLocationLogs = []; // 초기화
+                    if (snapshot.exists()) {
+                        snapshot.forEach(childSnapshot => currentUserLocationLogs.push(childSnapshot.val()));
+                        currentUserLocationLogs.reverse(); // 최신순 정렬
                     }
+                    
+                    // 초기 렌더링: 전체 보기
+                    renderLocationLogs(false);
+
+                }).catch(error => {
+                    console.error("Error loading location logs:", error);
+                    customAlert("위치 기록 로드 중 오류 발생");
                 });
+            }
 
-                // 지도 경로 그리기 (최근 20개, 필터링 적용)
-                const recentQuery = database.ref('users/' + userId + '/location_logs').limitToLast(50); // 충분히 가져와서 필터링
-                recentQuery.once('value').then((snapshot) => {
-                    if (!snapshot.exists()) return;
-                    let path = [];
-                    const bounds = new kakao.maps.LatLngBounds();
-                    bounds.extend(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
+            // [추가] 위치 로그 및 지도 경로 렌더링 함수 (필터 적용)
+            function renderLocationLogs(filterRange) {
+                const logListDiv = document.querySelector('.log-list');
+                if (!logListDiv) return;
+                logListDiv.innerHTML = '';
 
-                    const rawLogs = [];
-                    snapshot.forEach((snap) => rawLogs.push(snap.val()));
-                    // 시간순 정렬 필요하면 여기서 sort (이미 DB순서가 시간순이면 그대로)
+                // 버튼 상태 업데이트
+                const allBtn = document.getElementById('showAllBtn');
+                const rangeBtn = document.getElementById('showRangeBtn');
+                if (allBtn && rangeBtn) {
+                    if (filterRange) {
+                        allBtn.classList.remove('active');
+                        rangeBtn.classList.add('active');
+                    } else {
+                        allBtn.classList.add('active');
+                        rangeBtn.classList.remove('active');
+                    }
+                }
 
-                    // 필터링된 로그만 경로에 추가 (최근 20개 정도만 표시하도록 잘라도 됨)
-                    let count = 0;
-                    // 역순으로 탐색하여 최근 데이터부터 확인
-                    for (let i = rawLogs.length - 1; i >= 0; i--) {
-                        if (count >= 20) break; // 최대 20개 점만 표시
+                // 지도 경로 초기화
+                markers.forEach(marker => {
+                    if (marker.customOverlay) marker.customOverlay.setMap(null);
+                    marker.setMap(null);
+                });
+                markers = [];
+                if (currentPolyline) {
+                    currentPolyline.setMap(null);
+                    currentPolyline = null;
+                }
 
-                        const pos = rawLogs[i];
-                        const lat = parseFloat(pos.latitude);
-                        const lng = parseFloat(pos.longitude);
-                        if (isNaN(lat) || isNaN(lng)) continue;
+                if (currentUserLocationLogs.length === 0) {
+                    logListDiv.innerHTML = '표시할 위치 기록이 없습니다.';
+                    return;
+                }
 
-                        const dist = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
-                        
-                        // ▼▼▼ [수정] 3km 이내만 지도에 표시 ▼▼▼
-                        if (dist > MAX_DISTANCE_KM) continue; 
-                        // ▲▲▲ [수정 완료] ▲▲▲
+                // 지도 경로용 배열
+                let path = [];
+                const bounds = new kakao.maps.LatLngBounds();
+                bounds.extend(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
+                
+                // 로그 갯수 제한 (지도 성능 위해 50개)
+                let mapCount = 0;
 
+                currentUserLocationLogs.forEach((pos) => { 
+                    if (!pos || !pos.latitude || !pos.longitude) return;
+                    const lat = parseFloat(pos.latitude);
+                    const lng = parseFloat(pos.longitude);
+                    if (isNaN(lat) || isNaN(lng)) return;
+
+                    const distKm = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
+
+                    // 필터링 적용: 범위 내 보기이고, 거리가 설정값보다 크면 건너뜀
+                    if (filterRange && distKm > MAX_DISTANCE_KM) {
+                        return; 
+                    }
+
+                    // 리스트 아이템 생성
+                    let zoneBadge = '';
+                    let rowStyle = '';
+                    if (distKm <= 1.0) {
+                        zoneBadge = '<span style="color:red; font-weight:bold;">[1km 내 진입]</span>';
+                        rowStyle = 'background-color: #ffeaea;'; 
+                    } else if (distKm <= 2.0) {
+                        zoneBadge = '<span style="color:orange; font-weight:bold;">[2km 내 진입]</span>';
+                        rowStyle = 'background-color: #fff8e1;'; 
+                    } else if (distKm <= 3.0) {
+                        zoneBadge = '<span style="color:green; font-weight:bold;">[3km 내 진입]</span>';
+                    }
+
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'log-entry';
+                    if (rowStyle) logEntry.style = rowStyle; 
+
+                    const timeStr = pos.timestamp ? new Date(pos.timestamp).toLocaleString('ko-KR') : '시간 없음';
+                    
+                    let entryContent = `${zoneBadge ? zoneBadge + '<br>' : ''}`;
+                    entryContent += `<small>${timeStr}</small><br>`;
+                    entryContent += `위도: ${lat.toFixed(6)}<br>`;
+                    entryContent += `경도: ${lng.toFixed(6)}<br>`;
+                    if (pos.altitude !== undefined && pos.altitude !== null && !isNaN(parseFloat(pos.altitude))) {
+                        entryContent += `고도: ${parseFloat(pos.altitude).toFixed(2)}m<br>`;
+                    }
+                    entryContent += `거리: <strong>${distKm.toFixed(2)}km</strong>`;
+                    
+                    logEntry.innerHTML = entryContent;
+                    logEntry.addEventListener('click', () => showLocationOnMap(lat, lng));
+                    logListDiv.appendChild(logEntry);
+
+
+                    // 지도 경로 추가 (최대 50개까지만 표시)
+                    if (mapCount < 50) {
                         const latlng = new kakao.maps.LatLng(lat, lng);
-                        path.unshift(latlng); // 경로 순서 유지를 위해 앞에 추가 (역순 탐색 중이므로)
+                        path.push(latlng); // 최신순 데이터이므로 경로는 역순이 됨. 필요시 reverse
                         bounds.extend(latlng);
-
+                        
+                        // 경로 점 찍기
                         const dotContent = `<div class="custom-overlay-info">
-                                                ${dist.toFixed(2)}km 지점
+                                                ${distKm.toFixed(2)}km 지점
                                             </div>`;
                         const infoOverlay = new kakao.maps.CustomOverlay({
                             content: dotContent, position: latlng, yAnchor: 2.5, zIndex: 3
@@ -509,17 +541,22 @@
                         markers.push(overlay); 
                         overlay.customOverlay = infoOverlay;
                         
-                        count++;
-                    }
-
-                    if (path.length > 0) {
-                        currentPolyline = new kakao.maps.Polyline({
-                            path: path, strokeWeight: 4, strokeColor: '#CC00CC', strokeOpacity: 0.8, strokeStyle: 'solid', map: map
-                        });
-                        map.setBounds(bounds);
+                        mapCount++;
                     }
                 });
+
+                // 지도에 선 그리기
+                if (path.length > 0) {
+                    // path가 최신순이므로, 경로는 시간 역순으로 그려짐. 시간 순서대로 그리려면 reverse
+                    // path.reverse(); 
+                    currentPolyline = new kakao.maps.Polyline({
+                        path: path, strokeWeight: 4, strokeColor: '#CC00CC', strokeOpacity: 0.8, strokeStyle: 'solid', map: map
+                    });
+                    map.setBounds(bounds);
+                }
             }
+            // ▲▲▲ [수정 완료] ▲▲▲
+
 
             // 전체 로그 로드 (모달창)
             function loadAllLogs(userId) {
