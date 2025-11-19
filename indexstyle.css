@@ -265,6 +265,33 @@ body {
     color: #555; 
 }
 
+/* ▼▼▼ [추가] 필터 버튼 그룹 스타일 ▼▼▼ */
+.filter-group {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+.filter-btn {
+    flex: 1;
+    padding: 5px 0;
+    border: 1px solid #ddd;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    font-size: 12px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+.filter-btn:hover {
+    background-color: #e9ecef;
+}
+.filter-btn.active {
+    background-color: #e2e8f0;
+    font-weight: bold;
+    border-color: #adb5bd;
+    color: #333;
+}
+/* ▲▲▲ [추가 완료] ▲▲▲ */
+
 .log-list {
     flex-grow: 1;
     overflow-y: auto; 
