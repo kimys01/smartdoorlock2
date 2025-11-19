@@ -15,7 +15,7 @@
     <div class="container">
         <a href="index.html" class="back-link">&larr; 메인으로 돌아가기</a>
 
-        <h2>데이터베이스 조회 (Tree View)</h2>
+        <h2>데이터베이스 조회 (Interactive Tree View)</h2>
 
         <div class="search-container">
             <input type="text" id="search-input" placeholder="검색할 사용자 ID를 입력하세요 (예: 123456)">
@@ -111,16 +111,15 @@
                         <thead>
                             <tr>
                                 <th style="width: 150px;">사용자 ID</th>
-                                <th>데이터 상세 내용 (Firebase View)</th>
+                                <th>데이터 상세 내용 (Interactive Tree)</th>
                             </tr>
                         </thead>
                         <tbody>
             `;
 
-            // 데이터 반복문
             for (const [userId, userData] of Object.entries(data)) {
-                // [핵심] 데이터를 재귀적으로 파싱하여 HTML 트리로 변환
-                const formattedData = createFirebaseView(userData);
+                // [핵심] 데이터를 재귀적으로 파싱하여 HTML 트리로 변환 (depth 0부터 시작)
+                const formattedData = createFirebaseView(userData, 0);
 
                 tableHtml += `
                     <tr>
@@ -143,38 +142,69 @@
             resultArea.innerHTML = tableHtml;
         }
 
-        // --- 4. 재귀적 데이터 뷰 생성 함수 (이미지와 같은 형태 구현) ---
-        function createFirebaseView(data, depth = 0) {
+        // --- 4. 재귀적 데이터 뷰 생성 함수 (접기/펼치기 기능 포함) ---
+        function createFirebaseView(data, depth) {
             let html = '';
-            // 들여쓰기용 span 생성
             const indent = '<span class="fv-indent"></span>'.repeat(depth);
 
             if (typeof data === 'object' && data !== null) {
-                // 객체인 경우 키-값을 순회
                 for (const [key, value] of Object.entries(data)) {
                     const isObject = typeof value === 'object' && value !== null;
                     
-                    html += `<div class="fv-item">`;
-                    html += `${indent}<span class="fv-key">${key}:</span> `;
+                    // --- 초기 확장 상태 결정 로직 ---
+                    // depth 0, 1까지만 펼치고(expanded), depth 2 이상은 접음(hidden)
+                    const isInitiallyExpanded = depth < 1; 
                     
+                    const arrowClass = isInitiallyExpanded ? '' : 'style="transform: rotate(-90deg);"';
+                    const childrenClass = isInitiallyExpanded ? '' : 'fv-hidden';
+
                     if (isObject) {
-                        // 값이 객체면 줄바꿈 후 재귀 호출
-                        html += `</div>`;
-                        html += createFirebaseView(value, depth + 1);
+                        // 값이 객체면: 클릭 가능한 토글 버튼 생성
+                        html += `
+                        <div class="fv-item">
+                            ${indent}
+                            <div class="fv-key-box" onclick="toggleNode(this)">
+                                <span class="fv-arrow" ${arrowClass}>▼</span>
+                                <span class="fv-key">${key}:</span>
+                            </div>
+                            <div class="fv-children ${childrenClass}">
+                                ${createFirebaseView(value, depth + 1)}
+                            </div>
+                        </div>`;
                     } else {
-                        // 값이 기본타입이면 한 줄에 표시
-                        html += formatValue(value);
-                        html += `</div>`;
+                        // 값이 기본타입이면: 한 줄에 표시
+                        html += `
+                        <div class="fv-item">
+                            ${indent}
+                            <span style="display:inline-block; width:15px;"></span> <span class="fv-key">${key}:</span>
+                            ${formatValue(value)}
+                        </div>`;
                     }
                 }
             } else {
-                // (예외) 데이터 자체가 객체가 아닌 경우
                 html += `<div class="fv-item">${indent}${formatValue(data)}</div>`;
             }
             return html;
         }
 
-        // 값의 타입에 따라 색상을 입히는 헬퍼 함수
+        // --- 클릭 시 접기/펼치기 동작 함수 ---
+        function toggleNode(element) {
+            // 클릭한 요소(fv-key-box)의 바로 다음 형제 요소(fv-children)를 찾음
+            const childrenDiv = element.nextElementSibling;
+            const arrow = element.querySelector('.fv-arrow');
+
+            if (childrenDiv) {
+                if (childrenDiv.classList.contains('fv-hidden')) {
+                    childrenDiv.classList.remove('fv-hidden'); // 보이기
+                    arrow.style.transform = 'rotate(0deg)'; // 화살표 아래로
+                } else {
+                    childrenDiv.classList.add('fv-hidden'); // 숨기기
+                    arrow.style.transform = 'rotate(-90deg)'; // 화살표 옆으로
+                }
+            }
+        }
+
+        // 값 포맷팅 헬퍼
         function formatValue(val) {
             if (typeof val === 'string') return `<span class="fv-string">"${val}"</span>`;
             if (typeof val === 'number') return `<span class="fv-number">${val}</span>`;
@@ -183,7 +213,6 @@
             return val;
         }
 
-        // 엔터키 이벤트
         document.getElementById('search-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') searchUser();
         });
