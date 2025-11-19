@@ -149,19 +149,19 @@
 
 
         // ====================================================
-        // [2] 함수 정의 (호이스팅으로 어디서든 호출 가능)
+        // [2] 전역 함수 정의 (window 객체에 등록)
         // ====================================================
 
-        function customAlert(msg) {
+        window.customAlert = function(msg) {
             const el = document.getElementById('modal-message');
             if(el) {
                 el.textContent = msg;
                 document.getElementById('custom-modal').style.display = 'flex';
             } else alert(msg);
-        }
+        };
 
         // --- 화면 전환 ---
-        function showDashboard(isAdmin, loggedInUserId) {
+        window.showDashboard = function(isAdmin, loggedInUserId) {
             if (isAdmin === undefined) isAdmin = sessionStorage.getItem('isAdmin') === 'true';
             if (loggedInUserId === undefined) loggedInUserId = sessionStorage.getItem('userId');
 
@@ -183,7 +183,7 @@
                 userListDiv.classList.remove('hidden');
                 userInfoDiv.classList.add('hidden');
                 if (!map && typeof kakao !== 'undefined') {
-                    kakao.maps.load(initMap);
+                    kakao.maps.load(window.initMap);
                 } else if (map) {
                     setTimeout(() => { 
                         map.relayout(); 
@@ -195,45 +195,50 @@
                 userInfoDiv.classList.remove('hidden');
                 selectedUserId = loggedInUserId;
                 if (!map && typeof kakao !== 'undefined') {
-                    kakao.maps.load(() => { initMap(); selectUser(loggedInUserId); });
+                    kakao.maps.load(() => { window.initMap(); window.selectUser(loggedInUserId); });
                 }
             }
-        }
+        };
 
-        function showDbViewer() {
+        window.showDbViewer = function() {
             document.getElementById('main-content').classList.add('hidden');
             document.getElementById('log-modal-content').classList.add('hidden');
             document.getElementById('db-viewer-content').classList.remove('hidden');
+            
             document.body.style.background = '#f9f9f9'; 
             document.getElementById('mapBtn').disabled = false; 
             document.getElementById('dbEditBtn').disabled = true;
-            loadAllDbData();
-        }
+            
+            window.loadAllDbData();
+        };
 
-        function showLogView() {
+        window.showLogView = function() {
             const userId = selectedUserId || sessionStorage.getItem('userId');
-            if (!userId) return customAlert("사용자를 선택해주세요.");
+            if (!userId) return window.customAlert("사용자를 선택해주세요.");
+
             document.getElementById('main-content').classList.add('hidden');
             document.getElementById('log-modal-content').classList.remove('hidden');
             document.getElementById('db-viewer-content').classList.add('hidden');
+
             document.getElementById('mapBtn').disabled = false; 
             document.getElementById('logBtn').disabled = true;
-            loadAllLogs(userId);
-        }
 
-        function hideLogView() { showDashboard(); }
+            window.loadAllLogs(userId);
+        };
 
-        function confirmLogout() {
+        window.hideLogView = function() { window.showDashboard(); };
+
+        window.confirmLogout = function() {
             document.getElementById('logout-confirm-modal').classList.remove('hidden');
-        }
+        };
 
-        function executeLogout() {
+        window.executeLogout = function() {
             sessionStorage.clear(); 
             window.location.reload();
-        }
+        };
 
         // --- 로그인 ---
-        function handleLoginSubmit(e) {
+        window.handleLoginSubmit = function(e) {
             e.preventDefault();
             const id = document.getElementById('username').value.trim();
             const pw = document.getElementById('password').value.trim();
@@ -246,8 +251,8 @@
                     }); 
                 }
                 if (isAdmin) {
-                    setSession(true, true, id); 
-                    showDashboard(true, id);
+                    window.setSession(true, true, id); 
+                    window.showDashboard(true, id);
                 } else {
                     database.ref('users').once('value').then(userSnap => {
                         let isUser = false;
@@ -255,43 +260,43 @@
                             userSnap.forEach(c => { if(c.key === id) isUser = true; }); 
                         }
                         if (isUser) { 
-                            setSession(true, false, id); 
-                            showDashboard(false, id); 
+                            window.setSession(true, false, id); 
+                            window.showDashboard(false, id); 
                         } else {
-                            customAlert('로그인 실패: 아이디 또는 비밀번호를 확인하세요.');
+                            window.customAlert('로그인 실패: 아이디 또는 비밀번호를 확인하세요.');
                         }
                     });
                 }
             });
-        }
+        };
 
-        function setSession(loggedIn, admin, uid) {
+        window.setSession = function(loggedIn, admin, uid) {
             sessionStorage.setItem('isLoggedIn', loggedIn);
             sessionStorage.setItem('isAdmin', admin);
             sessionStorage.setItem('userId', uid);
-        }
+        };
 
-        // --- 지도 및 로직 ---
-        function initMap() {
+        // --- 지도 기능 ---
+        window.initMap = function() {
             const container = document.getElementById('map');
             if(!container) return;
             map = new kakao.maps.Map(container, { center: new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG), level: 7 });
             map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
             map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
-            drawDoorlockZones();
-            if (sessionStorage.getItem('isAdmin') === 'true') loadUserList();
-        }
+            window.drawDoorlockZones();
+            if (sessionStorage.getItem('isAdmin') === 'true') window.loadUserList();
+        };
 
-        function drawDoorlockZones() {
+        window.drawDoorlockZones = function() {
             const pos = new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG);
             new kakao.maps.Marker({ position: pos, map: map, title: "Home" });
             [1000, 2000, 3000].forEach((r, i) => {
                 const color = ['#FF0000', '#FFA500', '#008000'][i];
                 new kakao.maps.Circle({ center: pos, radius: r, strokeWeight: 1, strokeColor: color, strokeOpacity: 0.8, strokeStyle: 'dashed', fillColor: color, fillOpacity: 0.1, map: map });
             });
-        }
+        };
 
-        function clearMapAndInfo() {
+        window.clearMapAndInfo = function() {
             markers.forEach(m => { if(m.co) m.co.setMap(null); m.setMap(null); });
             markers = [];
             if (currentPolyline) { currentPolyline.setMap(null); currentPolyline = null; }
@@ -300,9 +305,9 @@
             document.getElementById('userInfo').classList.add('hidden');
             document.getElementById('logBtn').disabled = true;
             if (sessionStorage.getItem('isAdmin') === 'true') selectedUserId = null;
-        }
+        };
 
-        function loadUserList() {
+        window.loadUserList = function() {
             database.ref('users').once('value').then(snap => {
                 const list = document.getElementById('userList');
                 while (list.childNodes.length > 2) { list.removeChild(list.lastChild); }
@@ -310,18 +315,19 @@
                     const div = document.createElement('div');
                     div.className = 'user';
                     div.textContent = c.key;
-                    div.onclick = () => selectUser(c.key);
+                    div.onclick = () => window.selectUser(c.key);
                     list.appendChild(div);
                 });
             });
-        }
+        };
 
-        function selectUser(userId) {
-            clearMapAndInfo();
+        window.selectUser = function(userId) {
+            window.clearMapAndInfo();
             selectedUserId = userId;
             document.getElementById('logBtn').disabled = false;
             const infoArea = document.getElementById('infoArea');
             document.getElementById('userInfo').classList.remove('hidden');
+
             infoArea.innerHTML = `
                 <div style="margin-bottom:10px;"><strong>ID:</strong> ${userId}</div>
                 <div class="filter-group">
@@ -340,9 +346,9 @@
                         return tb - ta;
                     });
                 }
-                renderLocationLogs(false);
+                window.renderLocationLogs(false);
             });
-        }
+        };
 
         window.renderLocationLogs = function(filterRange, btn) {
             if(btn) {
@@ -368,7 +374,8 @@
                 if (!pos.latitude || !pos.longitude) return;
                 const lat = parseFloat(pos.latitude);
                 const lng = parseFloat(pos.longitude);
-                const dist = getDist(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
+                const dist = window.getDist(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
+
                 if (filterRange && dist > MAX_DISTANCE_KM) return;
 
                 const item = document.createElement('div');
@@ -377,7 +384,7 @@
                 item.innerHTML = `<small>${time}</small><br>거리: <b>${dist.toFixed(2)}km</b>`;
                 item.onclick = () => { 
                     if(map) map.panTo(new kakao.maps.LatLng(lat, lng)); 
-                    showSingleLogMarker(lat, lng, time, dist);
+                    window.showSingleLogMarker(lat, lng, time, dist);
                 };
                 listDiv.appendChild(item);
 
@@ -401,9 +408,9 @@
                 });
                 map.setBounds(bounds);
             }
-        }
+        };
 
-        function showSingleLogMarker(lat, lng, time, dist) {
+        window.showSingleLogMarker = function(lat, lng, time, dist) {
             if (selectedLogMarker) {
                 selectedLogMarker.setMap(null);
                 if(selectedLogMarker.infoBox) selectedLogMarker.infoBox.setMap(null);
@@ -419,17 +426,17 @@
             marker.setMap(map);
             selectedLogMarker = marker;
             selectedLogMarker.infoBox = infoBox;
-        }
+        };
 
-        function getDist(lat1, lon1, lat2, lon2) {
+        window.getDist = function(lat1, lon1, lat2, lon2) {
             const R = 6371; 
             const dLat = (lat2-lat1) * Math.PI/180;
             const dLon = (lon2-lon1) * Math.PI/180;
             const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        }
+        };
 
-        function loadAllLogs(userId) {
+        window.loadAllLogs = function(userId) {
             const doorDiv = document.querySelector('#doorLockLogs .log-entries');
             const appDiv = document.querySelector('#appLogs .log-entries');
             document.getElementById('logUserTitle').textContent = `${userId} 전체 로그`;
@@ -442,9 +449,9 @@
                 const logs = [];
                 snap.forEach(c => logs.push(c.val()));
                 logs.sort((a, b) => {
-                    const timeA = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
-                    const timeB = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
-                    return timeB - timeA;
+                    const ta = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
+                    const tb = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
+                    return tb - ta;
                 });
                 logs.forEach(log => {
                     const div = document.createElement('div');
@@ -455,29 +462,28 @@
                 });
             });
 
-            // 2. 앱 로그 (범용 구조)
+            // 2. 앱 로그 (범용)
             database.ref('users/' + userId + '/app_logs').once('value').then(snap => {
                 appDiv.innerHTML = '';
                 if (!snap.exists()) { appDiv.innerHTML = '없음'; return; }
                 const logs = [];
-                snap.forEach(categorySnap => {
-                    const catData = categorySnap.val();
-                    if (typeof catData === 'object' && catData !== null) {
+                snap.forEach(cat => {
+                    const catData = cat.val();
+                    if(typeof catData === 'object' && catData !== null) {
                         Object.keys(catData).forEach(key => {
                             const detail = catData[key];
                             if(typeof detail === 'object' && detail !== null) {
-                                const logItem = { ...detail, _cat: categorySnap.key, _type: key };
-                                logs.push(logItem);
+                                logs.push({ ...detail, _cat: cat.key, _type: key });
                             }
                         });
                     }
                 });
                 logs.sort((a, b) => {
-                    const timeA = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
-                    const timeB = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
-                    return timeB - timeA;
+                    const ta = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
+                    const tb = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
+                    return tb - ta;
                 });
-                if(logs.length === 0) appDiv.innerHTML = '표시할 형식의 로그 없음';
+                if(logs.length === 0) appDiv.innerHTML = '형식 맞는 로그 없음';
                 logs.forEach(log => {
                     const div = document.createElement('div');
                     div.className = 'full-log-entry';
@@ -492,7 +498,7 @@
                     appDiv.appendChild(div);
                 });
             });
-        }
+        };
 
         // --- DB 조회 ---
         window.loadAllDbData = function() {
@@ -501,35 +507,35 @@
             resultArea.innerHTML = '<div class="message-box">불러오는 중...</div>';
             document.getElementById('search-input').value = '';
             database.ref('users').once('value').then(snap => {
-                if(snap.exists()) renderGrid(snap.val());
+                if(snap.exists()) window.renderGrid(snap.val());
                 else resultArea.innerHTML = '<div class="message-box">데이터 없음</div>';
             });
         };
 
         window.searchUser = function() {
             const userId = document.getElementById('search-input').value.trim();
-            if(!userId) return alert("ID 입력");
+            if(!userId) return window.customAlert("ID 입력");
             const resultArea = document.getElementById('result-area');
             document.getElementById('result-title').textContent = `'${userId}' 검색 결과:`;
             resultArea.innerHTML = '<div class="message-box">검색 중...</div>';
             database.ref('users/' + userId).once('value').then(snap => {
-                if(snap.exists()) { const wrap = {}; wrap[userId] = snap.val(); renderGrid(wrap); }
+                if(snap.exists()) { const wrap = {}; wrap[userId] = snap.val(); window.renderGrid(wrap); }
                 else resultArea.innerHTML = '<div class="message-box">결과 없음</div>';
             });
         };
 
-        function renderGrid(data) {
+        window.renderGrid = function(data) {
             const resultArea = document.getElementById('result-area');
             let html = `<div class="grid-wrapper"><table class="styled-table"><thead><tr><th style="width:150px;">ID</th><th>Data Tree</th></tr></thead><tbody>`;
             for (const [id, val] of Object.entries(data)) {
-                const treeHtml = createFirebaseView(val, 0);
+                const treeHtml = window.createFirebaseView(val, 0);
                 html += `<tr><td style="vertical-align:top; font-weight:bold; color:#007bff;">${id}</td><td><div class="firebase-view">${treeHtml}</div></td></tr>`;
             }
             html += `</tbody></table></div>`;
             resultArea.innerHTML = html;
-        }
+        };
 
-        function createFirebaseView(data, depth) {
+        window.createFirebaseView = function(data, depth) {
             let html = '';
             const indent = '<span class="fv-indent"></span>'.repeat(depth);
             if (typeof data === 'object' && data !== null) {
@@ -540,16 +546,16 @@
                         const arrow = isExpanded ? '▼' : '▶';
                         const rotate = isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
                         const cls = isExpanded ? '' : 'fv-hidden';
-                        html += `<div class="fv-item">${indent}<div class="fv-key-box" onclick="toggleNode(this)"><span class="fv-arrow" style="transform:${rotate}">${arrow}</span><span class="fv-key">${key}</span></div><div class="fv-children ${cls}">${createFirebaseView(value, depth + 1)}</div></div>`;
+                        html += `<div class="fv-item">${indent}<div class="fv-key-box" onclick="toggleNode(this)"><span class="fv-arrow" style="transform:${rotate}">${arrow}</span><span class="fv-key">${key}</span></div><div class="fv-children ${cls}">${window.createFirebaseView(value, depth + 1)}</div></div>`;
                     } else {
-                        html += `<div class="fv-item">${indent}<span style="display:inline-block;width:16px;"></span><span class="fv-key">${key}:</span> ${formatValue(value)}</div>`;
+                        html += `<div class="fv-item">${indent}<span style="display:inline-block;width:16px;"></span><span class="fv-key">${key}:</span> ${window.formatValue(value)}</div>`;
                     }
                 }
             } else {
-                html += `<div class="fv-item">${indent}${formatValue(data)}</div>`;
+                html += `<div class="fv-item">${indent}${window.formatValue(data)}</div>`;
             }
             return html;
-        }
+        };
 
         window.toggleNode = function(el) {
             const child = el.nextElementSibling;
@@ -563,28 +569,25 @@
             }
         };
 
-        function formatValue(v) {
+        window.formatValue = function(v) {
             if (typeof v === 'string') return `<span class="fv-string">"${v}"</span>`;
             if (typeof v === 'number') return `<span class="fv-number">${v}</span>`;
             if (v === true || v === false) return `<span class="fv-boolean">${v}</span>`;
             return v;
+        };
+
+        // ====================================================
+        // [3] 초기 실행
+        // ====================================================
+        const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+        if (isLoggedIn) {
+            const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+            const userId = sessionStorage.getItem('userId');
+            window.showDashboard(isAdmin, userId);
+        } else {
+            document.getElementById('login-container').classList.remove('hidden');
         }
-
-
-        // ====================================================
-        // [3] 초기 실행 (DOMContentLoaded)
-        // ====================================================
-        document.addEventListener('DOMContentLoaded', () => {
-            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
-            if (isLoggedIn) {
-                const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
-                const userId = sessionStorage.getItem('userId');
-                showDashboard(isAdmin, userId);
-            } else {
-                document.getElementById('login-container').classList.remove('hidden');
-            }
-        });
-
+    });
     </script>
 </body>
 </html>
