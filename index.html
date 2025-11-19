@@ -33,7 +33,7 @@
     </div>
 
     <div id="header" class="hidden">
-        <h1 id="header-title" onclick="showDashboard()">Smart Doorlock</h1>
+        <h1 id="header-title" style="cursor: pointer;">Smart Doorlock</h1>
         <div class="button-group">
             <button id="mapBtn" disabled>지도</button>
             <button id="logBtn" disabled>로그 보기</button>
@@ -63,7 +63,7 @@
 
     <div id="log-modal-content" class="hidden">
         <div class="log-header-bar">
-            <button onclick="hideLogView()">← 지도로 돌아가기</button>
+            <button id="backToMapBtnTop">← 지도로 돌아가기</button>
             <h2 id="logUserTitle" style="margin:0;">전체 로그</h2>
         </div>
         <div class="log-layout">
@@ -83,8 +83,8 @@
             <h2>데이터베이스 조회 (Interactive Tree)</h2>
             <div class="search-container">
                 <input type="text" id="search-input" placeholder="검색할 사용자 ID를 입력하세요 (예: 123456)">
-                <button class="btn-search" onclick="searchUser()">검색</button>
-                <button class="btn-reset" onclick="loadAllDbData()">전체 목록</button>
+                <button class="btn-search" id="searchBtn">검색</button>
+                <button class="btn-reset" id="resetBtn">전체 목록</button>
             </div>
             <h3 id="result-title">사용자 목록:</h3>
             <div id="result-area">
@@ -96,7 +96,7 @@
     <div id="custom-modal" class="hidden">
         <div class="modal-content">
             <p id="modal-message"></p>
-            <button onclick="document.getElementById('custom-modal').style.display='none';">확인</button>
+            <button id="customModalConfirmBtn">확인</button>
         </div>
     </div>
     <div id="logout-confirm-modal" class="hidden">
@@ -104,7 +104,7 @@
             <p>로그아웃 하시겠습니까?</p>
             <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
                 <button id="confirmLogoutBtn" style="flex: 1;">확인</button>
-                <button onclick="document.getElementById('logout-confirm-modal').classList.add('hidden')" style="flex: 1; background-color: #aaa;">취소</button>
+                <button id="cancelLogoutBtn" style="flex: 1; background-color: #aaa;">취소</button>
             </div>
         </div>
     </div>
@@ -113,7 +113,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             console.log("App Started.");
 
-            // 전역 설정
+            // ====================================================
+            // [1] 설정 및 초기화 (Variables & Init)
+            // ====================================================
             const DOORLOCK_LAT = 37.566826; 
             const DOORLOCK_LNG = 126.9786567;
             const MAX_DISTANCE_KM = 3.0;
@@ -133,10 +135,10 @@
             let map;
             let markers = [];
             let currentPolyline;
+            let selectedLogMarker;
             let selectedUserId = null;
             let currentUserLocationLogs = [];
 
-            // Firebase 초기화
             try {
                 if (typeof firebase === 'undefined' || !firebase.initializeApp) throw new Error("Firebase SDK missing.");
                 firebase.initializeApp(firebaseConfig);
@@ -146,25 +148,12 @@
                 return;
             }
 
-            // 버튼 이벤트
-            document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
-            document.getElementById('logoutBtn').onclick = () => document.getElementById('logout-confirm-modal').classList.remove('hidden');
-            document.getElementById('confirmLogoutBtn').onclick = executeLogout;
-            
-            document.getElementById('header-title').onclick = () => showDashboard();
-            document.getElementById('mapBtn').onclick = hideLogView; 
-            document.getElementById('logBtn').onclick = showLogView;
-            document.getElementById('dbEditBtn').onclick = showDbViewer; 
-            
-            document.getElementById('closeUserInfoBtn').onclick = clearMapAndInfo;
-            document.getElementById('search-input').addEventListener('keypress', function (e) {
-                if (e.key === 'Enter') searchUser();
-            });
+            // ====================================================
+            // [2] 함수 정의 (Function Definitions) - 호이스팅을 위해 먼저 정의
+            // ====================================================
 
-            // ==================
-            // 화면 전환 함수들
-            // ==================
-            window.showDashboard = function(isAdmin, loggedInUserId) {
+            // --- 화면 전환 및 세션 ---
+            function showDashboard(isAdmin, loggedInUserId) {
                 if (isAdmin === undefined) isAdmin = sessionStorage.getItem('isAdmin') === 'true';
                 if (loggedInUserId === undefined) loggedInUserId = sessionStorage.getItem('userId');
 
@@ -185,7 +174,6 @@
                 if (isAdmin) {
                     userListDiv.classList.remove('hidden');
                     userInfoDiv.classList.add('hidden');
-                    
                     if (!map && typeof kakao !== 'undefined') {
                         kakao.maps.load(initMap);
                     } else if (map) {
@@ -202,9 +190,9 @@
                         kakao.maps.load(() => { initMap(); selectUser(loggedInUserId); });
                     }
                 }
-            };
+            }
 
-            window.showDbViewer = function() {
+            function showDbViewer() {
                 document.getElementById('main-content').classList.add('hidden');
                 document.getElementById('log-modal-content').classList.add('hidden');
                 document.getElementById('db-viewer-content').classList.remove('hidden');
@@ -214,9 +202,9 @@
                 document.getElementById('dbEditBtn').disabled = true;
                 
                 loadAllDbData();
-            };
+            }
 
-            window.showLogView = function() {
+            function showLogView() {
                 const userId = selectedUserId || sessionStorage.getItem('userId');
                 if (!userId) return alert("사용자를 선택해주세요.");
 
@@ -228,14 +216,56 @@
                 document.getElementById('logBtn').disabled = true;
 
                 loadAllLogs(userId);
-            };
+            }
 
-            window.hideLogView = function() { showDashboard(); };
+            function hideLogView() {
+                showDashboard();
+            }
 
+            function executeLogout() {
+                sessionStorage.clear(); 
+                window.location.reload();
+            }
 
-            // ==================
-            // 지도 및 사용자 로직
-            // ==================
+            function setSession(loggedIn, admin, uid) {
+                sessionStorage.setItem('isLoggedIn', loggedIn);
+                sessionStorage.setItem('isAdmin', admin);
+                sessionStorage.setItem('userId', uid);
+            }
+
+            // --- 로그인 처리 ---
+            function handleLoginSubmit(e) {
+                e.preventDefault();
+                const id = document.getElementById('username').value.trim();
+                const pw = document.getElementById('password').value.trim();
+                database.ref('admin_pass').once('value').then(snap => {
+                    let isAdmin = false;
+                    if (snap.exists()) { 
+                        snap.forEach(c => { 
+                            if (c.val().adminId === id && c.val().password === pw) isAdmin = true; 
+                        }); 
+                    }
+                    if (isAdmin) {
+                        setSession(true, true, id); 
+                        showDashboard(true, id);
+                    } else {
+                        database.ref('users').once('value').then(userSnap => {
+                            let isUser = false;
+                            if (userSnap.exists()) { 
+                                userSnap.forEach(c => { if(c.key === id) isUser = true; }); 
+                            }
+                            if (isUser) { 
+                                setSession(true, false, id); 
+                                showDashboard(false, id); 
+                            } else {
+                                alert('로그인 실패: 아이디 또는 비밀번호를 확인하세요.');
+                            }
+                        });
+                    }
+                });
+            }
+
+            // --- 지도 관련 함수 ---
             function initMap() {
                 const container = document.getElementById('map');
                 map = new kakao.maps.Map(container, { center: new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG), level: 7 });
@@ -255,6 +285,17 @@
                 });
             }
 
+            function clearMapAndInfo() {
+                markers.forEach(m => { if(m.co) m.co.setMap(null); m.setMap(null); });
+                markers = [];
+                if (currentPolyline) { currentPolyline.setMap(null); currentPolyline = null; }
+                document.getElementById('infoArea').innerHTML = '';
+                document.getElementById('userInfo').classList.add('hidden');
+                document.getElementById('logBtn').disabled = true;
+                if (sessionStorage.getItem('isAdmin') === 'true') selectedUserId = null;
+            }
+
+            // --- 사용자 데이터 및 로그 ---
             function loadUserList() {
                 database.ref('users').once('value').then(snap => {
                     const list = document.getElementById('userList');
@@ -357,16 +398,6 @@
                 }
             }
 
-            function clearMapAndInfo() {
-                markers.forEach(m => { if(m.co) m.co.setMap(null); m.setMap(null); });
-                markers = [];
-                if (currentPolyline) { currentPolyline.setMap(null); currentPolyline = null; }
-                document.getElementById('infoArea').innerHTML = '';
-                document.getElementById('userInfo').classList.add('hidden');
-                document.getElementById('logBtn').disabled = true;
-                if (sessionStorage.getItem('isAdmin') === 'true') selectedUserId = null;
-            }
-
             function getDist(lat1, lon1, lat2, lon2) {
                 const R = 6371; 
                 const dLat = (lat2-lat1) * Math.PI/180;
@@ -375,7 +406,6 @@
                 return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             }
 
-            // --- [수정됨] 상세 로그 로드 함수 (범용 버전) ---
             function loadAllLogs(userId) {
                 const doorDiv = document.querySelector('#doorLockLogs .log-entries');
                 const appDiv = document.querySelector('#appLogs .log-entries');
@@ -383,7 +413,7 @@
                 doorDiv.innerHTML = 'Loading...'; 
                 appDiv.innerHTML = 'Loading...';
 
-                // 1. 도어락 로그 (doorlock_logs/USER_ID)
+                // 도어락 로그
                 database.ref('doorlock_logs/' + userId).once('value').then(snap => {
                     doorDiv.innerHTML = '';
                     if (!snap.exists()) { doorDiv.innerHTML = '없음'; return; }
@@ -403,21 +433,18 @@
                     });
                 });
 
-                // 2. 앱 로그 (users/USER_ID/app_logs) - [수정] 모든 구조 허용
+                // 앱 로그 (범용)
                 database.ref('users/' + userId + '/app_logs').once('value').then(snap => {
                     appDiv.innerHTML = '';
                     if (!snap.exists()) { appDiv.innerHTML = '없음'; return; }
                     
                     const logs = [];
-                    // 구조를 모를 때를 대비해 재귀적으로 혹은 깊게 탐색
                     snap.forEach(categorySnap => {
                         const catData = categorySnap.val();
                         if (typeof catData === 'object' && catData !== null) {
                             Object.keys(catData).forEach(key => {
                                 const detail = catData[key];
-                                // 로그 객체 식별 (객체이면서 timestamp나 특정 키가 있는 경우)
                                 if(typeof detail === 'object' && detail !== null) {
-                                    // 화면 표시용 태그 추가
                                     const logItem = { ...detail, _cat: categorySnap.key, _type: key };
                                     logs.push(logItem);
                                 }
@@ -454,10 +481,8 @@
                 });
             }
 
-            // ==================
-            // DB 조회 (트리 뷰)
-            // ==================
-            window.loadAllDbData = function() {
+            // --- DB 뷰어 관련 함수 ---
+            function loadAllDbData() {
                 const resultArea = document.getElementById('result-area');
                 document.getElementById('result-title').textContent = "전체 사용자 목록 (users):";
                 resultArea.innerHTML = '<div class="message-box">불러오는 중...</div>';
@@ -466,9 +491,9 @@
                     if(snap.exists()) renderGrid(snap.val());
                     else resultArea.innerHTML = '<div class="message-box">데이터 없음</div>';
                 });
-            };
+            }
 
-            window.searchUser = function() {
+            function searchUser() {
                 const userId = document.getElementById('search-input').value.trim();
                 if(!userId) return alert("ID 입력");
                 const resultArea = document.getElementById('result-area');
@@ -478,7 +503,7 @@
                     if(snap.exists()) { const wrap = {}; wrap[userId] = snap.val(); renderGrid(wrap); }
                     else resultArea.innerHTML = '<div class="message-box">결과 없음</div>';
                 });
-            };
+            }
 
             function renderGrid(data) {
                 const resultArea = document.getElementById('result-area');
@@ -523,6 +548,7 @@
                 return html;
             }
 
+            // window 객체에 할당하여 HTML onclick에서 접근 가능하게 함
             window.toggleNode = function(el) {
                 const child = el.nextElementSibling;
                 const arrow = el.querySelector('.fv-arrow');
@@ -544,37 +570,31 @@
                 return v;
             }
 
-            function handleLoginSubmit(e) {
-                e.preventDefault();
-                const id = document.getElementById('username').value.trim();
-                const pw = document.getElementById('password').value.trim();
-                database.ref('admin_pass').once('value').then(snap => {
-                    let isAdmin = false;
-                    if (snap.exists()) { snap.forEach(c => { if (c.val().adminId === id && c.val().password === pw) isAdmin = true; }); }
-                    if (isAdmin) {
-                        setSession(true, true, id); showDashboard(true, id);
-                    } else {
-                        database.ref('users').once('value').then(userSnap => {
-                            let isUser = false;
-                            if (userSnap.exists()) { userSnap.forEach(c => { if(c.key === id) isUser = true; }); }
-                            if (isUser) { setSession(true, false, id); showDashboard(false, id); }
-                            else customAlert('로그인 실패');
-                        });
-                    }
-                });
-            }
 
-            function setSession(loggedIn, admin, uid) {
-                sessionStorage.setItem('isLoggedIn', loggedIn);
-                sessionStorage.setItem('isAdmin', admin);
-                sessionStorage.setItem('userId', uid);
-            }
+            // ====================================================
+            // [3] 이벤트 연결 (함수 정의 후)
+            // ====================================================
+            document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
+            document.getElementById('logoutBtn').onclick = () => document.getElementById('logout-confirm-modal').classList.remove('hidden');
+            document.getElementById('confirmLogoutBtn').onclick = executeLogout;
+            document.getElementById('cancelLogoutBtn').onclick = () => document.getElementById('logout-confirm-modal').classList.add('hidden');
+            
+            document.getElementById('header-title').onclick = () => showDashboard();
+            document.getElementById('mapBtn').onclick = hideLogView; 
+            document.getElementById('logBtn').onclick = showLogView;
+            document.getElementById('dbEditBtn').onclick = showDbViewer; 
+            document.getElementById('backToMapBtnTop').onclick = hideLogView;
 
-            function executeLogout() {
-                sessionStorage.clear(); window.location.reload();
-            }
+            document.getElementById('closeUserInfoBtn').onclick = clearMapAndInfo;
+            
+            document.getElementById('searchBtn').onclick = searchUser;
+            document.getElementById('resetBtn').onclick = loadAllDbData;
+            document.getElementById('customModalConfirmBtn').onclick = () => document.getElementById('custom-modal').style.display = 'none';
 
-            // --- 초기 실행 ---
+
+            // ====================================================
+            // [4] 초기 실행 (마지막)
+            // ====================================================
             const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
             if (isLoggedIn) {
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
@@ -583,7 +603,8 @@
             } else {
                 document.getElementById('login-container').classList.remove('hidden');
             }
-        });
+
+        }); // DOMContentLoaded
     </script>
 </body>
 </html>
