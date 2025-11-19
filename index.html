@@ -4,13 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Doorlock Admin</title>
-
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔒</text></svg>">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="indexstyle.css">
-
+    
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -19,25 +16,26 @@
 
     <div id="login-container">
         <h2>SmartDoorLock</h2>
-        <form id="login-form"> <div class="input-group">
-                <label for="username">아이디</label>
-                <input type="text" id="username" placeholder="아이디를 입력하세요" required>
+        <form id="login-form">
+            <div class="input-group">
+                <label>아이디</label>
+                <input type="text" id="username" required>
             </div>
             <div class="input-group">
-                <label for="password">비밀번호</label>
-                <input type="password" id="password" placeholder="비밀번호를 입력하세요" required>
+                <label>비밀번호</label>
+                <input type="password" id="password" required>
             </div>
             <button type="submit">로그인</button>
         </form>
     </div>
 
     <div id="header" class="hidden">
-        <h1 id="header-title" style="cursor: pointer;" onclick="showDashboard()">Smart Doorlock</h1>
+        <h1 id="header-title" style="cursor:pointer;">Smart Doorlock</h1>
         <div class="button-group">
-            <button id="mapBtn" onclick="hideLogView()" disabled>지도</button>
-            <button id="logBtn" onclick="showLogView()" disabled>로그 보기</button>
-            <button id="dbEditBtn" onclick="showDbViewer()">DB 조회</button>
-            <button id="logoutBtn" onclick="confirmLogout()">로그아웃</button>
+            <button id="mapBtn" disabled>지도</button>
+            <button id="logBtn" disabled>로그 보기</button>
+            <button id="dbEditBtn">DB 조회</button>
+            <button id="logoutBtn">로그아웃</button>
         </div>
     </div>
 
@@ -46,13 +44,11 @@
             <div id="userInfo" class="hidden">
                 <div class="info-header">
                     <h2>User Info</h2>
-                    <button id="closeUserInfoBtn" onclick="clearMapAndInfo()">X</button>
+                    <button id="closeUserInfoBtn">X</button>
                 </div>
                 <div id="infoArea">사용자를 선택해주세요.</div>
             </div>
-            <div id="userList">
-                <h2>User List</h2>
-            </div>
+            <div id="userList"><h2>User List</h2></div>
         </div>
         <div id="mapArea">
             <h2>Map</h2>
@@ -62,7 +58,7 @@
 
     <div id="log-modal-content" class="hidden">
         <div class="log-header-bar">
-            <button onclick="hideLogView()">← 지도로 돌아가기</button>
+            <button id="backToMapBtn">← 지도로 돌아가기</button>
             <h2 id="logUserTitle" style="margin:0;">전체 로그</h2>
         </div>
         <div class="log-layout">
@@ -77,534 +73,344 @@
         </div>
     </div>
 
-    <div id="db-viewer-content" class="hidden">
-        <div class="db-container">
-            <h2>데이터베이스 조회 (Interactive Tree)</h2>
-            <div class="search-container">
-                <input type="text" id="search-input" placeholder="검색할 사용자 ID를 입력하세요 (예: 123456)" onkeypress="if(event.key==='Enter') searchUser()">
-                <button class="btn-search" onclick="searchUser()">검색</button>
-                <button class="btn-reset" onclick="loadAllDbData()">전체 목록</button>
-            </div>
-            <h3 id="result-title">사용자 목록:</h3>
-            <div id="result-area">
-                <div class="message-box">데이터를 불러오는 중...</div>
-            </div>
-        </div>
-    </div>
-
     <div id="custom-modal" class="hidden">
         <div class="modal-content">
             <p id="modal-message"></p>
             <button onclick="document.getElementById('custom-modal').style.display='none'">확인</button>
         </div>
     </div>
-    <div id="logout-confirm-modal" class="hidden">
-        <div class="modal-content">
-            <p>로그아웃 하시겠습니까?</p>
-            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
-                <button onclick="executeLogout()" style="flex: 1;">확인</button>
-                <button onclick="document.getElementById('logout-confirm-modal').classList.add('hidden')" style="flex: 1; background-color: #aaa;">취소</button>
-            </div>
-        </div>
-    </div>
 
     <script>
-        // ====================================================
-        // [1] 전역 변수 및 설정
-        // ====================================================
-        const DOORLOCK_LAT = 37.566826; 
-        const DOORLOCK_LNG = 126.9786567;
-        const MAX_DISTANCE_KM = 3.0;
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
-            authDomain: "smartdoorlock-b4636.firebaseapp.com",
-            databaseURL: "https://smartdoorlock-b4636-default-rtdb.firebaseio.com",
-            projectId: "smartdoorlock-b4636",
-            storageBucket: "smartdoorlock-b4636.firebasestorage.app",
-            messagingSenderId: "104489505270",
-            appId: "1:104489505270:web:eb385c8f9c5dfd512077d7",
-            measurementId: "G-4TH9MB9WPM"
-        };
-
-        let database;
-        let map;
-        let markers = [];
-        let currentPolyline;
-        let selectedLogMarker;
-        let selectedUserId = null;
-        let currentUserLocationLogs = [];
-
-        // Firebase 초기화
-        try {
-            if (typeof firebase === 'undefined' || !firebase.initializeApp) throw new Error("Firebase SDK missing.");
-            firebase.initializeApp(firebaseConfig);
-            database = firebase.database();
-            console.log("Firebase initialized.");
-        } catch (e) {
-            alert("Firebase Init Error: " + e);
-        }
-
-
-        // ====================================================
-        // [2] 전역 함수 정의 (어디서든 접근 가능)
-        // ====================================================
-
-        function customAlert(msg) {
-            const el = document.getElementById('modal-message');
-            if(el) {
-                el.textContent = msg;
-                document.getElementById('custom-modal').style.display = 'flex';
-            } else alert(msg);
-        }
-
-        // --- 화면 전환 ---
-        function showDashboard(isAdmin, loggedInUserId) {
-            if (isAdmin === undefined) isAdmin = sessionStorage.getItem('isAdmin') === 'true';
-            if (loggedInUserId === undefined) loggedInUserId = sessionStorage.getItem('userId');
-
-            document.getElementById('login-container').classList.add('hidden');
-            document.getElementById('main-content').classList.remove('hidden');
-            document.getElementById('header').classList.remove('hidden');
-            document.getElementById('log-modal-content').classList.add('hidden');
-            document.getElementById('db-viewer-content').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-            document.body.style.background = 'linear-gradient(135deg, #71b7e6, #9b59b6)';
-
-            document.getElementById('mapBtn').disabled = true;
-            document.getElementById('dbEditBtn').disabled = false;
+        document.addEventListener('DOMContentLoaded', () => {
+            // 전역 변수
+            const DOORLOCK_LAT = 37.566826; 
+            const DOORLOCK_LNG = 126.9786567;
+            const MAX_DISTANCE_KM = 3.0;
             
-            const userListDiv = document.getElementById('userList');
-            const userInfoDiv = document.getElementById('userInfo');
+            const firebaseConfig = {
+                apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
+                authDomain: "smartdoorlock-b4636.firebaseapp.com",
+                databaseURL: "https://smartdoorlock-b4636-default-rtdb.firebaseio.com",
+                projectId: "smartdoorlock-b4636",
+                storageBucket: "smartdoorlock-b4636.firebasestorage.app",
+                messagingSenderId: "104489505270",
+                appId: "1:104489505270:web:eb385c8f9c5dfd512077d7",
+                measurementId: "G-4TH9MB9WPM"
+            };
 
-            if (isAdmin) {
-                userListDiv.classList.remove('hidden');
-                userInfoDiv.classList.add('hidden');
-                
-                if (!map && typeof kakao !== 'undefined') {
-                    kakao.maps.load(initMap);
-                } else if (map) {
-                    setTimeout(() => { 
-                        map.relayout(); 
-                        map.setCenter(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG)); 
-                    }, 100);
-                }
+            let database, map;
+            let markers = [], currentPolyline, selectedLogMarker;
+            let selectedUserId = null, currentUserLocationLogs = [];
+
+            try {
+                firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
+            } catch(e) { alert("Firebase Error: " + e); }
+
+            // 이벤트 리스너
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            document.getElementById('logoutBtn').onclick = handleLogout;
+            document.getElementById('header-title').onclick = () => location.reload();
+            
+            document.getElementById('dbEditBtn').onclick = () => window.location.href = 'loge.html'; // 페이지 이동
+            
+            document.getElementById('mapBtn').onclick = hideLogView;
+            document.getElementById('backToMapBtn').onclick = hideLogView;
+            document.getElementById('logBtn').onclick = showLogView;
+            document.getElementById('closeUserInfoBtn').onclick = clearMapAndInfo;
+
+            // 초기 실행
+            if (sessionStorage.getItem('isLoggedIn') === 'true') {
+                const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+                showDashboard(isAdmin, sessionStorage.getItem('userId'));
             } else {
-                userListDiv.classList.add('hidden');
-                userInfoDiv.classList.remove('hidden');
-                selectedUserId = loggedInUserId;
-                if (!map && typeof kakao !== 'undefined') {
-                    kakao.maps.load(() => { initMap(); selectUser(loggedInUserId); });
-                }
+                document.getElementById('login-container').classList.remove('hidden');
             }
-        }
 
-        function showDbViewer() {
-            document.getElementById('main-content').classList.add('hidden');
-            document.getElementById('log-modal-content').classList.add('hidden');
-            document.getElementById('db-viewer-content').classList.remove('hidden');
-            
-            document.body.style.background = '#f9f9f9'; 
-            document.getElementById('mapBtn').disabled = false; 
-            document.getElementById('dbEditBtn').disabled = true;
-            
-            loadAllDbData();
-        }
+            // 함수 정의
+            function customAlert(msg) {
+                document.getElementById('modal-message').textContent = msg;
+                document.getElementById('custom-modal').style.display = 'flex';
+            }
 
-        function showLogView() {
-            const userId = selectedUserId || sessionStorage.getItem('userId');
-            if (!userId) return customAlert("사용자를 선택해주세요.");
+            function showDashboard(isAdmin, uid) {
+                document.getElementById('login-container').classList.add('hidden');
+                document.getElementById('header').classList.remove('hidden');
+                document.getElementById('main-content').classList.remove('hidden');
+                document.body.style.overflow = 'auto';
 
-            document.getElementById('main-content').classList.add('hidden');
-            document.getElementById('log-modal-content').classList.remove('hidden');
-            document.getElementById('db-viewer-content').classList.add('hidden');
-
-            document.getElementById('mapBtn').disabled = false; 
-            document.getElementById('logBtn').disabled = true;
-
-            loadAllLogs(userId);
-        }
-
-        function hideLogView() { showDashboard(); }
-
-        function confirmLogout() {
-            document.getElementById('logout-confirm-modal').classList.remove('hidden');
-        }
-
-        function executeLogout() {
-            sessionStorage.clear(); 
-            window.location.reload();
-        }
-
-        // --- 로그인 로직 (중요) ---
-        function handleLoginSubmit(e) {
-            e.preventDefault(); // 폼 제출 방지
-            console.log("Login Attempt...");
-
-            const id = document.getElementById('username').value.trim();
-            const pw = document.getElementById('password').value.trim();
-
-            if(!database) return customAlert("DB 연결 오류");
-
-            database.ref('admin_pass').once('value').then(snap => {
-                let isAdmin = false;
-                if (snap.exists()) { 
-                    snap.forEach(c => { 
-                        if (c.val().adminId === id && c.val().password === pw) isAdmin = true; 
-                    }); 
-                }
-                
                 if (isAdmin) {
-                    setSession(true, true, id); 
-                    showDashboard(true, id);
+                    document.getElementById('userList').classList.remove('hidden');
+                    document.getElementById('userInfo').classList.add('hidden');
+                    kakao.maps.load(initMap);
                 } else {
-                    // 일반 유저 체크
-                    database.ref('users').once('value').then(userSnap => {
-                        let isUser = false;
-                        if (userSnap.exists()) { 
-                            // users 경로에 해당 ID가 키(Key)로 존재하는지 확인
-                            userSnap.forEach(c => { if(c.key === id) isUser = true; }); 
-                        }
-                        if (isUser) { 
-                            setSession(true, false, id); 
-                            showDashboard(false, id); 
-                        } else {
-                            customAlert('로그인 실패: 아이디 또는 비밀번호를 확인하세요.');
-                        }
-                    });
+                    document.getElementById('userList').classList.add('hidden');
+                    document.getElementById('userInfo').classList.remove('hidden');
+                    selectedUserId = uid;
+                    kakao.maps.load(() => { initMap(); selectUser(uid); });
                 }
-            }).catch(err => {
-                console.error(err);
-                customAlert("로그인 중 오류 발생");
-            });
-        }
-
-        function setSession(loggedIn, admin, uid) {
-            sessionStorage.setItem('isLoggedIn', loggedIn);
-            sessionStorage.setItem('isAdmin', admin);
-            sessionStorage.setItem('userId', uid);
-        }
-
-
-        // --- 지도 기능 ---
-        function initMap() {
-            const container = document.getElementById('map');
-            if(!container) return;
-            map = new kakao.maps.Map(container, { center: new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG), level: 7 });
-            map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
-            map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
-            drawDoorlockZones();
-            
-            if (sessionStorage.getItem('isAdmin') === 'true') loadUserList();
-        }
-
-        function drawDoorlockZones() {
-            const pos = new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG);
-            new kakao.maps.Marker({ position: pos, map: map, title: "Home" });
-            [1000, 2000, 3000].forEach((r, i) => {
-                const color = ['#FF0000', '#FFA500', '#008000'][i];
-                new kakao.maps.Circle({ center: pos, radius: r, strokeWeight: 1, strokeColor: color, strokeOpacity: 0.8, strokeStyle: 'dashed', fillColor: color, fillOpacity: 0.1, map: map });
-            });
-        }
-
-        function clearMapAndInfo() {
-            markers.forEach(m => { if(m.co) m.co.setMap(null); m.setMap(null); });
-            markers = [];
-            if (currentPolyline) { currentPolyline.setMap(null); currentPolyline = null; }
-            if (selectedLogMarker) { selectedLogMarker.setMap(null); if(selectedLogMarker.infoBox) selectedLogMarker.infoBox.setMap(null); }
-            document.getElementById('infoArea').innerHTML = '';
-            document.getElementById('userInfo').classList.add('hidden');
-            document.getElementById('logBtn').disabled = true;
-            if (sessionStorage.getItem('isAdmin') === 'true') selectedUserId = null;
-        }
-
-        function loadUserList() {
-            database.ref('users').once('value').then(snap => {
-                const list = document.getElementById('userList');
-                while (list.childNodes.length > 2) { list.removeChild(list.lastChild); }
-                snap.forEach(c => {
-                    const div = document.createElement('div');
-                    div.className = 'user';
-                    div.textContent = c.key;
-                    div.onclick = () => selectUser(c.key);
-                    list.appendChild(div);
-                });
-            });
-        }
-
-        function selectUser(userId) {
-            clearMapAndInfo();
-            selectedUserId = userId;
-            document.getElementById('logBtn').disabled = false;
-            const infoArea = document.getElementById('infoArea');
-            document.getElementById('userInfo').classList.remove('hidden');
-
-            infoArea.innerHTML = `
-                <div style="margin-bottom:10px;"><strong>ID:</strong> ${userId}</div>
-                <div class="filter-group">
-                    <button onclick="renderLocationLogs(false, this)" class="filter-btn active">전체 경로</button>
-                    <button onclick="renderLocationLogs(true, this)" class="filter-btn">3km 이내</button>
-                </div>
-                <div class="log-list">Loading...</div>
-            `;
-            database.ref('users/' + userId + '/location_logs').once('value').then(snap => {
-                currentUserLocationLogs = [];
-                if (snap.exists()) {
-                    snap.forEach(c => currentUserLocationLogs.push(c.val()));
-                    currentUserLocationLogs.sort((a, b) => {
-                        const ta = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
-                        const tb = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
-                        return tb - ta;
-                    });
-                }
-                renderLocationLogs(false);
-            });
-        }
-
-        function renderLocationLogs(filterRange, btn) {
-            if(btn) {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
             }
-            const listDiv = document.querySelector('.log-list');
-            if (!listDiv) return;
-            listDiv.innerHTML = '';
-            
-            markers.forEach(m => { if(m.co) m.co.setMap(null); m.setMap(null); });
-            markers = [];
-            if (currentPolyline) { currentPolyline.setMap(null); currentPolyline = null; }
 
-            if (currentUserLocationLogs.length === 0) { listDiv.innerHTML = '기록 없음'; return; }
+            function handleLogin(e) {
+                e.preventDefault();
+                const id = document.getElementById('username').value.trim();
+                const pw = document.getElementById('password').value.trim();
 
-            let path = [];
-            const bounds = new kakao.maps.LatLngBounds();
-            bounds.extend(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
-            let count = 0;
-
-            currentUserLocationLogs.forEach(pos => {
-                if (!pos.latitude || !pos.longitude) return;
-                const lat = parseFloat(pos.latitude);
-                const lng = parseFloat(pos.longitude);
-                const dist = getDist(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
-
-                if (filterRange && dist > MAX_DISTANCE_KM) return;
-
-                const item = document.createElement('div');
-                item.className = 'log-entry';
-                const time = pos.timestamp ? new Date(String(pos.timestamp).replace(" ", "T")).toLocaleString() : '-';
-                item.innerHTML = `<small>${time}</small><br>거리: <b>${dist.toFixed(2)}km</b>`;
-                item.onclick = () => { 
-                    if(map) map.panTo(new kakao.maps.LatLng(lat, lng)); 
-                    showSingleLogMarker(lat, lng, time, dist);
-                };
-                listDiv.appendChild(item);
-
-                if (count < 50) {
-                    const p = new kakao.maps.LatLng(lat, lng);
-                    path.push(p);
-                    bounds.extend(p);
-                    const img = document.createElement('img');
-                    img.src = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png';
-                    img.className = 'custom-marker-dot';
-                    const marker = new kakao.maps.CustomOverlay({ position: p, content: img, yAnchor: 0.5 });
-                    marker.setMap(map);
-                    markers.push(marker);
-                    count++;
-                }
-            });
-
-            if (path.length > 0) {
-                currentPolyline = new kakao.maps.Polyline({
-                    path: path, strokeWeight: 4, strokeColor: '#FF00FF', strokeOpacity: 0.8, strokeStyle: 'solid', map: map
-                });
-                map.setBounds(bounds);
-            }
-        }
-
-        function showSingleLogMarker(lat, lng, time, dist) {
-            if (selectedLogMarker) {
-                selectedLogMarker.setMap(null);
-                if(selectedLogMarker.infoBox) selectedLogMarker.infoBox.setMap(null);
-            }
-            const pos = new kakao.maps.LatLng(lat, lng);
-            const content = `<div class="custom-overlay-info"><strong>${time}</strong><br>거리: ${dist.toFixed(2)}km</div>`;
-            const infoBox = new kakao.maps.CustomOverlay({ content: content, position: pos, yAnchor: 2.5, zIndex: 5 });
-            infoBox.setMap(map);
-            const img = document.createElement('img');
-            img.src = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png';
-            img.className = 'custom-marker-pin';
-            const marker = new kakao.maps.CustomOverlay({ position: pos, content: img, yAnchor: 1 });
-            marker.setMap(map);
-            selectedLogMarker = marker;
-            selectedLogMarker.infoBox = infoBox;
-        }
-
-        function getDist(lat1, lon1, lat2, lon2) {
-            const R = 6371; 
-            const dLat = (lat2-lat1) * Math.PI/180;
-            const dLon = (lon2-lon1) * Math.PI/180;
-            const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        }
-
-        function loadAllLogs(userId) {
-            const doorDiv = document.querySelector('#doorLockLogs .log-entries');
-            const appDiv = document.querySelector('#appLogs .log-entries');
-            document.getElementById('logUserTitle').textContent = `${userId} 전체 로그`;
-            doorDiv.innerHTML = 'Loading...'; 
-            appDiv.innerHTML = 'Loading...';
-
-            // 도어락 로그
-            database.ref('doorlock_logs/' + userId).once('value').then(snap => {
-                doorDiv.innerHTML = '';
-                if (!snap.exists()) { doorDiv.innerHTML = '없음'; return; }
-                const logs = [];
-                snap.forEach(c => logs.push(c.val()));
-                logs.sort((a, b) => {
-                    const timeA = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
-                    const timeB = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
-                    return timeB - timeA;
-                });
-                logs.forEach(log => {
-                    const div = document.createElement('div');
-                    div.className = 'full-log-entry';
-                    let t = log.timestamp ? String(log.timestamp).replace("T", " ") : '시간 없음';
-                    div.innerHTML = `<strong>${t}</strong><br>방식: ${log.method || '-'}<br>상태: ${log.status || '-'}`;
-                    doorDiv.appendChild(div);
-                });
-            });
-
-            // 앱 로그
-            database.ref('users/' + userId + '/app_logs').once('value').then(snap => {
-                appDiv.innerHTML = '';
-                if (!snap.exists()) { appDiv.innerHTML = '없음'; return; }
-                const logs = [];
-                snap.forEach(categorySnap => {
-                    const catData = categorySnap.val();
-                    if (typeof catData === 'object' && catData !== null) {
-                        Object.keys(catData).forEach(key => {
-                            const detail = catData[key];
-                            if(typeof detail === 'object' && detail !== null) {
-                                const logItem = { ...detail, _cat: categorySnap.key, _type: key };
-                                logs.push(logItem);
+                database.ref('admin_pass').once('value').then(snap => {
+                    let isAdmin = false;
+                    if (snap.exists()) snap.forEach(c => { if(c.val().adminId===id && c.val().password===pw) isAdmin=true; });
+                    
+                    if (isAdmin) {
+                        sessionStorage.setItem('isLoggedIn', 'true');
+                        sessionStorage.setItem('isAdmin', 'true');
+                        sessionStorage.setItem('userId', id);
+                        showDashboard(true, id);
+                    } else {
+                        database.ref('users').once('value').then(uSnap => {
+                            let isUser = false;
+                            if(uSnap.exists()) uSnap.forEach(c => { if(c.key===id) isUser=true; });
+                            if(isUser) {
+                                sessionStorage.setItem('isLoggedIn', 'true');
+                                sessionStorage.setItem('isAdmin', 'false');
+                                sessionStorage.setItem('userId', id);
+                                showDashboard(false, id);
+                            } else {
+                                customAlert('로그인 정보 불일치');
                             }
                         });
                     }
                 });
-                logs.sort((a, b) => {
-                    const timeA = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
-                    const timeB = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
-                    return timeB - timeA;
+            }
+
+            function handleLogout() {
+                sessionStorage.clear();
+                window.location.reload();
+            }
+
+            function initMap() {
+                const container = document.getElementById('map');
+                map = new kakao.maps.Map(container, { center: new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG), level: 7 });
+                map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
+                map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
+                
+                // 도어락 마커 & 원
+                const pos = new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG);
+                new kakao.maps.Marker({ position: pos, map: map });
+                [1000, 2000, 3000].forEach((r, i) => {
+                    const color = ['#FF0000', '#FFA500', '#008000'][i];
+                    new kakao.maps.Circle({ center: pos, radius: r, strokeWeight: 1, strokeColor: color, strokeOpacity: 0.8, strokeStyle: 'dashed', fillColor: color, fillOpacity: 0.1, map: map });
                 });
-                if(logs.length === 0) appDiv.innerHTML = '형식 맞는 로그 없음';
-                logs.forEach(log => {
+
+                if(sessionStorage.getItem('isAdmin') === 'true') loadUserList();
+            }
+
+            function loadUserList() {
+                database.ref('users').once('value').then(snap => {
+                    const list = document.getElementById('userList');
+                    while(list.childNodes.length > 1) list.removeChild(list.lastChild);
+                    snap.forEach(c => {
+                        const div = document.createElement('div');
+                        div.className = 'user';
+                        div.textContent = c.key;
+                        div.onclick = () => selectUser(c.key);
+                        list.appendChild(div);
+                    });
+                });
+            }
+
+            function selectUser(uid) {
+                clearMapAndInfo();
+                selectedUserId = uid;
+                document.getElementById('logBtn').disabled = false;
+                document.getElementById('userInfo').classList.remove('hidden');
+                const infoArea = document.getElementById('infoArea');
+                
+                infoArea.innerHTML = `
+                    <div style="margin-bottom:10px;"><strong>ID:</strong> ${uid}</div>
+                    <div class="filter-group">
+                        <button onclick="renderLocLogs('${uid}', false)" class="filter-btn active">전체</button>
+                        <button onclick="renderLocLogs('${uid}', true)" class="filter-btn">3km이내</button>
+                    </div>
+                    <div class="log-list">Loading...</div>
+                `;
+                
+                // 전역 함수로 만들어 둔 renderLocLogs 호출을 위해 데이터 로드
+                database.ref(`users/${uid}/location_logs`).once('value').then(snap => {
+                    currentUserLocationLogs = [];
+                    if(snap.exists()) snap.forEach(c => currentUserLocationLogs.push(c.val()));
+                    currentUserLocationLogs.sort((a,b) => {
+                        const ta = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
+                        const tb = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
+                        return tb - ta;
+                    });
+                    window.renderLocLogs(uid, false); // 초기 렌더링
+                });
+            }
+
+            // 필터 버튼 클릭 시 호출될 전역 함수 설정
+            window.renderLocLogs = function(uid, filter) {
+                const list = document.querySelector('.log-list');
+                if(!list) return;
+                list.innerHTML = '';
+                
+                // 마커 초기화
+                markers.forEach(m => { if(m.co) m.co.setMap(null); m.setMap(null); });
+                markers = [];
+                if(currentPolyline) { currentPolyline.setMap(null); currentPolyline=null; }
+                if(selectedLogMarker) { selectedLogMarker.setMap(null); if(selectedLogMarker.infoBox) selectedLogMarker.infoBox.setMap(null); }
+
+                if(currentUserLocationLogs.length === 0) { list.innerHTML = '기록 없음'; return; }
+
+                let path = [];
+                const bounds = new kakao.maps.LatLngBounds();
+                bounds.extend(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
+                let count = 0;
+
+                currentUserLocationLogs.forEach(pos => {
+                    if(!pos.latitude || !pos.longitude) return;
+                    const lat = parseFloat(pos.latitude), lng = parseFloat(pos.longitude);
+                    const dist = getDist(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
+                    if(filter && dist > MAX_DISTANCE_KM) return;
+
                     const div = document.createElement('div');
-                    div.className = 'full-log-entry';
-                    let t = log.timestamp ? String(log.timestamp).replace("T", " ") : '시간 없음';
-                    let msg = "";
-                    if(log.new_auth) msg = `인증 변경: ${log.new_auth}`;
-                    else if(log.new_name) msg = `이름 변경: ${log.new_name}`;
-                    else if(log.new_pw) msg = `비번 변경`;
-                    else if(log.event) msg = `이벤트: ${log.event}`;
-                    else msg = JSON.stringify(log);
-                    div.innerHTML = `<div style="color:#28a745; font-size:12px;">[${t}] (${log._cat}/${log._type})</div><div>${msg}</div>`;
-                    appDiv.appendChild(div);
-                });
-            });
-        }
+                    div.className = 'log-entry';
+                    const t = pos.timestamp ? String(pos.timestamp).replace("T", " ") : '-';
+                    div.innerHTML = `<small>${t}</small><br>거리: <b>${dist.toFixed(2)}km</b>`;
+                    div.onclick = () => { 
+                        map.panTo(new kakao.maps.LatLng(lat, lng));
+                        showMarkerInfo(lat, lng, t, dist);
+                    };
+                    list.appendChild(div);
 
-        // --- DB 조회 ---
-        function loadAllDbData() {
-            const resultArea = document.getElementById('result-area');
-            document.getElementById('result-title').textContent = "전체 사용자 목록 (users):";
-            resultArea.innerHTML = '<div class="message-box">불러오는 중...</div>';
-            document.getElementById('search-input').value = '';
-            database.ref('users').once('value').then(snap => {
-                if(snap.exists()) renderGrid(snap.val());
-                else resultArea.innerHTML = '<div class="message-box">데이터 없음</div>';
-            });
-        }
-
-        function searchUser() {
-            const userId = document.getElementById('search-input').value.trim();
-            if(!userId) return alert("ID 입력");
-            const resultArea = document.getElementById('result-area');
-            document.getElementById('result-title').textContent = `'${userId}' 검색 결과:`;
-            resultArea.innerHTML = '<div class="message-box">검색 중...</div>';
-            database.ref('users/' + userId).once('value').then(snap => {
-                if(snap.exists()) { const wrap = {}; wrap[userId] = snap.val(); renderGrid(wrap); }
-                else resultArea.innerHTML = '<div class="message-box">결과 없음</div>';
-            });
-        }
-
-        function renderGrid(data) {
-            const resultArea = document.getElementById('result-area');
-            let html = `<div class="grid-wrapper"><table class="styled-table"><thead><tr><th style="width:150px;">ID</th><th>Data Tree</th></tr></thead><tbody>`;
-            for (const [id, val] of Object.entries(data)) {
-                const treeHtml = createFirebaseView(val, 0);
-                html += `<tr><td style="vertical-align:top; font-weight:bold; color:#007bff;">${id}</td><td><div class="firebase-view">${treeHtml}</div></td></tr>`;
-            }
-            html += `</tbody></table></div>`;
-            resultArea.innerHTML = html;
-        }
-
-        function createFirebaseView(data, depth) {
-            let html = '';
-            const indent = '<span class="fv-indent"></span>'.repeat(depth);
-            if (typeof data === 'object' && data !== null) {
-                for (const [key, value] of Object.entries(data)) {
-                    const isObj = typeof value === 'object' && value !== null;
-                    if (isObj) {
-                        const isExpanded = depth < 2; 
-                        const arrow = isExpanded ? '▼' : '▶';
-                        const rotate = isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
-                        const cls = isExpanded ? '' : 'fv-hidden';
-                        html += `<div class="fv-item">${indent}<div class="fv-key-box" onclick="toggleNode(this)"><span class="fv-arrow" style="transform:${rotate}">${arrow}</span><span class="fv-key">${key}</span></div><div class="fv-children ${cls}">${createFirebaseView(value, depth + 1)}</div></div>`;
-                    } else {
-                        html += `<div class="fv-item">${indent}<span style="display:inline-block;width:16px;"></span><span class="fv-key">${key}:</span> ${formatValue(value)}</div>`;
+                    if(count < 50) {
+                        const p = new kakao.maps.LatLng(lat, lng);
+                        path.push(p); bounds.extend(p);
+                        const img = document.createElement('img');
+                        img.src = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png';
+                        img.className = 'custom-marker-dot';
+                        const m = new kakao.maps.CustomOverlay({ position: p, content: img, yAnchor: 0.5 });
+                        m.setMap(map);
+                        markers.push(m);
+                        count++;
                     }
+                });
+
+                if(path.length > 0) {
+                    currentPolyline = new kakao.maps.Polyline({ path: path, strokeWeight: 4, strokeColor: '#FF00FF', strokeOpacity: 0.8, strokeStyle: 'solid', map: map });
+                    map.setBounds(bounds);
                 }
-            } else {
-                html += `<div class="fv-item">${indent}${formatValue(data)}</div>`;
+            };
+
+            function showMarkerInfo(lat, lng, time, dist) {
+                if(selectedLogMarker) { selectedLogMarker.setMap(null); if(selectedLogMarker.infoBox) selectedLogMarker.infoBox.setMap(null); }
+                const pos = new kakao.maps.LatLng(lat, lng);
+                const content = `<div style="padding:5px; background:white; border:1px solid #ccc; font-size:12px;">${time}<br>${dist.toFixed(2)}km</div>`;
+                const info = new kakao.maps.CustomOverlay({ content: content, position: pos, yAnchor: 2.5, zIndex: 5 });
+                info.setMap(map);
+                
+                const img = document.createElement('img');
+                img.src = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png';
+                img.className = 'custom-marker-pin';
+                const marker = new kakao.maps.CustomOverlay({ position: pos, content: img, yAnchor: 1 });
+                marker.setMap(map);
+                
+                selectedLogMarker = marker;
+                selectedLogMarker.infoBox = info;
             }
-            return html;
-        }
 
-        function toggleNode(el) {
-            const child = el.nextElementSibling;
-            const arrow = el.querySelector('.fv-arrow');
-            if(child) {
-                if(child.classList.contains('fv-hidden')) {
-                    child.classList.remove('fv-hidden'); arrow.textContent = '▼'; arrow.style.transform = 'rotate(0deg)';
-                } else {
-                    child.classList.add('fv-hidden'); arrow.textContent = '▶'; arrow.style.transform = 'rotate(-90deg)';
-                }
+            function clearMapAndInfo() {
+                markers.forEach(m => { if(m.co) m.co.setMap(null); m.setMap(null); });
+                markers = [];
+                if(currentPolyline) { currentPolyline.setMap(null); currentPolyline=null; }
+                document.getElementById('infoArea').innerHTML = '';
+                document.getElementById('userInfo').classList.add('hidden');
+                document.getElementById('logBtn').disabled = true;
+                if(sessionStorage.getItem('isAdmin') === 'true') selectedUserId = null;
             }
-        }
 
-        function formatValue(v) {
-            if (typeof v === 'string') return `<span class="fv-string">"${v}"</span>`;
-            if (typeof v === 'number') return `<span class="fv-number">${v}</span>`;
-            if (v === true || v === false) return `<span class="fv-boolean">${v}</span>`;
-            return v;
-        }
-
-        // ====================================================
-        // [3] 초기 실행 (DOMContentLoaded)
-        // ====================================================
-        document.addEventListener('DOMContentLoaded', () => {
-            // 로그인 이벤트 리스너 (JS 연결)
-            document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
-
-            // 초기 로그인 상태 체크
-            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
-            if (isLoggedIn) {
-                const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
-                const userId = sessionStorage.getItem('userId');
-                showDashboard(isAdmin, userId);
-            } else {
-                document.getElementById('login-container').classList.remove('hidden');
+            function getDist(lat1, lon1, lat2, lon2) {
+                const R = 6371; 
+                const dLat = (lat2-lat1) * Math.PI/180;
+                const dLon = (lon2-lon1) * Math.PI/180;
+                const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+                return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             }
+
+            // 로그 보기 화면
+            function showLogView() {
+                if (!selectedUserId) return customAlert("사용자 선택 필요");
+                document.getElementById('main-content').classList.add('hidden');
+                document.getElementById('log-modal-content').classList.remove('hidden');
+                document.getElementById('mapBtn').disabled = false;
+                document.getElementById('logBtn').disabled = true;
+                
+                loadAllLogs(selectedUserId);
+            }
+
+            function hideLogView() {
+                document.getElementById('log-modal-content').classList.add('hidden');
+                document.getElementById('main-content').classList.remove('hidden');
+                document.getElementById('mapBtn').disabled = true;
+                document.getElementById('logBtn').disabled = false;
+            }
+
+            function loadAllLogs(uid) {
+                const doorDiv = document.querySelector('#doorLockLogs .log-entries');
+                const appDiv = document.querySelector('#appLogs .log-entries');
+                document.getElementById('logUserTitle').textContent = `${uid} 전체 로그`;
+                doorDiv.innerHTML = 'Loading...'; appDiv.innerHTML = 'Loading...';
+
+                // 도어락
+                database.ref('doorlock_logs/' + uid).once('value').then(snap => {
+                    doorDiv.innerHTML = '';
+                    if(!snap.exists()) { doorDiv.innerHTML = '기록 없음'; return; }
+                    const arr = [];
+                    snap.forEach(c => arr.push(c.val()));
+                    arr.sort((a,b) => {
+                         const ta = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
+                         const tb = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
+                         return tb - ta;
+                    });
+                    arr.forEach(log => {
+                        const div = document.createElement('div');
+                        div.className = 'full-log-entry';
+                        let t = log.timestamp ? String(log.timestamp).replace("T", " ") : '-';
+                        div.innerHTML = `<strong>[${t}]</strong><br>방식: ${log.method}<br>상태: ${log.status}`;
+                        doorDiv.appendChild(div);
+                    });
+                });
+
+                // 앱 로그 (범용)
+                database.ref('users/' + uid + '/app_logs').once('value').then(snap => {
+                    appDiv.innerHTML = '';
+                    if(!snap.exists()) { appDiv.innerHTML = '기록 없음'; return; }
+                    const logs = [];
+                    snap.forEach(cat => {
+                        const val = cat.val();
+                        if(typeof val==='object' && val!==null) {
+                            Object.keys(val).forEach(k => {
+                                const d = val[k];
+                                if(typeof d==='object' && d!==null) logs.push({...d, _cat:cat.key, _type:k});
+                            });
+                        }
+                    });
+                    logs.sort((a,b) => {
+                         const ta = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
+                         const tb = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
+                         return tb - ta;
+                    });
+                    if(logs.length===0) appDiv.innerHTML = '형식 데이터 없음';
+                    logs.forEach(log => {
+                        const div = document.createElement('div');
+                        div.className = 'full-log-entry';
+                        let t = log.timestamp ? String(log.timestamp).replace("T", " ") : '-';
+                        let msg = log.new_auth ? `인증변경: ${log.new_auth}` : (log.event || JSON.stringify(log));
+                        div.innerHTML = `<div style="color:#28a745; font-size:12px;">[${t}]</div><div>${msg}</div>`;
+                        appDiv.appendChild(div);
+                    });
+                });
+            }
+
         });
     </script>
 </body>
