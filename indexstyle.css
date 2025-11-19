@@ -12,12 +12,14 @@
 
 body {
     height: 100vh;
+    /* 기본 배경은 그라데이션 (로그인/메인 화면용) */
     background: linear-gradient(135deg, #71b7e6, #9b59b6);
-    padding-top: 70px; /* 헤더 높이 확보 */
-    transition: background-color 0.3s ease;
-    overflow: hidden; /* 기본 스크롤 방지 (각 컨텐츠 내부에서 스크롤) */
+    padding-top: 70px; /* 헤더 높이만큼 여백 */
+    transition: background-color 0.3s ease; /* 배경색 변경 시 부드럽게 */
+    overflow: hidden; /* 전체 스크롤 방지 (내부 스크롤 사용) */
 }
 
+/* 유틸리티: 숨김 클래스 (가장 높은 우선순위) */
 .hidden { display: none !important; }
 
 
@@ -101,12 +103,11 @@ body {
 #header h1 {
     font-size: 24px;
     margin: 0;
-    cursor: pointer;
+    font-weight: 600;
     background: linear-gradient(135deg, #71b7e6, #9b59b6);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    font-weight: 600;
 }
 
 #header .button-group { display: flex; gap: 5px; }
@@ -142,10 +143,10 @@ body {
     padding: 10px;
     gap: 20px;
     width: 100%;
-    height: calc(100vh - 70px);
+    height: calc(100vh - 70px); /* 헤더 제외 높이 */
 }
 
-/* 사이드바 레이아웃 */
+/* 사이드바 */
 #sidebar {
     display: flex;
     flex-direction: column;
@@ -167,7 +168,8 @@ body {
 #userList { flex-grow: 1; overflow-y: auto; }
 #userInfo { flex-grow: 1; }
 
-#userList h2, #userInfo h2 {
+/* 섹션 제목 스타일 */
+#userList h2, #userInfo h2, #mapArea h2, .db-container h2 {
     font-weight: 600;
     border-bottom: 1px solid #eee;
     padding-bottom: 10px;
@@ -177,7 +179,7 @@ body {
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    font-size: 1.5em;
+    font-size: 1.2rem;
     margin-top: 0;
 }
 
@@ -199,7 +201,7 @@ body {
 }
 #closeUserInfoBtn:hover { color: #dc3545; }
 
-/* 사용자 정보 필터 버튼 */
+/* 필터 버튼 그룹 */
 .filter-group { display: flex; gap: 5px; margin-bottom: 10px; }
 .filter-btn {
     flex: 1; padding: 5px; font-size: 12px;
@@ -210,7 +212,7 @@ body {
     background: #71b7e6; color: white; border-color: #71b7e6;
 }
 
-/* 사이드바 내부 로그 리스트 */
+/* 로그 리스트 (사이드바 내부) */
 .log-list { flex-grow: 1; overflow-y: auto; font-size: 13px; }
 .log-entry { padding: 8px; border-bottom: 1px solid #f5f5f5; cursor: pointer; }
 .log-entry:hover { background-color: #f9f9f9; }
@@ -225,22 +227,11 @@ body {
     display: flex;
     flex-direction: column;
 }
-#mapArea h2 {
-    font-weight: 600;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
-    margin-bottom: 10px;
-    background: linear-gradient(135deg, #71b7e6, #9b59b6);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    margin-top: 0;
-}
 #map { width: 100%; flex-grow: 1; border-radius: 4px; }
 
 
 /* =========================================
-   5. 상세 로그 모달 (전체 화면)
+   5. 상세 로그 모달 (전체 화면 덮개)
    ========================================= */
 #log-modal-content {
     position: fixed;
@@ -281,13 +272,12 @@ body {
     margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px;
     color: #555; font-weight: 600;
 }
-
 .log-entries { flex-grow: 1; overflow-y: auto; font-size: 13px; line-height: 1.6; }
 .full-log-entry { padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
 
 
 /* =========================================
-   6. DB 조회 화면 (Tree View)
+   6. DB 조회 화면 (트리 뷰 & 그리드)
    ========================================= */
 #db-viewer-content {
     width: 100%;
@@ -312,10 +302,6 @@ body {
     height: 100%;
 }
 
-.db-container h2 {
-    color: #333; font-size: 20px; font-weight: 600; margin-bottom: 15px; margin-top: 0;
-}
-
 /* 검색창 */
 .search-container { display: flex; gap: 10px; margin-bottom: 15px; flex-shrink: 0; }
 .search-container input {
@@ -332,7 +318,7 @@ body {
     color: white; border: none; border-radius: 4px; cursor: pointer;
 }
 
-/* 트리 뷰 결과 영역 */
+/* 결과 영역 (테이블 스크롤) */
 #result-area {
     flex-grow: 1;
     overflow: auto;
@@ -341,26 +327,34 @@ body {
     padding: 10px;
 }
 
-/* 그리드 테이블 */
+/* --- 스트링 그리드 테이블 스타일 --- */
 .grid-wrapper { border: 1px solid #ccc; border-radius: 4px; }
+
 .styled-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
 .styled-table th {
     position: sticky; top: 0;
     background: #f1f3f5; padding: 10px;
     text-align: left; border-bottom: 2px solid #ddd; z-index: 10;
     color: #333; font-weight: bold;
+    white-space: nowrap;
 }
+
 .styled-table td {
     padding: 8px 10px;
     border-bottom: 1px solid #eee;
     border-right: 1px solid #eee;
     vertical-align: top;
+    color: #333;
 }
+.styled-table td:last-child { border-right: none; }
+
+/* 사용자 ID 열 강조 */
 .styled-table td:first-child {
-    font-weight: bold; color: #007bff; background-color: #fdfdfd;
+    font-weight: bold; color: #007bff; background-color: #fdfdfd; width: 150px;
 }
 
-/* Firebase 트리 뷰 스타일 */
+/* --- Firebase 트리 뷰 스타일 (이미지와 유사하게) --- */
 .firebase-view {
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 13px;
@@ -368,23 +362,37 @@ body {
     color: #333;
     text-align: left;
 }
+
 .fv-item { white-space: nowrap; }
 
-.fv-key-box { cursor: pointer; display: inline-block; user-select: none; }
+/* 클릭 가능한 키 (폴더) */
+.fv-key-box {
+    cursor: pointer;
+    display: inline-block;
+    user-select: none;
+}
 .fv-key-box:hover .fv-key { text-decoration: underline; color: #0056b3; }
 
-.fv-key { color: #000080; font-weight: bold; } /* 키 색상 (진한 파랑) */
+.fv-key { color: #000080; font-weight: bold; } /* 진한 파랑 */
 
+/* 화살표 아이콘 */
 .fv-arrow {
-    display: inline-block; width: 12px; font-size: 10px;
+    display: inline-block; width: 14px; font-size: 10px;
     color: #555; text-align: center; margin-right: 3px;
     transition: transform 0.2s;
 }
 
-.fv-children { display: block; padding-left: 10px; border-left: 1px solid #eee; }
+/* 자식 노드 컨테이너 (들여쓰기) */
+.fv-children {
+    display: block;
+    padding-left: 10px;
+    border-left: 1px solid #eee; /* 계층 가이드라인 */
+}
+
+/* 접기/펼치기 용 클래스 */
 .fv-hidden { display: none !important; }
 
-/* 값 색상 */
+/* 값(Value) 색상 */
 .fv-string { color: #a31515; } /* 붉은 갈색 */
 .fv-number { color: #098658; } /* 녹색 */
 .fv-boolean { color: #0000ff; } /* 파랑 */
@@ -417,16 +425,11 @@ body {
 }
 
 .modal-content button {
-    padding: 8px 20px;
-    margin-top: 15px;
-    cursor: pointer;
-    border: none;
-    border-radius: 4px;
-    background: #71b7e6;
-    color: white;
+    padding: 8px 20px; margin-top: 15px; cursor: pointer;
+    border: none; border-radius: 4px; background: #71b7e6; color: white;
 }
 
-/* 지도 오버레이 */
+/* 지도 오버레이 (정보창) */
 .custom-overlay-info {
     padding: 5px 10px;
     background: white;
@@ -436,9 +439,5 @@ body {
     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
-.custom-marker-pin {
-    width: 32px; height: 35px; transform: scale(1.5); transform-origin: bottom center;
-}
-.custom-marker-dot {
-    width: 12px; height: 12px; transform: scale(1.8); transform-origin: center center;
-}
+.custom-marker-pin { width: 32px; height: 35px; transform: scale(1.5); transform-origin: bottom center; }
+.custom-marker-dot { width: 12px; height: 12px; transform: scale(1.8); transform-origin: center center; }
