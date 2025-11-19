@@ -33,7 +33,7 @@
     </div>
 
     <div id="header" class="hidden">
-        <h1 id="header-title" onclick="showDashboard()">Smart Doorlock</h1>
+        <h1 id="header-title" style="cursor: pointer;">Smart Doorlock</h1>
         <div class="button-group">
             <button id="mapBtn" disabled>지도</button>
             <button id="logBtn" disabled>로그 보기</button>
@@ -63,7 +63,7 @@
 
     <div id="log-modal-content" class="hidden">
         <div class="log-header-bar">
-            <button onclick="hideLogView()">← 지도로 돌아가기</button>
+            <button id="backToMapBtnTop">← 지도로 돌아가기</button>
             <h2 id="logUserTitle" style="margin:0;">전체 로그</h2>
         </div>
         <div class="log-layout">
@@ -83,8 +83,8 @@
             <h2>데이터베이스 조회 (Interactive Tree)</h2>
             <div class="search-container">
                 <input type="text" id="search-input" placeholder="검색할 사용자 ID를 입력하세요 (예: 123456)">
-                <button class="btn-search" onclick="searchUser()">검색</button>
-                <button class="btn-reset" onclick="loadAllDbData()">전체 목록</button>
+                <button class="btn-search" id="searchBtn">검색</button>
+                <button class="btn-reset" id="resetBtn">전체 목록</button>
             </div>
             <h3 id="result-title">사용자 목록:</h3>
             <div id="result-area">
@@ -96,7 +96,7 @@
     <div id="custom-modal" class="hidden">
         <div class="modal-content">
             <p id="modal-message"></p>
-            <button onclick="document.getElementById('custom-modal').style.display='none';">확인</button>
+            <button id="customModalConfirmBtn">확인</button>
         </div>
     </div>
     <div id="logout-confirm-modal" class="hidden">
@@ -104,7 +104,7 @@
             <p>로그아웃 하시겠습니까?</p>
             <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
                 <button id="confirmLogoutBtn" style="flex: 1;">확인</button>
-                <button onclick="document.getElementById('logout-confirm-modal').classList.add('hidden')" style="flex: 1; background-color: #aaa;">취소</button>
+                <button id="cancelLogoutBtn" style="flex: 1; background-color: #aaa;">취소</button>
             </div>
         </div>
     </div>
@@ -147,24 +147,11 @@
                 return;
             }
 
-            // 버튼 이벤트
-            document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
-            document.getElementById('logoutBtn').onclick = () => document.getElementById('logout-confirm-modal').classList.remove('hidden');
-            document.getElementById('confirmLogoutBtn').onclick = executeLogout;
-            
-            document.getElementById('header-title').onclick = () => showDashboard();
-            document.getElementById('mapBtn').onclick = hideLogView; 
-            document.getElementById('logBtn').onclick = showLogView;
-            document.getElementById('dbEditBtn').onclick = showDbViewer; 
-            
-            document.getElementById('closeUserInfoBtn').onclick = clearMapAndInfo;
-            document.getElementById('search-input').addEventListener('keypress', function (e) {
-                if (e.key === 'Enter') searchUser();
-            });
+            // ====================================================
+            // [1] 함수 정의 (먼저 정의해야 에러가 안 납니다!)
+            // ====================================================
 
-            // ==================
-            // 화면 전환 함수들
-            // ==================
+            // --- 화면 전환 ---
             window.showDashboard = function(isAdmin, loggedInUserId) {
                 if (isAdmin === undefined) isAdmin = sessionStorage.getItem('isAdmin') === 'true';
                 if (loggedInUserId === undefined) loggedInUserId = sessionStorage.getItem('userId');
@@ -186,8 +173,6 @@
                 if (isAdmin) {
                     userListDiv.classList.remove('hidden');
                     userInfoDiv.classList.add('hidden');
-                    
-                    // [수정됨] 지도 로드 및 리레이아웃(깨짐 방지)
                     if (!map && typeof kakao !== 'undefined') {
                         kakao.maps.load(initMap);
                     } else if (map) {
@@ -234,10 +219,7 @@
 
             window.hideLogView = function() { showDashboard(); };
 
-
-            // ==================
-            // 지도 및 사용자 로직
-            // ==================
+            // --- 지도 관련 ---
             function initMap() {
                 const container = document.getElementById('map');
                 map = new kakao.maps.Map(container, { center: new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG), level: 7 });
@@ -288,6 +270,7 @@
                 `;
                 document.getElementById('showAllBtn').onclick = (e) => { setActiveBtn(e.target); renderLocationLogs(false); };
                 document.getElementById('showRangeBtn').onclick = (e) => { setActiveBtn(e.target); renderLocationLogs(true); };
+                
                 function setActiveBtn(btn) {
                     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
@@ -297,8 +280,6 @@
                     currentUserLocationLogs = [];
                     if (snap.exists()) {
                         snap.forEach(c => currentUserLocationLogs.push(c.val()));
-                        
-                        // [수정됨] 날짜 정렬 오류 해결 (문자열 날짜 처리)
                         currentUserLocationLogs.sort((a, b) => {
                             const timeA = a.timestamp ? new Date(String(a.timestamp).replace(" ", "T")).getTime() : 0;
                             const timeB = b.timestamp ? new Date(String(b.timestamp).replace(" ", "T")).getTime() : 0;
@@ -378,7 +359,7 @@
                 return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             }
 
-            // 로그 로드
+            // --- 상세 로그 뷰 ---
             function loadAllLogs(userId) {
                 const doorDiv = document.querySelector('#doorLockLogs .log-entries');
                 const appDiv = document.querySelector('#appLogs .log-entries');
@@ -417,9 +398,7 @@
                 });
             }
 
-            // ==================
-            // DB 조회 (트리 뷰)
-            // ==================
+            // --- DB 조회 (트리 뷰) ---
             window.loadAllDbData = function() {
                 const resultArea = document.getElementById('result-area');
                 document.getElementById('result-title').textContent = "전체 사용자 목록 (users):";
@@ -507,6 +486,7 @@
                 return v;
             }
 
+            // --- 로그인 및 세션 ---
             function handleLoginSubmit(e) {
                 e.preventDefault();
                 const id = document.getElementById('username').value.trim();
@@ -537,11 +517,42 @@
                 sessionStorage.clear(); window.location.reload();
             }
 
-            // --- [수정됨] 스크립트 맨 마지막으로 이동하여 함수 정의 후 실행 ---
+
+            // ====================================================
+            // [2] 이벤트 연결 (함수가 다 만들어진 후 연결)
+            // ====================================================
+            document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
+            document.getElementById('logoutBtn').onclick = () => document.getElementById('logout-confirm-modal').classList.remove('hidden');
+            document.getElementById('confirmLogoutBtn').onclick = executeLogout;
+            document.getElementById('cancelLogoutBtn').onclick = () => document.getElementById('logout-confirm-modal').classList.add('hidden');
+            
+            document.getElementById('header-title').onclick = () => showDashboard();
+            document.getElementById('mapBtn').onclick = hideLogView; 
+            document.getElementById('logBtn').onclick = showLogView;
+            document.getElementById('dbEditBtn').onclick = showDbViewer; 
+            document.getElementById('backToMapBtnTop').onclick = hideLogView; // 상세로그창 뒤로가기
+
+            document.getElementById('closeUserInfoBtn').onclick = clearMapAndInfo;
+            
+            // DB 뷰어 버튼들
+            document.getElementById('searchBtn').onclick = searchUser;
+            document.getElementById('resetBtn').onclick = loadAllDbData;
+            document.getElementById('search-input').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') searchUser();
+            });
+
+            // 모달 닫기
+            document.getElementById('customModalConfirmBtn').onclick = () => document.getElementById('custom-modal').style.display = 'none';
+
+
+            // ====================================================
+            // [3] 초기 실행 로직 (가장 마지막에 실행)
+            // ====================================================
             const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
             if (isLoggedIn) {
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
                 const userId = sessionStorage.getItem('userId');
+                // 이제 위에서 showDashboard 함수가 정의되었으므로 안전합니다.
                 showDashboard(isAdmin, userId);
             } else {
                 document.getElementById('login-container').classList.remove('hidden');
