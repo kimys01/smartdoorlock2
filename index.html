@@ -110,7 +110,7 @@
 
     <script>
         // ====================================================
-        // [1] 전역 변수 및 설정
+        // [1] 전역 변수 (Global Variables)
         // ====================================================
         const DOORLOCK_LAT = 37.566826; 
         const DOORLOCK_LNG = 126.9786567;
@@ -135,18 +135,8 @@
         let selectedUserId = null;
         let currentUserLocationLogs = [];
 
-        // Firebase 초기화 (즉시 실행)
-        try {
-            if (typeof firebase === 'undefined' || !firebase.initializeApp) throw new Error("Firebase SDK missing.");
-            firebase.initializeApp(firebaseConfig);
-            database = firebase.database();
-            console.log("Firebase initialized.");
-        } catch (e) {
-            alert("Firebase Init Error: " + e);
-        }
-
         // ====================================================
-        // [2] 전역 함수 정의 (HTML에서 바로 호출 가능하도록)
+        // [2] 함수 정의 (Global Functions)
         // ====================================================
 
         function customAlert(msg) {
@@ -157,9 +147,7 @@
             } else alert(msg);
         }
 
-        // --- 화면 전환 ---
         function showDashboard(isAdmin, loggedInUserId) {
-            // 인자가 없으면 세션에서 로드
             if (isAdmin === undefined) isAdmin = sessionStorage.getItem('isAdmin') === 'true';
             if (loggedInUserId === undefined) loggedInUserId = sessionStorage.getItem('userId');
 
@@ -236,8 +224,6 @@
             window.location.reload();
         }
 
-
-        // --- 로그인 ---
         function handleLoginSubmit(e) {
             e.preventDefault();
             const id = document.getElementById('username').value.trim();
@@ -277,8 +263,6 @@
             sessionStorage.setItem('userId', uid);
         }
 
-
-        // --- 지도 기능 ---
         function initMap() {
             const container = document.getElementById('map');
             if(!container) return;
@@ -360,8 +344,7 @@
             });
         }
 
-        // 전역 노출 함수
-        window.renderLocationLogs = function(filterRange, btn) {
+        function renderLocationLogs(filterRange, btn) {
             if(btn) {
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -458,23 +441,23 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        // --- 상세 로그 (도어락 + 앱) ---
         function loadAllLogs(userId) {
             const doorDiv = document.querySelector('#doorLockLogs .log-entries');
             const appDiv = document.querySelector('#appLogs .log-entries');
             document.getElementById('logUserTitle').textContent = `${userId} 전체 로그`;
-            doorDiv.innerHTML = 'Loading...'; appDiv.innerHTML = 'Loading...';
+            doorDiv.innerHTML = 'Loading...'; 
+            appDiv.innerHTML = 'Loading...';
 
             // 도어락 로그
             database.ref('doorlock_logs/' + userId).once('value').then(snap => {
                 doorDiv.innerHTML = '';
-                if(!snap.exists()) { doorDiv.innerHTML = '없음'; return; }
+                if (!snap.exists()) { doorDiv.innerHTML = '없음'; return; }
                 const logs = [];
                 snap.forEach(c => logs.push(c.val()));
                 logs.sort((a, b) => {
-                    const ta = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
-                    const tb = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
-                    return tb - ta;
+                    const timeA = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
+                    const timeB = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
+                    return timeB - timeA;
                 });
                 logs.forEach(log => {
                     const div = document.createElement('div');
@@ -485,31 +468,32 @@
                 });
             });
 
-            // 앱 로그 (범용)
+            // 앱 로그
             database.ref('users/' + userId + '/app_logs').once('value').then(snap => {
                 appDiv.innerHTML = '';
                 if (!snap.exists()) { appDiv.innerHTML = '없음'; return; }
                 
                 const logs = [];
-                snap.forEach(cat => {
-                    const catData = cat.val();
-                    if(typeof catData === 'object' && catData !== null) {
+                snap.forEach(categorySnap => {
+                    const catData = categorySnap.val();
+                    if (typeof catData === 'object' && catData !== null) {
                         Object.keys(catData).forEach(key => {
                             const detail = catData[key];
                             if(typeof detail === 'object' && detail !== null) {
-                                logs.push({ ...detail, _cat: cat.key, _type: key });
+                                const logItem = { ...detail, _cat: categorySnap.key, _type: key };
+                                logs.push(logItem);
                             }
                         });
                     }
                 });
 
                 logs.sort((a, b) => {
-                    const ta = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
-                    const tb = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
-                    return tb - ta;
+                    const timeA = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
+                    const timeB = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
+                    return timeB - timeA;
                 });
 
-                if(logs.length === 0) appDiv.innerHTML = '형식 맞는 로그 없음';
+                if(logs.length === 0) appDiv.innerHTML = '표시할 형식의 로그 없음';
 
                 logs.forEach(log => {
                     const div = document.createElement('div');
@@ -523,14 +507,16 @@
                     else if(log.event) msg = `이벤트: ${log.event}`;
                     else msg = JSON.stringify(log);
 
-                    div.innerHTML = `<div style="color:#28a745; font-size:12px;">[${t}] (${log._cat}/${log._type})</div><div>${msg}</div>`;
+                    div.innerHTML = `
+                        <div style="color:#28a745; font-size:12px;">[${t}] (${log._cat}/${log._type})</div>
+                        <div>${msg}</div>
+                    `;
                     appDiv.appendChild(div);
                 });
             });
         }
 
-        // --- DB 조회 (트리 뷰) ---
-        window.loadAllDbData = function() {
+        function loadAllDbData() {
             const resultArea = document.getElementById('result-area');
             document.getElementById('result-title').textContent = "전체 사용자 목록 (users):";
             resultArea.innerHTML = '<div class="message-box">불러오는 중...</div>';
@@ -539,9 +525,9 @@
                 if(snap.exists()) renderGrid(snap.val());
                 else resultArea.innerHTML = '<div class="message-box">데이터 없음</div>';
             });
-        };
+        }
 
-        window.searchUser = function() {
+        function searchUser() {
             const userId = document.getElementById('search-input').value.trim();
             if(!userId) return alert("ID 입력");
             const resultArea = document.getElementById('result-area');
@@ -551,7 +537,7 @@
                 if(snap.exists()) { const wrap = {}; wrap[userId] = snap.val(); renderGrid(wrap); }
                 else resultArea.innerHTML = '<div class="message-box">결과 없음</div>';
             });
-        };
+        }
 
         function renderGrid(data) {
             const resultArea = document.getElementById('result-area');
@@ -596,7 +582,7 @@
             return html;
         }
 
-        window.toggleNode = function(el) {
+        function toggleNode(el) {
             const child = el.nextElementSibling;
             const arrow = el.querySelector('.fv-arrow');
             if(child) {
@@ -608,7 +594,7 @@
                     arrow.textContent = '▶'; arrow.style.transform = 'rotate(-90deg)';
                 }
             }
-        };
+        }
 
         function formatValue(v) {
             if (typeof v === 'string') return `<span class="fv-string">"${v}"</span>`;
@@ -617,23 +603,30 @@
             return v;
         }
 
-
         // ====================================================
-        // [3] 이벤트 연결 (DOMContentLoaded 내부)
+        // [3] 초기 실행 및 이벤트 연결 (Execution)
         // ====================================================
-        document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
-        
-        // 초기 실행
-        const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
-        if (isLoggedIn) {
-            const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
-            const userId = sessionStorage.getItem('userId');
-            showDashboard(isAdmin, userId);
-        } else {
-            document.getElementById('login-container').classList.remove('hidden');
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
 
-    }); // DOMContentLoaded End
+            try {
+                if (typeof firebase === 'undefined' || !firebase.initializeApp) throw new Error("Firebase SDK missing.");
+                firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
+            } catch (e) {
+                alert("Firebase Init Error: " + e);
+                return;
+            }
+
+            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+            if (isLoggedIn) {
+                const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+                const userId = sessionStorage.getItem('userId');
+                showDashboard(isAdmin, userId);
+            } else {
+                document.getElementById('login-container').classList.remove('hidden');
+            }
+        });
     </script>
 </body>
 </html>
