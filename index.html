@@ -146,17 +146,6 @@
                 alert("Firebase Init Error: " + e);
                 return;
             }
-
-            // 로그인 상태 체크
-            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
-            if (isLoggedIn) {
-                const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
-                const userId = sessionStorage.getItem('userId');
-                showDashboard(isAdmin, userId);
-            } else {
-                document.getElementById('login-container').classList.remove('hidden');
-            }
-
             // 버튼 이벤트 연결
             document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
             document.getElementById('logoutBtn').onclick = () => document.getElementById('logout-confirm-modal').classList.remove('hidden');
@@ -528,7 +517,17 @@
             function executeLogout() {
                 sessionStorage.clear(); window.location.reload();
             }
+            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+            if (isLoggedIn) {
+                const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+                const userId = sessionStorage.getItem('userId');
+                // 이제 showDashboard 함수가 위에서 이미 만들어졌으므로 에러가 나지 않습니다.
+                showDashboard(isAdmin, userId);
+            } else {
+                document.getElementById('login-container').classList.remove('hidden');
+            }
         });
     </script>
 </body>
 </html>
+
