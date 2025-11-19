@@ -5,9 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Doorlock Admin</title>
 
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔒</text></svg>">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="indexstyle.css">
 
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
@@ -18,7 +21,7 @@
 
     <div id="login-container">
         <h2>SmartDoorLock</h2>
-        <form id="login-form">
+        <form id="login-form" onsubmit="handleLoginSubmit(event)">
             <div class="input-group">
                 <label for="username">아이디</label>
                 <input type="text" id="username" placeholder="아이디를 입력하세요" required>
@@ -110,7 +113,7 @@
 
     <script>
         // ====================================================
-        // [1] 전역 변수 (Global Variables)
+        // [1] 전역 변수 및 초기화
         // ====================================================
         const DOORLOCK_LAT = 37.566826; 
         const DOORLOCK_LNG = 126.9786567;
@@ -135,8 +138,18 @@
         let selectedUserId = null;
         let currentUserLocationLogs = [];
 
+        try {
+            if (typeof firebase === 'undefined' || !firebase.initializeApp) throw new Error("Firebase SDK missing.");
+            firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            console.log("Firebase initialized.");
+        } catch (e) {
+            alert("Firebase Init Error: " + e);
+        }
+
+
         // ====================================================
-        // [2] 함수 정의 (Global Functions)
+        // [2] 함수 정의 (호이스팅으로 어디서든 호출 가능)
         // ====================================================
 
         function customAlert(msg) {
@@ -147,6 +160,7 @@
             } else alert(msg);
         }
 
+        // --- 화면 전환 ---
         function showDashboard(isAdmin, loggedInUserId) {
             if (isAdmin === undefined) isAdmin = sessionStorage.getItem('isAdmin') === 'true';
             if (loggedInUserId === undefined) loggedInUserId = sessionStorage.getItem('userId');
@@ -168,7 +182,6 @@
             if (isAdmin) {
                 userListDiv.classList.remove('hidden');
                 userInfoDiv.classList.add('hidden');
-                
                 if (!map && typeof kakao !== 'undefined') {
                     kakao.maps.load(initMap);
                 } else if (map) {
@@ -191,25 +204,20 @@
             document.getElementById('main-content').classList.add('hidden');
             document.getElementById('log-modal-content').classList.add('hidden');
             document.getElementById('db-viewer-content').classList.remove('hidden');
-            
             document.body.style.background = '#f9f9f9'; 
             document.getElementById('mapBtn').disabled = false; 
             document.getElementById('dbEditBtn').disabled = true;
-            
             loadAllDbData();
         }
 
         function showLogView() {
             const userId = selectedUserId || sessionStorage.getItem('userId');
             if (!userId) return customAlert("사용자를 선택해주세요.");
-
             document.getElementById('main-content').classList.add('hidden');
             document.getElementById('log-modal-content').classList.remove('hidden');
             document.getElementById('db-viewer-content').classList.add('hidden');
-
             document.getElementById('mapBtn').disabled = false; 
             document.getElementById('logBtn').disabled = true;
-
             loadAllLogs(userId);
         }
 
@@ -224,6 +232,7 @@
             window.location.reload();
         }
 
+        // --- 로그인 ---
         function handleLoginSubmit(e) {
             e.preventDefault();
             const id = document.getElementById('username').value.trim();
@@ -236,7 +245,6 @@
                         if (c.val().adminId === id && c.val().password === pw) isAdmin = true; 
                     }); 
                 }
-                
                 if (isAdmin) {
                     setSession(true, true, id); 
                     showDashboard(true, id);
@@ -263,6 +271,7 @@
             sessionStorage.setItem('userId', uid);
         }
 
+        // --- 지도 및 로직 ---
         function initMap() {
             const container = document.getElementById('map');
             if(!container) return;
@@ -270,7 +279,6 @@
             map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
             map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
             drawDoorlockZones();
-            
             if (sessionStorage.getItem('isAdmin') === 'true') loadUserList();
         }
 
@@ -287,12 +295,7 @@
             markers.forEach(m => { if(m.co) m.co.setMap(null); m.setMap(null); });
             markers = [];
             if (currentPolyline) { currentPolyline.setMap(null); currentPolyline = null; }
-            if (selectedLogMarker) {
-                 selectedLogMarker.setMap(null);
-                 if(selectedLogMarker.infoBox) selectedLogMarker.infoBox.setMap(null);
-                 selectedLogMarker = null;
-            }
-
+            if (selectedLogMarker) { selectedLogMarker.setMap(null); if(selectedLogMarker.infoBox) selectedLogMarker.infoBox.setMap(null); }
             document.getElementById('infoArea').innerHTML = '';
             document.getElementById('userInfo').classList.add('hidden');
             document.getElementById('logBtn').disabled = true;
@@ -303,7 +306,6 @@
             database.ref('users').once('value').then(snap => {
                 const list = document.getElementById('userList');
                 while (list.childNodes.length > 2) { list.removeChild(list.lastChild); }
-                
                 snap.forEach(c => {
                     const div = document.createElement('div');
                     div.className = 'user';
@@ -320,7 +322,6 @@
             document.getElementById('logBtn').disabled = false;
             const infoArea = document.getElementById('infoArea');
             document.getElementById('userInfo').classList.remove('hidden');
-
             infoArea.innerHTML = `
                 <div style="margin-bottom:10px;"><strong>ID:</strong> ${userId}</div>
                 <div class="filter-group">
@@ -329,7 +330,6 @@
                 </div>
                 <div class="log-list">Loading...</div>
             `;
-
             database.ref('users/' + userId + '/location_logs').once('value').then(snap => {
                 currentUserLocationLogs = [];
                 if (snap.exists()) {
@@ -344,12 +344,11 @@
             });
         }
 
-        function renderLocationLogs(filterRange, btn) {
+        window.renderLocationLogs = function(filterRange, btn) {
             if(btn) {
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
             }
-
             const listDiv = document.querySelector('.log-list');
             if (!listDiv) return;
             listDiv.innerHTML = '';
@@ -357,7 +356,6 @@
             markers.forEach(m => { if(m.co) m.co.setMap(null); m.setMap(null); });
             markers = [];
             if (currentPolyline) { currentPolyline.setMap(null); currentPolyline = null; }
-            if (selectedLogMarker) { selectedLogMarker.setMap(null); if(selectedLogMarker.infoBox) selectedLogMarker.infoBox.setMap(null); }
 
             if (currentUserLocationLogs.length === 0) { listDiv.innerHTML = '기록 없음'; return; }
 
@@ -371,7 +369,6 @@
                 const lat = parseFloat(pos.latitude);
                 const lng = parseFloat(pos.longitude);
                 const dist = getDist(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
-
                 if (filterRange && dist > MAX_DISTANCE_KM) return;
 
                 const item = document.createElement('div');
@@ -388,11 +385,9 @@
                     const p = new kakao.maps.LatLng(lat, lng);
                     path.push(p);
                     bounds.extend(p);
-                    
                     const img = document.createElement('img');
                     img.src = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png';
                     img.className = 'custom-marker-dot';
-                    
                     const marker = new kakao.maps.CustomOverlay({ position: p, content: img, yAnchor: 0.5 });
                     marker.setMap(map);
                     markers.push(marker);
@@ -414,21 +409,14 @@
                 if(selectedLogMarker.infoBox) selectedLogMarker.infoBox.setMap(null);
             }
             const pos = new kakao.maps.LatLng(lat, lng);
-            
-            const content = `<div class="custom-overlay-info">
-                                <strong>${time}</strong><br>
-                                거리: ${dist.toFixed(2)}km
-                             </div>`;
+            const content = `<div class="custom-overlay-info"><strong>${time}</strong><br>거리: ${dist.toFixed(2)}km</div>`;
             const infoBox = new kakao.maps.CustomOverlay({ content: content, position: pos, yAnchor: 2.5, zIndex: 5 });
             infoBox.setMap(map);
-
             const img = document.createElement('img');
             img.src = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png';
             img.className = 'custom-marker-pin';
-            
             const marker = new kakao.maps.CustomOverlay({ position: pos, content: img, yAnchor: 1 });
             marker.setMap(map);
-            
             selectedLogMarker = marker;
             selectedLogMarker.infoBox = infoBox;
         }
@@ -445,10 +433,9 @@
             const doorDiv = document.querySelector('#doorLockLogs .log-entries');
             const appDiv = document.querySelector('#appLogs .log-entries');
             document.getElementById('logUserTitle').textContent = `${userId} 전체 로그`;
-            doorDiv.innerHTML = 'Loading...'; 
-            appDiv.innerHTML = 'Loading...';
+            doorDiv.innerHTML = 'Loading...'; appDiv.innerHTML = 'Loading...';
 
-            // 도어락 로그
+            // 1. 도어락 로그
             database.ref('doorlock_logs/' + userId).once('value').then(snap => {
                 doorDiv.innerHTML = '';
                 if (!snap.exists()) { doorDiv.innerHTML = '없음'; return; }
@@ -468,11 +455,10 @@
                 });
             });
 
-            // 앱 로그
+            // 2. 앱 로그 (범용 구조)
             database.ref('users/' + userId + '/app_logs').once('value').then(snap => {
                 appDiv.innerHTML = '';
                 if (!snap.exists()) { appDiv.innerHTML = '없음'; return; }
-                
                 const logs = [];
                 snap.forEach(categorySnap => {
                     const catData = categorySnap.val();
@@ -486,37 +472,30 @@
                         });
                     }
                 });
-
                 logs.sort((a, b) => {
                     const timeA = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
                     const timeB = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
                     return timeB - timeA;
                 });
-
                 if(logs.length === 0) appDiv.innerHTML = '표시할 형식의 로그 없음';
-
                 logs.forEach(log => {
                     const div = document.createElement('div');
                     div.className = 'full-log-entry';
                     let t = log.timestamp ? String(log.timestamp).replace("T", " ") : '시간 없음';
-                    
                     let msg = "";
                     if(log.new_auth) msg = `인증 변경: ${log.new_auth}`;
                     else if(log.new_name) msg = `이름 변경: ${log.new_name}`;
                     else if(log.new_pw) msg = `비번 변경`;
                     else if(log.event) msg = `이벤트: ${log.event}`;
                     else msg = JSON.stringify(log);
-
-                    div.innerHTML = `
-                        <div style="color:#28a745; font-size:12px;">[${t}] (${log._cat}/${log._type})</div>
-                        <div>${msg}</div>
-                    `;
+                    div.innerHTML = `<div style="color:#28a745; font-size:12px;">[${t}] (${log._cat}/${log._type})</div><div>${msg}</div>`;
                     appDiv.appendChild(div);
                 });
             });
         }
 
-        function loadAllDbData() {
+        // --- DB 조회 ---
+        window.loadAllDbData = function() {
             const resultArea = document.getElementById('result-area');
             document.getElementById('result-title').textContent = "전체 사용자 목록 (users):";
             resultArea.innerHTML = '<div class="message-box">불러오는 중...</div>';
@@ -525,9 +504,9 @@
                 if(snap.exists()) renderGrid(snap.val());
                 else resultArea.innerHTML = '<div class="message-box">데이터 없음</div>';
             });
-        }
+        };
 
-        function searchUser() {
+        window.searchUser = function() {
             const userId = document.getElementById('search-input').value.trim();
             if(!userId) return alert("ID 입력");
             const resultArea = document.getElementById('result-area');
@@ -537,14 +516,11 @@
                 if(snap.exists()) { const wrap = {}; wrap[userId] = snap.val(); renderGrid(wrap); }
                 else resultArea.innerHTML = '<div class="message-box">결과 없음</div>';
             });
-        }
+        };
 
         function renderGrid(data) {
             const resultArea = document.getElementById('result-area');
-            let html = `
-                <div class="grid-wrapper"><table class="styled-table">
-                <thead><tr><th style="width:150px;">ID</th><th>Data Tree</th></tr></thead><tbody>
-            `;
+            let html = `<div class="grid-wrapper"><table class="styled-table"><thead><tr><th style="width:150px;">ID</th><th>Data Tree</th></tr></thead><tbody>`;
             for (const [id, val] of Object.entries(data)) {
                 const treeHtml = createFirebaseView(val, 0);
                 html += `<tr><td style="vertical-align:top; font-weight:bold; color:#007bff;">${id}</td><td><div class="firebase-view">${treeHtml}</div></td></tr>`;
@@ -564,14 +540,7 @@
                         const arrow = isExpanded ? '▼' : '▶';
                         const rotate = isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
                         const cls = isExpanded ? '' : 'fv-hidden';
-                        html += `
-                        <div class="fv-item">${indent}
-                            <div class="fv-key-box" onclick="toggleNode(this)">
-                                <span class="fv-arrow" style="transform:${rotate}">${arrow}</span>
-                                <span class="fv-key">${key}</span>
-                            </div>
-                            <div class="fv-children ${cls}">${createFirebaseView(value, depth + 1)}</div>
-                        </div>`;
+                        html += `<div class="fv-item">${indent}<div class="fv-key-box" onclick="toggleNode(this)"><span class="fv-arrow" style="transform:${rotate}">${arrow}</span><span class="fv-key">${key}</span></div><div class="fv-children ${cls}">${createFirebaseView(value, depth + 1)}</div></div>`;
                     } else {
                         html += `<div class="fv-item">${indent}<span style="display:inline-block;width:16px;"></span><span class="fv-key">${key}:</span> ${formatValue(value)}</div>`;
                     }
@@ -582,19 +551,17 @@
             return html;
         }
 
-        function toggleNode(el) {
+        window.toggleNode = function(el) {
             const child = el.nextElementSibling;
             const arrow = el.querySelector('.fv-arrow');
             if(child) {
                 if(child.classList.contains('fv-hidden')) {
-                    child.classList.remove('fv-hidden');
-                    arrow.textContent = '▼'; arrow.style.transform = 'rotate(0deg)';
+                    child.classList.remove('fv-hidden'); arrow.textContent = '▼'; arrow.style.transform = 'rotate(0deg)';
                 } else {
-                    child.classList.add('fv-hidden');
-                    arrow.textContent = '▶'; arrow.style.transform = 'rotate(-90deg)';
+                    child.classList.add('fv-hidden'); arrow.textContent = '▶'; arrow.style.transform = 'rotate(-90deg)';
                 }
             }
-        }
+        };
 
         function formatValue(v) {
             if (typeof v === 'string') return `<span class="fv-string">"${v}"</span>`;
@@ -603,21 +570,11 @@
             return v;
         }
 
+
         // ====================================================
-        // [3] 초기 실행 및 이벤트 연결 (Execution)
+        // [3] 초기 실행 (DOMContentLoaded)
         // ====================================================
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
-
-            try {
-                if (typeof firebase === 'undefined' || !firebase.initializeApp) throw new Error("Firebase SDK missing.");
-                firebase.initializeApp(firebaseConfig);
-                database = firebase.database();
-            } catch (e) {
-                alert("Firebase Init Error: " + e);
-                return;
-            }
-
             const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
             if (isLoggedIn) {
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
@@ -627,6 +584,7 @@
                 document.getElementById('login-container').classList.remove('hidden');
             }
         });
+
     </script>
 </body>
 </html>
