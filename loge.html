@@ -3,13 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DB Editor - Capstone</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <title>사용자 검색</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
     <link rel="stylesheet" href="logestyle.css">
 
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -17,47 +12,19 @@
 </head>
 <body>
 
-    <div id="header">
-        <h1>데이터베이스 편집기</h1>
-        <button id="backBtn" onclick="window.location.href='index.html'">메인으로 돌아가기</button>
-    </div>
+    <div class="container">
+        <a href="index.html" class="back-link">&larr; 메인으로 돌아가기</a>
 
-    <div id="container">
-        <div id="tree-panel">
-            <div class="panel-header">
-                <span>DB 탐색기</span>
-                <button class="btn btn-refresh" onclick="loadDatabase()" style="padding: 5px 10px; font-size:12px;">
-                    <i class="fas fa-sync-alt"></i> 새로고침
-                </button>
-            </div>
-            <div id="tree-content">
-                <div style="text-align:center; margin-top:20px; color:#999;">데이터 로딩 중...</div>
-            </div>
+        <h2>사용자 검색</h2>
+
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="검색할 사용자 ID를 입력하세요 (예: 123456)">
+            <button class="btn-search" onclick="searchUser()">검색</button>
         </div>
 
-        <div id="editor-panel">
-            <div class="panel-header">데이터 수정</div>
-            <div id="editor-area">
-                <div>
-                    <label style="font-size:12px; color:#777;">현재 경로:</label>
-                    <div id="current-path" class="path-display">/</div>
-                </div>
-                
-                <label style="font-size:12px; color:#777;">JSON 데이터 (직접 수정 가능):</label>
-                <textarea id="json-editor" spellcheck="false"></textarea>
-
-                <div class="action-buttons">
-                    <button class="btn btn-add" onclick="addChildNode()">
-                        <i class="fas fa-plus"></i> 자식 추가
-                    </button>
-                    <button class="btn btn-delete" onclick="deleteCurrentNode()">
-                        <i class="fas fa-trash"></i> 현재 경로 삭제
-                    </button>
-                    <button class="btn btn-save" onclick="saveCurrentData()">
-                        <i class="fas fa-save"></i> 변경사항 저장
-                    </button>
-                </div>
-            </div>
+        <h3>검색 결과:</h3>
+        <div id="result-area">
+            <div class="message-box">사용자 ID를 입력하고 검색 버튼을 누르세요.</div>
         </div>
     </div>
 
@@ -74,79 +41,90 @@
             measurementId: "G-4TH9MB9WPM"
         };
 
-        // Firebase 초기화
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // 전역 변수
-        let fullData = null; // DB 전체 데이터
-        let currentPath = "/"; // 현재 선택된 경로
+        // --- 사용자 검색 함수 ---
+        function searchUser() {
+            const input = document.getElementById('search-input');
+            const resultArea = document.getElementById('result-area');
+            const userId = input.value.trim();
 
-        // 페이지 로드 시 실행
-        document.addEventListener('DOMContentLoaded', () => {
-            loadDatabase();
-        });
+            if (!userId) {
+                alert("사용자 ID를 입력해주세요.");
+                return;
+            }
 
-        // --- 1. DB 전체 데이터 로드 및 트리 생성 ---
-        function loadDatabase() {
-            const treeContent = document.getElementById('tree-content');
-            treeContent.innerHTML = '<div style="text-align:center; margin-top:20px; color:#999;"><i class="fas fa-spinner fa-spin"></i> 데이터 불러오는 중...</div>';
+            resultArea.innerHTML = '<div class="message-box">검색 중...</div>';
 
-            // 루트 경로(/)에서 모든 데이터를 가져옴
-            database.ref('/').once('value').then(snapshot => {
-                fullData = snapshot.val();
-                renderTree();
-                selectNode('/'); // 초기에는 루트 선택
-            }).catch(err => {
-                console.error(err);
-                treeContent.innerHTML = '<div style="color:red; text-align:center; margin-top:20px;">데이터 로드 실패</div>';
-                alert('데이터를 불러오지 못했습니다: ' + err.message);
+            const userRef = database.ref('users/' + userId);
+            
+            userRef.once('value').then((snapshot) => {
+                if (snapshot.exists()) {
+                    // 데이터가 있으면 테이블 생성 함수 호출
+                    renderTable(snapshot.val());
+                } else {
+                    resultArea.innerHTML = `
+                        <div class="message-box" style="color: #dc3545;">
+                            '${userId}' 사용자에 대한 정보를 찾을 수 없습니다.<br>
+                            <small>(경로: users/${userId})</small>
+                        </div>
+                    `;
+                }
+            }).catch((error) => {
+                resultArea.innerHTML = `<div class="message-box" style="color: red;">에러 발생: ${error.message}</div>`;
             });
         }
 
-        // --- 2. 트리 뷰 렌더링 (재귀 함수) ---
-        function renderTree() {
-            const treeContent = document.getElementById('tree-content');
-            treeContent.innerHTML = '';
+        // --- [핵심] 데이터를 그리드(테이블)로 그려주는 함수 ---
+        function renderTable(data) {
+            const resultArea = document.getElementById('result-area');
+            
+            let tableHtml = `
+                <div class="grid-wrapper">
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>항목 (Key)</th>
+                                <th>내용 (Value)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
 
-            const rootUl = document.createElement('div');
-            // 루트 노드 생성
-            rootUl.appendChild(createTreeNode('Root', fullData, ''));
-            treeContent.appendChild(rootUl);
+            // 데이터 객체의 키-값을 순회하며 행(Row) 추가
+            for (const [key, value] of Object.entries(data)) {
+                let displayValue = value;
+
+                // 만약 값이 객체(Object)라면 보기 좋게 JSON 형태로 변환
+                if (typeof value === 'object' && value !== null) {
+                    displayValue = `<pre class="json-value">${JSON.stringify(value, null, 4)}</pre>`;
+                }
+
+                tableHtml += `
+                    <tr>
+                        <td>${key}</td>
+                        <td>${displayValue}</td>
+                    </tr>
+                `;
+            }
+
+            tableHtml += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            resultArea.innerHTML = tableHtml;
         }
 
-        function createTreeNode(key, data, parentPath) {
-            // 현재 경로 계산
-            const currentPathStr = parentPath === '' ? key : (parentPath === '/' ? '/' + key : parentPath + '/' + key);
-            const actualPath = parentPath === '' ? '/' : currentPathStr; // Root는 '/'로 취급
+        // 엔터키 이벤트
+        document.getElementById('search-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                searchUser();
+            }
+        });
 
-            const container = document.createElement('div');
-            
-            // 노드 헤더 (아이콘 + 이름)
-            const header = document.createElement('div');
-            header.className = 'tree-node';
-            header.dataset.path = actualPath;
-            header.onclick = (e) => {
-                e.stopPropagation(); // 부모 클릭 방지
-                selectNode(actualPath);
-                
-                // 폴더면 열고 닫기 토글
-                const childrenDiv = container.querySelector('.tree-children');
-                const toggleIcon = header.querySelector('.toggle-icon i');
-                if (childrenDiv) {
-                    const isOpen = childrenDiv.classList.contains('open');
-                    if (isOpen) {
-                        childrenDiv.classList.remove('open');
-                        toggleIcon.className = 'fas fa-chevron-right';
-                    } else {
-                        childrenDiv.classList.add('open');
-                        toggleIcon.className = 'fas fa-chevron-down';
-                    }
-                }
-            };
-
-            // 아이콘 결정
-            const isObject = data !== null && typeof data === 'object';
-            const toggleIconHtml = isObject 
-                ? `<span class
-
+    </script>
+</body>
+</html>
