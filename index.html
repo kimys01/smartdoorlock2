@@ -94,13 +94,13 @@
     <!-- 5. DB 조회 컨텐츠 -->
     <div id="db-content" class="hidden">
         <div class="container">
-            <h2>데이터베이스 관리 (CRUD)</h2>
+            <h2>DataBase</h2>
             <div class="search-container">
                 <input type="text" id="search-input" placeholder="검색할 사용자 ID를 입력하세요 (예: 123456)">
                 <button class="btn-search" onclick="searchUser()">검색</button>
                 <button class="btn-reset" onclick="loadAllDBData()" style="margin-left:5px;">전체 목록</button>
             </div>
-            <h3 id="result-title">사용자 목록:</h3>
+            <h3 id="result-title">User List:</h3>
             <div id="result-area">
                 <div class="message-box">데이터를 불러오는 중입니다...</div>
             </div>
@@ -608,7 +608,7 @@
             window.loadAllDBData = function() {
                 const resultArea = document.getElementById('result-area');
                 const title = document.getElementById('result-title');
-                title.textContent = "전체 사용자 목록 (users):";
+                title.textContent = "User List:";
                 resultArea.innerHTML = '<div class="message-box">전체 데이터를 불러오는 중...</div>';
                 document.getElementById('search-input').value = '';
                 database.ref('users').once('value').then((snapshot) => {
@@ -936,3 +936,4 @@
     </script>
 </body>
 </html>
+
