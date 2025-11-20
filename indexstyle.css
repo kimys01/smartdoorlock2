@@ -378,7 +378,7 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
 .styled-table td { padding: 12px 10px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; vertical-align: top; color: #333 !important; }
 
 .firebase-view { font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.6; color: #333 !important; }
-.fv-item { white-space: nowrap; display: flex; align-items: center; flex-wrap: wrap; padding: 2px 0; cursor: pointer; } /* pointer for touch target */
+.fv-item { white-space: nowrap; display: flex; align-items: center; flex-wrap: wrap; padding: 2px 0; cursor: pointer; }
 
 .fv-key-box { cursor: pointer; display: inline-block; user-select: none; margin-right: 5px; }
 .fv-key-box:hover .fv-key { text-decoration: underline; color: #0056b3 !important; }
@@ -393,7 +393,7 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
 .fv-boolean { color: #0000ff !important; }
 .fv-null { color: #808080 !important; }
 
-/* [수정됨] 아이콘 버튼 스타일: 기본 숨김, 호버/액티브 시 표시 */
+/* [수정됨] 버튼 스타일: 평소에는 숨김(opacity:0, visibility:hidden) -> 호버 시 표시 */
 .btn-edit-mini, .btn-delete-mini {
     background-color: transparent !important; 
     border: none !important;                  
@@ -409,24 +409,29 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
     display: inline-flex; 
     align-items: center;
     justify-content: center;
-    opacity: 0; /* 기본 숨김 */
+    
+    /* 기본 상태: 안보임 */
+    opacity: 0;
+    visibility: hidden;
     pointer-events: none; /* 클릭 방지 */
 }
 
-/* 데스크탑 호버 효과 */
+/* 데스크탑: 마우스 올리면 보임 */
 .fv-item:hover .btn-edit-mini, 
 .fv-item:hover .btn-delete-mini,
 tr:hover .btn-delete-mini {
     opacity: 1;
+    visibility: visible;
     pointer-events: auto;
 }
 
-/* 모바일 터치 활성화 클래스 (JS로 추가됨) */
+/* 모바일 터치 활성화 상태 (JS로 클래스 추가됨) */
 .mobile-active .btn-edit-mini,
 .mobile-active .btn-delete-mini {
     opacity: 1 !important;
+    visibility: visible !important;
     pointer-events: auto !important;
-    color: #666 !important; /* 모바일에서는 좀 더 진하게 */
+    color: #555 !important; 
 }
 
 .btn-edit-mini:hover {
