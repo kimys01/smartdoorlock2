@@ -14,17 +14,15 @@
     padding: 0; 
     box-sizing: border-box; 
     font-family: 'Poppins', sans-serif; 
-    /* 모든 텍스트 색상을 강제로 어두운 색으로 고정 (반전 방지) */
     color: #333333; 
 }
 
 body { 
     height: 100vh; 
-    /* [수정] 배경 그라디언트에 !important 추가하여 다크모드 개입 차단 */
     background: linear-gradient(135deg, #71b7e6, #9b59b6) !important;
-    background-color: #71b7e6 !important; /* 그라디언트 로딩 전 fallback */
+    background-color: #71b7e6 !important; 
     padding-top: 70px;
-    overflow: hidden;
+    overflow: hidden; /* 데스크탑: 스크롤 방지 */
     transition: background-color 0.3s ease; 
 }
 
@@ -39,7 +37,7 @@ body {
     width: 100%; 
     height: 70px; 
     padding: 0 30px;
-    background-color: #ffffff !important; /* 배경 흰색 강제 */
+    background-color: #ffffff !important; 
     box-shadow: 0 2px 4px rgba(0,0,0,0.08);
     display: flex; 
     justify-content: space-between; 
@@ -56,7 +54,7 @@ body {
     background: linear-gradient(135deg, #71b7e6, #9b59b6) !important;
     -webkit-background-clip: text !important; 
     background-clip: text !important; 
-    color: transparent !important; /* 텍스트 투명화 후 배경색 보이기 */
+    color: transparent !important; 
     white-space: nowrap;
 }
 
@@ -65,12 +63,12 @@ body {
 #header button {
     padding: 10px 20px; 
     border: none; 
-    color: #333 !important; /* 버튼 글씨 검은색 강제 */
+    color: #333 !important; 
     border-radius: 0; 
-    cursor: pointer;
+    cursor: pointer; 
     font-weight: 500; 
     transition: 0.3s; 
-    background-color: #f8f9fa !important; /* 버튼 배경 밝은 회색 강제 */
+    background-color: #f8f9fa !important; 
     font-size: 14px;
     white-space: nowrap;
 }
@@ -94,7 +92,7 @@ body {
 #login-container {
     width: 90%; 
     max-width: 400px; 
-    background-color: #ffffff !important; /* 흰색 배경 강제 */
+    background-color: #ffffff !important; 
     padding: 40px;
     border-radius: 10px; 
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
@@ -107,16 +105,15 @@ body {
 
 #login-container h2 { font-size: 28px; font-weight: 600; margin-bottom: 25px; color: #333 !important; }
 
-/* 입력창 스타일 강제 (다크모드에서 검게 변하는 것 방지) */
 input[type="text"], input[type="password"] {
     width: 100%; 
     padding: 12px 15px; 
     border: 1px solid #ccc !important; 
     border-radius: 5px; 
     font-size: 16px; 
-    background-color: #ffffff !important; /* 흰색 배경 강제 */
-    color: #000000 !important; /* 검은 글씨 강제 */
-    -webkit-appearance: none; /* 브라우저 기본 스타일 제거 */
+    background-color: #ffffff !important; 
+    color: #000000 !important; 
+    -webkit-appearance: none; 
 }
 
 .input-group { margin-bottom: 20px; text-align: left; }
@@ -162,7 +159,7 @@ input[type="text"], input[type="password"] {
     box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
     padding: 15px;
     border-radius: 8px; 
-    background-color: #ffffff !important; /* 흰색 강제 */
+    background-color: #ffffff !important; 
     box-sizing: border-box;
 }
 
@@ -173,7 +170,7 @@ input[type="text"], input[type="password"] {
     flex-shrink: 0; 
     display: flex; 
     flex-direction: column;
-    max-height: 60vh;
+    max-height: 60vh; /* 데스크탑: 너무 길어지지 않게 제한 */
 }
 
 #mapArea { flex-grow: 1; display: flex; flex-direction: column; }
@@ -425,7 +422,7 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
 .custom-marker-dot { width: 12px; height: 12px; transform: scale(1.8); transform-origin: center center; }
 
 /* =========================================
-   8. 반응형 (Mobile Responsive)
+   8. 반응형 (Mobile Responsive) - 수정됨
    ========================================= */
 @media (max-width: 768px) {
     /* 헤더 조정 */
@@ -440,52 +437,57 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
     #header .button-group { width: 100%; justify-content: space-between; }
     #header button { flex: 1; padding: 8px 0; font-size: 12px; }
 
-    /* [수정] Body Scroll 활성화 (모바일에서 전체 페이지 스크롤 가능하게) */
+    /* [수정] Body Scroll 활성화 (전체 페이지 스크롤) */
     body { 
         padding-top: 110px; 
-        overflow-y: auto !important; /* 스크롤 강제 활성화 */
+        overflow-y: auto !important; /* 강제 스크롤 활성화 */
         height: auto !important;     /* 고정 높이 해제 */
     }
 
-    /* [수정] 메인 레이아웃 (세로 배치 + 높이 자동) */
+    /* [수정] 메인 레이아웃 (세로 배치, 높이 자동) */
     #main-content { 
-        flex-direction: column; 
-        height: auto !important; /* 컨텐츠만큼 늘어나게 */
-        gap: 20px;
+        display: block; /* flex 대신 block으로 변경하여 자연스러운 흐름 유도 */
+        height: auto !important; 
         padding: 10px;
-        padding-bottom: 50px; /* 하단 여백 확보 */
-        overflow: visible;    /* 내부 스크롤 대신 전체 스크롤 사용 */
+        padding-bottom: 30px; /* 하단 여백 */
+        overflow: visible;
     }
 
-    /* [수정] 사이드바 (유저리스트/정보) - 고정 높이 부여 */
+    /* [수정] 사이드바 (정보창) */
     #sidebar { 
         width: 100%; 
-        height: 400px; /* 리스트가 보일 충분한 높이 */
-        flex: none;    /* 크기 고정 */
-        min-height: unset;
-        position: relative; 
-        z-index: 20; 
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15); 
-        /* 내부 리스트 스크롤은 유지 */
+        height: auto !important; /* 내용만큼 늘어나도록 설정 */
+        flex: none;
+        margin-bottom: 20px; /* 지도와의 간격 */
+        z-index: auto; /* z-index 해제하여 자연스럽게 배치 */
     }
     
-    /* [수정] 지도 영역 (하단 배치, 고정 높이) */
-    #mapArea { 
-        width: 100%; 
-        flex: none;    /* 남은공간 채우기 X -> 고정 크기 O */
-        height: 400px; /* 지도 높이 */
-        position: relative;
-        z-index: 10;
-        /* 지도가 사이드바 아래에 위치하게 됨 */
+    #userInfo {
+        max-height: none !important; /* 내부 스크롤 제거하고 전체 길이 표시 */
+        height: auto !important;
     }
 
-    /* 로그 화면 및 DB 화면도 전체 스크롤에 맞게 조정 */
+    /* [수정] 정보창 내부 리스트 */
+    .log-list {
+        max-height: 400px; /* 리스트가 너무 길어지면 내부 스크롤 (선택사항) */
+        overflow-y: auto;
+    }
+    
+    /* [수정] 지도 영역 (하단 배치) */
+    #mapArea { 
+        width: 100%; 
+        height: 400px; /* 지도 높이 고정 */
+        flex: none;
+        z-index: 1; /* 기본 레벨 */
+    }
+
+    /* 로그 화면 및 DB 화면 */
     #log-content, #db-content { 
         top: 110px; 
         height: auto !important; 
         min-height: calc(100vh - 110px);
         padding: 10px;
-        position: absolute; /* 고정(fixed) 대신 절대위치로 변경하여 스크롤 가능하게 */
+        position: absolute; /* 스크롤 가능하게 절대 위치 */
     }
 
     .log-container { 
