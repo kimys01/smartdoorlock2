@@ -50,6 +50,7 @@
     <!-- 3. 메인 컨텐츠 (지도 및 사용자 리스트) -->
     <div id="main-content" class="hidden">
         <div id="sidebar">
+            <!-- [수정] 사용자 정보창 (스크롤 및 레이아웃 개선) -->
             <div id="userInfo" class="hidden">
                 <div class="info-header">
                     <h2>User Info</h2>
@@ -360,7 +361,7 @@
                 map.panTo(position);
             }
 
-            // --- [수정] 사용자 선택 시 데이터 로딩 로직 개선 ---
+            // --- [수정됨] 사용자 선택 및 데이터 로딩 로직 (리스트/단일객체 모두 대응) ---
             function selectUser(userId) {
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
                 if (isAdmin) clearMapAndInfo();
@@ -371,9 +372,10 @@
                 const infoArea = document.getElementById('infoArea');
                 const userInfoDiv = document.getElementById('userInfo');
                 if (infoArea && userInfoDiv) {
+                    // HTML 구조를 미리 셋팅하여 renderLocationLogs에서 찾을 수 있게 함
                     infoArea.innerHTML = `
-                        <div style="margin-bottom:10px;"><strong>ID:</strong> ${userId}</div>
-                        <div class="filter-group">
+                        <div style="margin-bottom:10px; flex-shrink:0;"><strong>ID:</strong> ${userId}</div>
+                        <div class="filter-group" style="flex-shrink:0;">
                             <button id="showAllBtn" class="filter-btn active">전체 기록</button>
                             <button id="showRangeBtn" class="filter-btn">범위 내(3km)</button>
                         </div>
@@ -397,14 +399,25 @@
                     currentUserLocationLogs = [];
                     if (snapshot.exists()) {
                         const val = snapshot.val();
-                        // 만약 데이터가 리스트가 아니라 단일 객체로 저장되어 있을 경우(키가 없는 경우) 예외처리
-                        if (val.latitude && val.longitude) {
-                             currentUserLocationLogs.push(val);
-                        } else {
-                             // 일반적인 경우: 리스트 형태
-                             snapshot.forEach(child => currentUserLocationLogs.push(child.val()));
+                        let isList = false;
+                        
+                        // 1. 자식 노드들을 순회하며 로그인지 확인 (리스트 형태 우선 감지)
+                        // snapshot.forEach는 배열이나 객체 맵 모두 순회합니다.
+                        snapshot.forEach(child => {
+                            const cVal = child.val();
+                            // 자식이 latitude나 lat 속성을 가지고 있다면 로그 데이터로 판단
+                            if (cVal && (cVal.latitude !== undefined || cVal.lat !== undefined)) {
+                                currentUserLocationLogs.push(cVal);
+                                isList = true;
+                            }
+                        });
+
+                        // 2. 자식에서 로그를 하나도 못 찾았는데, 본인이 로그라면 (단일 객체/덮어쓰기 형태)
+                        if (!isList && val && (val.latitude !== undefined || val.lat !== undefined)) {
+                            currentUserLocationLogs.push(val);
                         }
-                        // 최신순 정렬
+                        
+                        // 3. 최신순 정렬
                         currentUserLocationLogs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                     }
                     renderLocationLogs(false);
@@ -414,15 +427,13 @@
                 });
             }
 
-            // --- [수정] 로그 렌더링 로직 (초기화 문제 해결) ---
+            // --- [수정됨] 로그 렌더링 로직 ---
             function renderLocationLogs(filterRange) {
-                const logListDiv = document.querySelector('#userInfo .log-list'); // 선택자 구체화
+                const logListDiv = document.querySelector('#userInfo .log-list'); 
                 if (!logListDiv) return;
                 
-                // 목록 초기화는 여기서 *한 번만* 실행
                 logListDiv.innerHTML = '';
 
-                // 지도 마커 초기화
                 markers.forEach(m => {
                     if (m.customOverlay) m.customOverlay.setMap(null);
                     m.setMap(null);
@@ -440,20 +451,17 @@
                 bounds.extend(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
                 let mapCount = 0;
 
-                // Fragment를 사용하여 DOM 조작 최소화 (성능 개선)
                 const listFragment = document.createDocumentFragment();
 
                 currentUserLocationLogs.forEach((pos) => { 
-                    if (!pos || !pos.latitude || !pos.longitude) return; // 유효성 검사
+                    if (!pos || (!pos.latitude && !pos.lat) || (!pos.longitude && !pos.lon)) return;
 
-                    const lat = parseFloat(pos.latitude);
-                    const lng = parseFloat(pos.longitude);
+                    const lat = parseFloat(pos.latitude || pos.lat);
+                    const lng = parseFloat(pos.longitude || pos.lon);
                     const distKm = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
 
-                    // 필터링 모드일 때 거리 체크
                     if (filterRange && distKm > MAX_DISTANCE_KM) return; 
 
-                    // 리스트 아이템 스타일
                     let rowStyle = '';
                     if (distKm <= 1.0) rowStyle = 'background-color: #ffeaea;'; 
                     else if (distKm <= 2.0) rowStyle = 'background-color: #fff8e1;'; 
@@ -466,9 +474,8 @@
                     logEntry.innerHTML = `<small>${timeStr}</small><br>거리: <strong>${distKm.toFixed(2)}km</strong>`;
                     logEntry.addEventListener('click', () => showLocationOnMap(lat, lng));
                     
-                    listFragment.appendChild(logEntry); // Fragment에 추가
+                    listFragment.appendChild(logEntry);
 
-                    // 지도 마커 추가 (최대 50개)
                     if (mapCount < 50) {
                         const latlng = new kakao.maps.LatLng(lat, lng);
                         path.push(latlng); 
@@ -494,9 +501,8 @@
                     }
                 });
                 
-                logListDiv.appendChild(listFragment); // 최종적으로 DOM에 추가
+                logListDiv.appendChild(listFragment);
 
-                // 경로 그리기
                 if (filterRange && path.length > 0) {
                     currentPolyline = new kakao.maps.Polyline({
                         path: path, strokeWeight: 4, strokeColor: '#CC00CC', strokeOpacity: 0.8, strokeStyle: 'solid', map: map
