@@ -440,55 +440,62 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
     #header .button-group { width: 100%; justify-content: space-between; }
     #header button { flex: 1; padding: 8px 0; font-size: 12px; }
 
-    /* Body Padding */
-    body { padding-top: 110px; }
+    /* [수정] Body Scroll 활성화 (모바일에서 전체 페이지 스크롤 가능하게) */
+    body { 
+        padding-top: 110px; 
+        overflow-y: auto !important; /* 스크롤 강제 활성화 */
+        height: auto !important;     /* 고정 높이 해제 */
+    }
 
-    /* [수정] 메인 레이아웃 (세로 배치 + z-index 수정) */
+    /* [수정] 메인 레이아웃 (세로 배치 + 높이 자동) */
     #main-content { 
         flex-direction: column; 
-        height: calc(100vh - 110px); 
-        gap: 10px;
+        height: auto !important; /* 컨텐츠만큼 늘어나게 */
+        gap: 20px;
         padding: 10px;
+        padding-bottom: 50px; /* 하단 여백 확보 */
+        overflow: visible;    /* 내부 스크롤 대신 전체 스크롤 사용 */
     }
 
-    /* [수정] 사이드바 (상단 고정, 지도 위에 오도록 z-index 부여) */
+    /* [수정] 사이드바 (유저리스트/정보) - 고정 높이 부여 */
     #sidebar { 
         width: 100%; 
-        flex: 0 0 40%; /* 고정 비율 */
-        height: 40%;
+        height: 400px; /* 리스트가 보일 충분한 높이 */
+        flex: none;    /* 크기 고정 */
         min-height: unset;
         position: relative; 
-        z-index: 20; /* 지도보다 높게 */
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15); /* 구분감 추가 */
+        z-index: 20; 
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15); 
+        /* 내부 리스트 스크롤은 유지 */
     }
     
-    /* [수정] 지도 영역 (하단) */
+    /* [수정] 지도 영역 (하단 배치, 고정 높이) */
     #mapArea { 
         width: 100%; 
-        flex: 1; /* 남은 공간 차지 */
-        height: auto;
+        flex: none;    /* 남은공간 채우기 X -> 고정 크기 O */
+        height: 400px; /* 지도 높이 */
         position: relative;
         z-index: 10;
+        /* 지도가 사이드바 아래에 위치하게 됨 */
     }
 
-    #log-content { 
+    /* 로그 화면 및 DB 화면도 전체 스크롤에 맞게 조정 */
+    #log-content, #db-content { 
         top: 110px; 
-        height: calc(100vh - 110px);
+        height: auto !important; 
+        min-height: calc(100vh - 110px);
         padding: 10px;
+        position: absolute; /* 고정(fixed) 대신 절대위치로 변경하여 스크롤 가능하게 */
     }
+
     .log-container { 
         flex-direction: column; 
-        overflow-y: auto; 
+        overflow: visible;
     }
     .log-section { width: 100%; margin-bottom: 20px; flex: none; height: auto; }
     .log-entries { max-height: 300px; }
 
-    #db-content {
-        top: 110px;
-        height: calc(100vh - 110px);
-        padding: 10px;
-    }
-    .container { padding: 15px; }
+    .container { padding: 15px; height: auto; }
     .search-container { flex-direction: column; align-items: stretch; }
     .search-container input { width: 100%; }
     .btn-search, .btn-reset { width: 100%; }
