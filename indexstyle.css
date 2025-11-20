@@ -174,7 +174,8 @@ h2, h3 {
     display: flex; 
     flex-direction: column; 
     gap: 20px;
-    background-color: #f4f6f9; /* 약간 어두운 배경으로 구분 */
+    /* 배경색 제거 (투명)하여 body의 그라데이션이 보이도록 함 */
+    background-color: transparent;
     position: fixed; 
     top: 70px; left: 0;
     z-index: 600;
@@ -210,50 +211,96 @@ h2, h3 {
     width: 100%;
     height: calc(100vh - 70px);
     padding: 20px;
-    overflow-y: auto; /* 자체 스크롤 허용 */
-    background-color: #f4f6f9; /* 배경색 통일 */
+    display: flex;
+    flex-direction: column;
+    /* 배경색 제거 (투명)하여 body의 그라데이션이 보이도록 함 */
+    background-color: transparent;
+    position: fixed;
+    top: 70px; left: 0;
+    z-index: 600;
 }
 
-/* 컨테이너 스타일 (기존 loge.html 스타일 통합) */
+/* 컨테이너를 로그 섹션처럼 보이게 수정 */
 .container {
     max-width: 1200px;
+    width: 100%;
     margin: 0 auto;
     background: white;
-    padding: 30px;
+    padding: 20px;
     border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    display: flex; 
+    flex-direction: column;
+    height: 100%; 
+}
+
+.container h2 {
+    background: linear-gradient(135deg, #71b7e6, #9b59b6); 
+    -webkit-background-clip: text; 
+    background-clip: text; 
+    color: transparent;
+    border-bottom: 1px solid #eee; 
+    padding-bottom: 10px;
+    flex-shrink: 0; 
 }
 
 /* 검색 영역 */
 .search-container {
     display: flex;
     gap: 10px;
-    margin-bottom: 20px;
-    padding: 20px;
-    background-color: #f1f3f5;
+    margin-bottom: 15px;
+    padding: 15px;
+    background-color: #f8f9fa;
     border-radius: 8px;
     align-items: center;
+    flex-shrink: 0; 
+    border: 1px solid #eee;
 }
 
 .search-container input[type="text"] {
     flex: 1;
-    padding: 12px 15px;
-    border: 1px solid #ccc;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
     border-radius: 4px;
     outline: none;
 }
 
-.btn-search { background: linear-gradient(135deg, #71b7e6, #9b59b6); color: white; border: none; padding: 12px 25px; border-radius: 4px; cursor: pointer; font-weight: 600; }
+.btn-search { background: linear-gradient(135deg, #71b7e6, #9b59b6); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: 600; }
 .btn-search:hover { opacity: 0.9; }
 
-.btn-reset { background-color: #6c757d; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-weight: 600; }
+.btn-reset { background-color: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: 600; }
 .btn-reset:hover { opacity: 0.9; }
 
+/* 결과 제목 */
+#result-title {
+    flex-shrink: 0;
+    margin-top: 5px;
+}
+
+/* 결과 영역 (스크롤 적용) */
+#result-area {
+    flex-grow: 1; 
+    overflow-y: auto; 
+    overflow-x: hidden;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
 /* 테이블 스타일 */
-.grid-wrapper { border: 1px solid #ccc; border-radius: 4px; overflow-x: auto; }
+.grid-wrapper { border: none; overflow-x: auto; } 
 .styled-table { width: 100%; border-collapse: collapse; font-size: 14px; background-color: white; }
-.styled-table th { background: linear-gradient(135deg, #71b7e6, #9b59b6); color: white; padding: 12px 15px; text-align: left; white-space: nowrap; }
-.styled-table td { padding: 12px 15px; border-bottom: 1px solid #ccc; border-right: 1px solid #eee; vertical-align: top; color: #333; }
+.styled-table th { 
+    background: #f8f9fa; 
+    color: #333; 
+    padding: 12px 15px; 
+    text-align: left; 
+    white-space: nowrap; 
+    border-bottom: 2px solid #ddd;
+    position: sticky; top: 0; 
+    z-index: 10;
+}
+.styled-table td { padding: 12px 15px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; vertical-align: top; color: #333; }
 
 /* Firebase Tree View 스타일 */
 .firebase-view { font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.6; color: #333; }
