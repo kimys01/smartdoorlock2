@@ -91,7 +91,7 @@
         </div>
     </div>
 
-    <!-- 5. DB 조회 컨텐츠 -->
+    <!-- 5. DB 조회 컨텐츠 (수정/삭제 기능 추가됨) -->
     <div id="db-content" class="hidden">
         <div class="container">
             <h2>데이터베이스 관리 (CRUD)</h2>
@@ -174,6 +174,230 @@
                 customAlert("Firebase 초기화 실패.");
                 return;
             }
+
+            // ---------------------------------------------------------
+            // [DB 관리 - CRUD 기능] 수정 및 삭제 로직
+            // ---------------------------------------------------------
+            
+            // (1) 전체 데이터 로드
+            window.loadAllDBData = function() {
+                const resultArea = document.getElementById('result-area');
+                const title = document.getElementById('result-title');
+                
+                title.textContent = "전체 사용자 목록 (users):";
+                resultArea.innerHTML = '<div class="message-box">전체 데이터를 불러오는 중...</div>';
+                document.getElementById('search-input').value = '';
+
+                database.ref('users').once('value').then((snapshot) => {
+                    if (snapshot.exists()) {
+                        renderGrid(snapshot.val());
+                    } else {
+                        resultArea.innerHTML = '<div class="message-box">저장된 사용자 데이터가 없습니다.</div>';
+                    }
+                }).catch((error) => {
+                    resultArea.innerHTML = `<div class="message-box" style="color: red;">데이터 로드 실패: ${error.message}</div>`;
+                });
+            }
+
+            // (2) 특정 사용자 검색
+            window.searchUser = function() {
+                const input = document.getElementById('search-input');
+                const resultArea = document.getElementById('result-area');
+                const title = document.getElementById('result-title');
+                const userId = input.value.trim();
+
+                if (!userId) { alert("사용자 ID를 입력해주세요."); return; }
+
+                title.textContent = `'${userId}' 검색 결과:`;
+                resultArea.innerHTML = '<div class="message-box">검색 중...</div>';
+
+                database.ref('users/' + userId).once('value').then((snapshot) => {
+                    if (snapshot.exists()) {
+                        const wrapper = {};
+                        wrapper[userId] = snapshot.val();
+                        renderGrid(wrapper);
+                    } else {
+                        resultArea.innerHTML = `<div class="message-box" style="color: #dc3545;">'${userId}' 사용자를 찾을 수 없습니다.</div>`;
+                    }
+                }).catch((error) => {
+                    resultArea.innerHTML = `<div class="message-box" style="color: red;">에러 발생: ${error.message}</div>`;
+                });
+            }
+
+            // (3) 테이블 렌더링 (유저 삭제 아이콘 추가)
+            function renderGrid(data) {
+                const resultArea = document.getElementById('result-area');
+                let tableHtml = `
+                    <div class="grid-wrapper">
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 80px;">사용자 ID</th>
+                                    <th>데이터 상세 내용 (Interactive Tree)</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+                for (const [userId, userData] of Object.entries(data)) {
+                    const rootPath = 'users/' + userId;
+                    const formattedData = createFirebaseView(userData, 0, rootPath);
+                    tableHtml += `
+                        <tr>
+                            <td style="vertical-align: top; font-weight: bold; color: #007bff; background-color: #fdfdfd;">
+                                <div style="display: flex; align-items: center; justify-content: space-between;">
+                                    <span>${userId}</span>
+                                    <!-- 유저 삭제 아이콘 -->
+                                    <button class="btn-delete-mini" onclick="deleteData('${rootPath}')" title="유저 삭제">✕</button>
+                                </div>
+                            </td>
+                            <td style="vertical-align: top;">
+                                <div class="firebase-view">${formattedData}</div>
+                            </td>
+                        </tr>`;
+                }
+                tableHtml += `</tbody></table></div>`;
+                resultArea.innerHTML = tableHtml;
+            }
+
+            // (4) 트리 뷰 생성 (데이터 수정/삭제 아이콘 추가)
+            function createFirebaseView(data, depth, currentPath) {
+                let html = '';
+                const indent = '<span class="fv-indent"></span>'.repeat(depth);
+
+                if (typeof data === 'object' && data !== null) {
+                    for (const [key, value] of Object.entries(data)) {
+                        const newPath = currentPath + '/' + key;
+                        const isObject = typeof value === 'object' && value !== null;
+                        
+                        if (isObject) {
+                            const isExpanded = false; 
+                            const arrowIcon = isExpanded ? '▼' : '▶';
+                            const arrowTransform = isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
+                            const childrenClass = isExpanded ? '' : 'fv-hidden';
+
+                            html += `
+                            <div class="fv-item">
+                                ${indent}
+                                <div class="fv-key-box" onclick="toggleNode(this)">
+                                    <span class="fv-arrow" style="transform: ${arrowTransform};">${arrowIcon}</span>
+                                    <span class="fv-key">${key}</span>
+                                </div>
+                                <!-- 객체 삭제 아이콘 -->
+                                <button class="btn-delete-mini" onclick="deleteData('${newPath}')" title="삭제">✕</button>
+                                <div class="fv-children ${childrenClass}">
+                                    ${createFirebaseView(value, depth + 1, newPath)}
+                                </div>
+                            </div>`;
+                        } else {
+                            // 값 표시 + 수정(✎) / 삭제(✕) 아이콘
+                            html += `
+                            <div class="fv-item" id="node-${newPath.replace(/\//g, '-')}">
+                                ${indent}
+                                <span style="display:inline-block; width:16px;"></span>
+                                <span class="fv-key">${key}:</span>
+                                <span class="fv-value">${formatValue(value)}</span>
+                                <button class="btn-edit-mini" onclick="enableEdit(this, '${newPath}', '${String(value).replace(/'/g, "\\'")}')" title="수정">✎</button>
+                                <button class="btn-delete-mini" onclick="deleteData('${newPath}')" title="삭제">✕</button>
+                            </div>`;
+                        }
+                    }
+                } else {
+                    html += `<div class="fv-item">${indent}${formatValue(data)}</div>`;
+                }
+                return html;
+            }
+
+            window.toggleNode = function(element) {
+                const childrenDiv = element.parentNode.querySelector('.fv-children');
+                const arrowSpan = element.querySelector('.fv-arrow');
+                if (childrenDiv) {
+                    if (childrenDiv.classList.contains('fv-hidden')) {
+                        childrenDiv.classList.remove('fv-hidden');
+                        arrowSpan.textContent = '▼';
+                        arrowSpan.style.transform = 'rotate(0deg)';
+                    } else {
+                        childrenDiv.classList.add('fv-hidden');
+                        arrowSpan.textContent = '▶';
+                        arrowSpan.style.transform = 'rotate(-90deg)';
+                    }
+                }
+            }
+
+            function formatValue(val) {
+                if (typeof val === 'string') return `<span class="fv-string">"${val}"</span>`;
+                if (typeof val === 'number') return `<span class="fv-number">${val}</span>`;
+                if (typeof val === 'boolean') return `<span class="fv-boolean">${val}</span>`;
+                if (val === null) return `<span class="fv-null">null</span>`;
+                return val;
+            }
+
+            // (5) 수정 모드 활성화 (입력창 표시)
+            window.enableEdit = function(btn, path, currentVal) {
+                const container = btn.parentNode;
+                const valueSpan = container.querySelector('.fv-value');
+                
+                if (container.querySelector('.edit-input')) return;
+
+                valueSpan.style.display = 'none';
+                btn.style.display = 'none'; // 수정 버튼 숨김
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'edit-input';
+                input.value = currentVal;
+                
+                const saveBtn = document.createElement('button');
+                saveBtn.textContent = '저장';
+                saveBtn.className = 'btn-save-mini';
+                saveBtn.onclick = () => saveEdit(path, input.value);
+
+                const cancelBtn = document.createElement('button');
+                cancelBtn.textContent = '취소';
+                cancelBtn.className = 'btn-cancel-mini';
+                cancelBtn.onclick = () => {
+                    valueSpan.style.display = 'inline';
+                    btn.style.display = 'inline-flex'; // 아이콘 다시 보임
+                    input.remove();
+                    saveBtn.remove();
+                    cancelBtn.remove();
+                };
+
+                container.insertBefore(input, btn);
+                container.insertBefore(saveBtn, btn);
+                container.insertBefore(cancelBtn, btn);
+            }
+
+            // (6) DB 업데이트 (수정 저장)
+            window.saveEdit = function(path, newVal) {
+                let finalVal = newVal;
+                // 타입 자동 추론
+                if (newVal === 'true') finalVal = true;
+                else if (newVal === 'false') finalVal = false;
+                else if (!isNaN(Number(newVal)) && newVal.trim() !== '') finalVal = Number(newVal);
+
+                database.ref(path).set(finalVal)
+                    .then(() => {
+                        alert('수정되었습니다.');
+                        if (document.getElementById('search-input').value) searchUser();
+                        else loadAllDBData();
+                    })
+                    .catch(err => alert('수정 실패: ' + err.message));
+            }
+
+            // (7) DB 삭제
+            window.deleteData = function(path) {
+                if (confirm('정말 삭제하시겠습니까?\n경로: ' + path)) {
+                    database.ref(path).remove()
+                        .then(() => {
+                            alert('삭제되었습니다.');
+                            if (document.getElementById('search-input').value) searchUser();
+                            else loadAllDBData();
+                        })
+                        .catch(err => alert('삭제 실패: ' + err.message));
+                }
+            }
+
+            // ---------------------------------------------------------
 
             window.switchLogTab = function(tabName) {
                 const buttons = document.querySelectorAll('.log-tab-btn');
@@ -273,7 +497,6 @@
 
             function drawDoorlockZones() {
                 const doorlockPosition = new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG);
-                
                 const markerImage = new kakao.maps.MarkerImage(
                     'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
                     new kakao.maps.Size(35, 35)
@@ -284,7 +507,6 @@
                     map: map,
                     title: "우리집 도어락"
                 });
-
                 const radii = [
                     { r: 1000, color: '#FF0000' }, 
                     { r: 2000, color: '#FFA500' }, 
@@ -333,10 +555,8 @@
                 }
                 const infoArea = document.getElementById('infoArea');
                 if (infoArea) infoArea.innerHTML = '';
-                
                 const logBtnElem = document.getElementById('logBtn');
-                if (logBtnElem) logBtnElem.disabled = true; 
-                
+                if (logBtnElem) logBtnElem.disabled = true;
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
                 if (isAdmin) {
                     const userInfoDiv = document.getElementById('userInfo');
@@ -349,18 +569,14 @@
 
             function showLocationOnMap(lat, lng) {
                 if (!map) return;
-                
                 if (selectedLogMarker) {
                     selectedLogMarker.setMap(null);
                     if (selectedLogMarker.infoBox) selectedLogMarker.infoBox.setMap(null);
                 }
                 const position = new kakao.maps.LatLng(lat, lng);
-
                 map.setCenter(position); 
                 map.setLevel(5, {animate: true});
-
                 const dist = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
-                
                 const overlayContent = `<div class="custom-overlay-info">
                                         <strong>선택된 위치</strong><br>
                                         거리: <span style="color:blue; font-weight:bold;">${dist.toFixed(2)}km</span>
@@ -368,15 +584,12 @@
                 const infoOverlay = new kakao.maps.CustomOverlay({
                     content: overlayContent, position: position, xAnchor: 0.5, yAnchor: 2.5, zIndex: 3
                 });
-
                 const markerImg = document.createElement('img');
                 markerImg.src = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png';
                 markerImg.className = 'custom-marker-pin';
                 markerImg.style.cursor = 'pointer';
-                
                 markerImg.addEventListener('mouseover', () => { infoOverlay.setMap(map); });
                 markerImg.addEventListener('mouseout', () => { infoOverlay.setMap(null); });
-
                 selectedLogMarker = new kakao.maps.CustomOverlay({
                     position: position, content: markerImg, yAnchor: 1
                 });
@@ -393,7 +606,6 @@
 
                 const infoArea = document.getElementById('infoArea');
                 const userInfoDiv = document.getElementById('userInfo');
-                
                 if (infoArea && userInfoDiv) {
                     infoArea.innerHTML = `
                         <div style="margin-bottom:10px; flex-shrink:0;"><strong>ID:</strong> ${userId}</div>
@@ -404,7 +616,6 @@
                         <div class="log-list">Loading...</div>
                     `;
                     userInfoDiv.classList.remove('hidden');
-
                     document.getElementById('showAllBtn').onclick = function() {
                         this.classList.add('active');
                         document.getElementById('showRangeBtn').classList.remove('active');
@@ -416,13 +627,11 @@
                         renderLocationLogs(true);
                     };
                 }
-
                 database.ref('users/' + userId + '/location_logs').once('value').then((snapshot) => {
                     currentUserLocationLogs = [];
                     if (snapshot.exists()) {
                         const val = snapshot.val();
                         let isList = false;
-                        
                         snapshot.forEach(child => {
                             const cVal = child.val();
                             if (cVal && (cVal.latitude !== undefined || cVal.lat !== undefined)) {
@@ -430,14 +639,12 @@
                                 isList = true;
                             }
                         });
-
                         if (!isList && val && (val.latitude !== undefined || val.lat !== undefined)) {
                             currentUserLocationLogs.push(val);
                         }
-                        
                         currentUserLocationLogs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                     }
-                    renderLocationLogs(false); 
+                    renderLocationLogs(false);
                 }).catch(err => {
                     console.error(err);
                     customAlert("위치 기록 로드 실패");
@@ -447,66 +654,47 @@
             function renderLocationLogs(filterRange) {
                 const logListDiv = document.querySelector('#userInfo .log-list'); 
                 if (!logListDiv) return;
-                
-                logListDiv.innerHTML = ''; 
-
+                logListDiv.innerHTML = '';
                 markers.forEach(m => {
                     if (m.customOverlay) m.customOverlay.setMap(null);
                     m.setMap(null);
                 });
                 markers = [];
                 if (currentPolyline) { currentPolyline.setMap(null); currentPolyline = null; }
-
                 if (currentUserLocationLogs.length === 0) {
                     logListDiv.innerHTML = '<div style="padding:10px; color:#666;">기록 없음</div>';
                     return;
                 }
-
                 let path = [];
-                const bounds = new kakao.maps.LatLngBounds(); 
+                const bounds = new kakao.maps.LatLngBounds();
                 bounds.extend(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
                 let mapCount = 0;
-
                 const listFragment = document.createDocumentFragment();
-
                 currentUserLocationLogs.forEach((pos) => { 
                     if (!pos || (!pos.latitude && !pos.lat) || (!pos.longitude && !pos.lon)) return;
-
                     const lat = parseFloat(pos.latitude || pos.lat);
                     const lng = parseFloat(pos.longitude || pos.lon);
                     const alt = pos.altitude !== undefined ? parseFloat(pos.altitude) : (pos.alt !== undefined ? parseFloat(pos.alt) : null);
-
                     const distKm = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
-
                     if (filterRange && distKm > MAX_DISTANCE_KM) return; 
-
                     let rowStyle = '';
                     if (distKm <= 1.0) rowStyle = 'background-color: #ffeaea;'; 
                     else if (distKm <= 2.0) rowStyle = 'background-color: #fff8e1;'; 
-
                     const logEntry = document.createElement('div');
                     logEntry.className = 'log-entry';
                     if (rowStyle) logEntry.style = rowStyle; 
-                    
                     const timeStr = pos.timestamp ? new Date(pos.timestamp).toLocaleString('ko-KR') : '시간 없음';
-                    
                     let entryContent = `<small>${timeStr}</small><br>`;
                     entryContent += `거리: <strong>${distKm.toFixed(2)}km</strong><br>`;
                     entryContent += `위도: ${lat.toFixed(6)} / 경도: ${lng.toFixed(6)}`;
-                    if (alt !== null && !isNaN(alt)) {
-                        entryContent += `<br>고도: ${alt.toFixed(2)}m`;
-                    }
-                    
+                    if (alt !== null && !isNaN(alt)) entryContent += `<br>고도: ${alt.toFixed(2)}m`;
                     logEntry.innerHTML = entryContent;
                     logEntry.addEventListener('click', () => showLocationOnMap(lat, lng));
-                    
                     listFragment.appendChild(logEntry);
-
                     if (mapCount < 50) {
                         const latlng = new kakao.maps.LatLng(lat, lng);
                         path.push(latlng); 
                         bounds.extend(latlng);
-                        
                         const dotContent = `<div class="custom-overlay-info">${distKm.toFixed(2)}km 지점</div>`;
                         const infoOverlay = new kakao.maps.CustomOverlay({
                             content: dotContent, position: latlng, yAnchor: 2.5, zIndex: 3
@@ -516,7 +704,6 @@
                         dotImg.className = 'custom-marker-dot';
                         dotImg.addEventListener('mouseover', () => infoOverlay.setMap(map));
                         dotImg.addEventListener('mouseout', () => infoOverlay.setMap(null));
-
                         const overlay = new kakao.maps.CustomOverlay({
                             position: latlng, content: dotImg, xAnchor: 0.5, yAnchor: 0.5
                         });
@@ -526,9 +713,7 @@
                         mapCount++;
                     }
                 });
-                
                 logListDiv.appendChild(listFragment);
-
                 if (filterRange && path.length > 0) {
                     currentPolyline = new kakao.maps.Polyline({
                         path: path, strokeWeight: 4, strokeColor: '#CC00CC', strokeOpacity: 0.8, strokeStyle: 'solid', map: map
@@ -543,11 +728,9 @@
                 const doorLockLogContainer = document.querySelector('#doorLockLogs .log-entries');
                 const appLogContainer = document.querySelector('#appLogs .log-entries');
                 const logUserTitle = document.getElementById('logUserTitle');
-
                 logUserTitle.textContent = `${userId} 전체 로그`;
                 doorLockLogContainer.innerHTML = '<em>로딩 중...</em>';
                 appLogContainer.innerHTML = '<em>로딩 중...</em>';
-
                 database.ref('doorlock_logs/' + userId).orderByKey().once('value').then((snapshot) => {
                     doorLockLogContainer.innerHTML = '';
                     if (!snapshot.exists()) {
@@ -556,7 +739,6 @@
                         const logs = [];
                         const val = snapshot.val();
                         let isList = false;
-
                         snapshot.forEach(c => {
                             const cVal = c.val();
                             if (cVal && (cVal.method !== undefined || cVal.timestamp !== undefined)) {
@@ -567,32 +749,26 @@
                         if (!isList && val && (val.method !== undefined || val.timestamp !== undefined)) {
                             logs.push(val);
                         }
-
                         logs.sort((a, b) => {
                             const tA = a.timestamp ? new Date(typeof a.timestamp === 'string' ? a.timestamp.replace(" ", "T") : a.timestamp).getTime() : 0;
                             const tB = b.timestamp ? new Date(typeof b.timestamp === 'string' ? b.timestamp.replace(" ", "T") : b.timestamp).getTime() : 0;
                             return tB - tA;
                         });
-
                         logs.forEach(log => {
                             const entry = document.createElement('div');
                             entry.className = 'full-log-entry';
-                            
                             let time = 'N/A';
                             if (log.timestamp) {
                                 if (typeof log.timestamp === 'number') time = new Date(log.timestamp).toLocaleString('ko-KR');
                                 else time = log.timestamp;
                             }
-                            
                             const method = log.method || '방식 모름';
                             const status = log.status || '상태 모름';
-
                             entry.innerHTML = `<strong>[${time}]</strong> ${method} - ${status}`;
                             doorLockLogContainer.appendChild(entry);
                         });
                     }
                 });
-
                 database.ref('users/' + userId + '/app_logs').once('value').then((snapshot) => {
                     appLogContainer.innerHTML = '';
                     if (!snapshot.exists()) {
@@ -607,17 +783,14 @@
                                 });
                             }
                         });
-                        
                         logs.sort((a, b) => {
                             const tA = a.timestamp ? new Date(typeof a.timestamp === 'string' ? a.timestamp.replace(" ", "T") : a.timestamp).getTime() : 0;
                             const tB = b.timestamp ? new Date(typeof b.timestamp === 'string' ? b.timestamp.replace(" ", "T") : b.timestamp).getTime() : 0;
                             return tB - tA;
                         });
-
                         logs.forEach(log => {
                             const entry = document.createElement('div');
                             entry.className = 'full-log-entry';
-                            
                             let time = 'N/A';
                             if (log.timestamp) {
                                 if (typeof log.timestamp === 'number') {
@@ -626,16 +799,13 @@
                                     time = log.timestamp;
                                 }
                             }
-
                             let msg = log.event;
-                            
                             if (!msg) {
                                 if (log.new_auth) msg = `인증방식 변경: ${log.new_auth}`;
                                 else if (log.new_name) msg = `이름 변경: ${log.new_name}`;
                                 else if (log.new_pw) msg = `비밀번호 변경: ${log.new_pw}`;
                                 else msg = `<pre style="margin:0; white-space:pre-wrap; font-family:inherit; color:#555;">${JSON.stringify(log, null, 2)}</pre>`;
                             }
-                            
                             entry.innerHTML = `<strong>[${time}]</strong> ${msg}`;
                             appLogContainer.appendChild(entry);
                         });
@@ -643,221 +813,11 @@
                 });
             }
 
-            window.loadAllDBData = function() {
-                const resultArea = document.getElementById('result-area');
-                const title = document.getElementById('result-title');
-                
-                title.textContent = "전체 사용자 목록 (users):";
-                resultArea.innerHTML = '<div class="message-box">전체 데이터를 불러오는 중...</div>';
-                document.getElementById('search-input').value = '';
-
-                database.ref('users').once('value').then((snapshot) => {
-                    if (snapshot.exists()) {
-                        renderGrid(snapshot.val());
-                    } else {
-                        resultArea.innerHTML = '<div class="message-box">저장된 사용자 데이터가 없습니다.</div>';
-                    }
-                }).catch((error) => {
-                    resultArea.innerHTML = `<div class="message-box" style="color: red;">데이터 로드 실패: ${error.message}</div>`;
-                });
-            }
-
-            window.searchUser = function() {
-                const input = document.getElementById('search-input');
-                const resultArea = document.getElementById('result-area');
-                const title = document.getElementById('result-title');
-                const userId = input.value.trim();
-
-                if (!userId) { alert("사용자 ID를 입력해주세요."); return; }
-
-                title.textContent = `'${userId}' 검색 결과:`;
-                resultArea.innerHTML = '<div class="message-box">검색 중...</div>';
-
-                database.ref('users/' + userId).once('value').then((snapshot) => {
-                    if (snapshot.exists()) {
-                        const wrapper = {};
-                        wrapper[userId] = snapshot.val();
-                        renderGrid(wrapper);
-                    } else {
-                        resultArea.innerHTML = `<div class="message-box" style="color: #dc3545;">'${userId}' 사용자를 찾을 수 없습니다.</div>`;
-                    }
-                }).catch((error) => {
-                    resultArea.innerHTML = `<div class="message-box" style="color: red;">에러 발생: ${error.message}</div>`;
-                });
-            }
-
-            // [수정됨] 유저 삭제 버튼 아이콘화 (✕)
-            function renderGrid(data) {
-                const resultArea = document.getElementById('result-area');
-                let tableHtml = `
-                    <div class="grid-wrapper">
-                        <table class="styled-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 80px;">사용자 ID</th>
-                                    <th>데이터 상세 내용 (Interactive Tree)</th>
-                                </tr>
-                            </thead>
-                            <tbody>`;
-
-                for (const [userId, userData] of Object.entries(data)) {
-                    const rootPath = 'users/' + userId;
-                    const formattedData = createFirebaseView(userData, 0, rootPath);
-                    tableHtml += `
-                        <tr>
-                            <td style="vertical-align: top; font-weight: bold; color: #007bff; background-color: #fdfdfd;">
-                                <div style="display: flex; align-items: center; justify-content: space-between;">
-                                    <span>${userId}</span>
-                                    <button class="btn-delete-mini" onclick="deleteData('${rootPath}')" title="유저 삭제">✕</button>
-                                </div>
-                            </td>
-                            <td style="vertical-align: top;">
-                                <div class="firebase-view">${formattedData}</div>
-                            </td>
-                        </tr>`;
-                }
-                tableHtml += `</tbody></table></div>`;
-                resultArea.innerHTML = tableHtml;
-            }
-
-            // [수정됨] 삭제 버튼 아이콘화 (✕)
-            function createFirebaseView(data, depth, currentPath) {
-                let html = '';
-                const indent = '<span class="fv-indent"></span>'.repeat(depth);
-
-                if (typeof data === 'object' && data !== null) {
-                    for (const [key, value] of Object.entries(data)) {
-                        const newPath = currentPath + '/' + key;
-                        const isObject = typeof value === 'object' && value !== null;
-                        
-                        if (isObject) {
-                            const isExpanded = false; 
-                            const arrowIcon = isExpanded ? '▼' : '▶';
-                            const arrowTransform = isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
-                            const childrenClass = isExpanded ? '' : 'fv-hidden';
-
-                            html += `
-                            <div class="fv-item">
-                                ${indent}
-                                <div class="fv-key-box" onclick="toggleNode(this)">
-                                    <span class="fv-arrow" style="transform: ${arrowTransform};">${arrowIcon}</span>
-                                    <span class="fv-key">${key}</span>
-                                </div>
-                                <button class="btn-delete-mini" onclick="deleteData('${newPath}')" title="삭제">✕</button>
-                                <div class="fv-children ${childrenClass}">
-                                    ${createFirebaseView(value, depth + 1, newPath)}
-                                </div>
-                            </div>`;
-                        } else {
-                            html += `
-                            <div class="fv-item" id="node-${newPath.replace(/\//g, '-')}">
-                                ${indent}
-                                <span style="display:inline-block; width:16px;"></span>
-                                <span class="fv-key">${key}:</span>
-                                <span class="fv-value">${formatValue(value)}</span>
-                                <button class="btn-edit-mini" onclick="enableEdit(this, '${newPath}', '${String(value).replace(/'/g, "\\'")}')" title="수정">✏️</button>
-                                <button class="btn-delete-mini" onclick="deleteData('${newPath}')" title="삭제">✕</button>
-                            </div>`;
-                        }
-                    }
-                } else {
-                    html += `<div class="fv-item">${indent}${formatValue(data)}</div>`;
-                }
-                return html;
-            }
-
-            window.toggleNode = function(element) {
-                const childrenDiv = element.parentNode.querySelector('.fv-children');
-                const arrowSpan = element.querySelector('.fv-arrow');
-                if (childrenDiv) {
-                    if (childrenDiv.classList.contains('fv-hidden')) {
-                        childrenDiv.classList.remove('fv-hidden');
-                        arrowSpan.textContent = '▼';
-                        arrowSpan.style.transform = 'rotate(0deg)';
-                    } else {
-                        childrenDiv.classList.add('fv-hidden');
-                        arrowSpan.textContent = '▶';
-                        arrowSpan.style.transform = 'rotate(-90deg)';
-                    }
-                }
-            }
-
-            function formatValue(val) {
-                if (typeof val === 'string') return `<span class="fv-string">"${val}"</span>`;
-                if (typeof val === 'number') return `<span class="fv-number">${val}</span>`;
-                if (typeof val === 'boolean') return `<span class="fv-boolean">${val}</span>`;
-                if (val === null) return `<span class="fv-null">null</span>`;
-                return val;
-            }
-
-            window.enableEdit = function(btn, path, currentVal) {
-                const container = btn.parentNode;
-                const valueSpan = container.querySelector('.fv-value');
-                
-                if (container.querySelector('.edit-input')) return;
-
-                valueSpan.style.display = 'none';
-                btn.style.display = 'none';
-
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.className = 'edit-input';
-                input.value = currentVal;
-                
-                const saveBtn = document.createElement('button');
-                saveBtn.textContent = '저장';
-                saveBtn.className = 'btn-save-mini';
-                saveBtn.onclick = () => saveEdit(path, input.value);
-
-                const cancelBtn = document.createElement('button');
-                cancelBtn.textContent = '취소';
-                cancelBtn.className = 'btn-cancel-mini';
-                cancelBtn.onclick = () => {
-                    valueSpan.style.display = 'inline';
-                    btn.style.display = 'inline-block';
-                    input.remove();
-                    saveBtn.remove();
-                    cancelBtn.remove();
-                };
-
-                container.insertBefore(input, btn);
-                container.insertBefore(saveBtn, btn);
-                container.insertBefore(cancelBtn, btn);
-            }
-
-            window.saveEdit = function(path, newVal) {
-                let finalVal = newVal;
-                if (newVal === 'true') finalVal = true;
-                else if (newVal === 'false') finalVal = false;
-                else if (!isNaN(Number(newVal)) && newVal.trim() !== '') finalVal = Number(newVal);
-
-                database.ref(path).set(finalVal)
-                    .then(() => {
-                        alert('수정되었습니다.');
-                        if (document.getElementById('search-input').value) searchUser();
-                        else loadAllDBData();
-                    })
-                    .catch(err => alert('수정 실패: ' + err.message));
-            }
-
-            window.deleteData = function(path) {
-                if (confirm('정말 삭제하시겠습니까?\n경로: ' + path)) {
-                    database.ref(path).remove()
-                        .then(() => {
-                            alert('삭제되었습니다.');
-                            if (document.getElementById('search-input').value) searchUser();
-                            else loadAllDBData();
-                        })
-                        .catch(err => alert('삭제 실패: ' + err.message));
-                }
-            }
-
             function handleLoginSubmit(e) {
                 e.preventDefault();
                 const usernameInput = document.getElementById('username')?.value.trim();
                 const passwordInput = document.getElementById('password')?.value.trim();
                 if (!database) return;
-
                 database.ref('admin_pass').once('value').then((snap) => {
                     let loginSuccess = false;
                     let isAdmin = false;
@@ -911,11 +871,9 @@
                 mainContent.classList.add('hidden');
                 dbContent.classList.add('hidden');
                 logContent.classList.remove('hidden');
-
                 document.getElementById('mapBtn').disabled = false;
                 document.getElementById('logBtn').disabled = true;
                 document.getElementById('newBtn').disabled = false;
-
                 const u = selectedUserId || sessionStorage.getItem('userId');
                 if (u) loadAllLogs(u);
                 else customAlert("사용자 선택 필요");
@@ -925,11 +883,9 @@
                 logContent.classList.add('hidden');
                 dbContent.classList.add('hidden');
                 mainContent.classList.remove('hidden');
-
                 document.getElementById('mapBtn').disabled = true;
                 document.getElementById('logBtn').disabled = false;
                 document.getElementById('newBtn').disabled = false;
-                
                 if(map) map.relayout();
             }
 
@@ -937,11 +893,9 @@
                 mainContent.classList.add('hidden');
                 logContent.classList.add('hidden');
                 dbContent.classList.remove('hidden');
-
                 document.getElementById('mapBtn').disabled = false;
                 document.getElementById('logBtn').disabled = false;
                 document.getElementById('newBtn').disabled = true;
-
                 loadAllDBData();
             }
 
@@ -950,7 +904,6 @@
                 document.getElementById('logBtn').onclick = handleLogView;
                 document.getElementById('newBtn').onclick = handleDBView;
                 document.getElementById('mapBtn').onclick = handleBackToMap;
-                
                 const headerTitle = document.getElementById('header-title');
                 if (headerTitle) headerTitle.onclick = () => window.location.reload();
             }
