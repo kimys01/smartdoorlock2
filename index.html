@@ -368,6 +368,11 @@
                     if (selectedLogMarker.infoBox) selectedLogMarker.infoBox.setMap(null);
                 }
                 const position = new kakao.maps.LatLng(lat, lng);
+
+                // [수정] 지도 중심 이동 및 250m 단위(Level 5) 확대
+                map.setCenter(position); 
+                map.setLevel(5, {animate: true});
+
                 const dist = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
                 const overlayContent = `<div class="custom-overlay-info">
                                         <strong>선택된 위치</strong><br>
@@ -389,7 +394,6 @@
                 });
                 selectedLogMarker.infoBox = infoOverlay; 
                 selectedLogMarker.setMap(map);
-                map.panTo(position);
             }
 
             // --- 사용자 선택 및 데이터 로딩 ---
