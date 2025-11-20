@@ -175,7 +175,6 @@
                 return;
             }
 
-            // --- [기능] 모바일 탭 및 CRUD UI 제어 ---
             window.switchLogTab = function(tabName) {
                 const buttons = document.querySelectorAll('.log-tab-btn');
                 buttons.forEach(btn => btn.classList.remove('active'));
@@ -191,27 +190,19 @@
                 }
             }
 
-            // [추가] 모바일에서 아이템 클릭 시 버튼 표시 및 타이머 설정
+            // [추가] 모바일 터치 시 버튼 표시 (1분 타이머)
             window.toggleMobileButtons = function(element, event) {
-                // 버튼이나 화살표를 직접 클릭한 경우는 무시 (해당 기능 동작해야 함)
                 if (event.target.tagName === 'BUTTON' || event.target.classList.contains('fv-arrow')) {
                     return;
                 }
-                
-                // 기존에 활성화된 타이머가 있다면 초기화 (시간 연장 효과)
                 if (element.dataset.timerId) {
                     clearTimeout(element.dataset.timerId);
                 }
-
-                // 활성화 클래스 추가
                 element.classList.add('mobile-active');
-
-                // 60초(60000ms) 뒤에 클래스 제거
                 const timerId = setTimeout(() => {
                     element.classList.remove('mobile-active');
                     delete element.dataset.timerId;
-                }, 60000); // 1분 뒤 사라짐
-
+                }, 60000);
                 element.dataset.timerId = timerId;
             }
 
