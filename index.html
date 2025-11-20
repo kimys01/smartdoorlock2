@@ -2,40 +2,26 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <!-- 모바일 화면에서 적절한 비율로 보이도록 설정 (반응형 웹 필수) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- [중요] 모바일 브라우저(특히 다크모드)에서 색상 반전을 막고 라이트 모드로 강제 설정 -->
     <meta name="color-scheme" content="light only">
     <meta name="supported-color-schemes" content="light">
 
     <title>Smart Doorlock Capstone</title>
 
-    <!-- 구글 폰트 (Poppins) 불러오기 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 
-    <!-- 외부 CSS 파일 연결 -->
     <link rel="stylesheet" href="indexstyle.css">
 
-    <!-- 외부 라이브러리(SDK) 로드 -->
-    <!-- 1. 카카오 지도 SDK (지도 기능) -->
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
-    <!-- 2. Firebase SDK (데이터베이스 및 인증 기능) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-
-    <!-- CSS가 로드되지 않을 경우를 대비한 내부 스타일 (필요시 사용, 현재는 외부 파일 사용 중) -->
-    <style>
-        /* 외부 파일(indexstyle.css)이 우선 적용됩니다. */
-    </style>
 </head>
 <body>
 
-    <!-- ==========================
-         1. 로그인 화면 (초기 화면)
-         ========================== -->
+    <!-- 1. 로그인 화면 -->
     <div id="login-container">
         <h2>SmartDoorLock</h2>
         <form id="login-form">
@@ -51,71 +37,53 @@
         </form>
     </div>
 
-    <!-- ==========================
-         2. 상단 헤더 (로그인 후 표시)
-         ========================== -->
+    <!-- 2. 상단 헤더 -->
     <div id="header" class="hidden">
-        <!-- 로고 클릭 시 새로고침 -->
         <h1 id="header-title" style="cursor: pointer;">Smart Doorlock</h1> 
-        
-        <!-- 네비게이션 버튼 그룹 -->
         <div class="button-group">
-            <button id="mapBtn" disabled>지도</button>       <!-- 메인 화면으로 이동 -->
-            <button id="logBtn" disabled>로그 보기</button>  <!-- 로그 화면으로 이동 -->
-            <button id="newBtn">DB 조회</button>             <!-- DB 전체 조회 화면으로 이동 -->
+            <button id="mapBtn" disabled>지도</button>
+            <button id="logBtn" disabled>로그 보기</button>
+            <button id="newBtn">DB 조회</button>
             <button id="logoutBtn">로그아웃</button>
         </div>
     </div>
 
-    <!-- ==========================
-         3. 메인 컨텐츠 (지도 + 유저 정보)
-         ========================== -->
+    <!-- 3. 메인 컨텐츠 -->
     <div id="main-content" class="hidden">
-        <!-- 좌측(모바일: 상단) 사이드바 -->
         <div id="sidebar">
-            <!-- (1) 일반 유저용 정보창 -->
             <div id="userInfo" class="hidden">
                 <div class="info-header">
                     <h2>User Info</h2>
-                    <button id="closeUserInfoBtn">X</button> <!-- 정보창 닫기/초기화 -->
+                    <button id="closeUserInfoBtn">X</button>
                 </div>
-                <!-- 로그 리스트가 표시될 영역 -->
                 <div id="infoArea">사용자를 선택해주세요.</div>
             </div>
-            <!-- (2) 관리자용 유저 리스트 -->
             <div id="userList">
                 <h2>User List</h2>
             </div>
         </div>
-        
-        <!-- 우측(모바일: 하단) 지도 영역 -->
         <div id="mapArea">
             <h2>Map</h2>
             <div id="map"></div> 
         </div>
     </div>
 
-    <!-- ==========================
-         4. 로그 컨텐츠 (상세 로그 화면)
-         ========================== -->
+    <!-- 4. 로그 컨텐츠 -->
     <div id="log-content" class="hidden">
         <div class="log-header">
             <h2 id="logUserTitle">전체 로그</h2>
         </div>
 
-        <!-- 모바일 전용 탭 버튼 (CSS로 데스크탑에선 숨김 처리됨) -->
         <div class="log-tab-buttons">
             <button id="tab-doorlock" class="log-tab-btn active" onclick="switchLogTab('doorlock')">도어락 로그</button>
             <button id="tab-app" class="log-tab-btn" onclick="switchLogTab('app')">앱 로그</button>
         </div>
 
         <div class="log-container">
-            <!-- 도어락 로그 섹션 -->
             <div id="doorLockLogs" class="log-section active-tab-content">
                 <h3>DoorLock Logs</h3>
                 <div class="log-entries"></div>
             </div>
-            <!-- 앱 로그 섹션 -->
             <div id="appLogs" class="log-section">
                 <h3>App Logs</h3>
                 <div class="log-entries"></div>
@@ -123,29 +91,23 @@
         </div>
     </div>
 
-    <!-- ==========================
-         5. DB 조회 컨텐츠 (트리 뷰)
-         ========================== -->
+    <!-- 5. DB 조회 컨텐츠 (수정/삭제 기능 추가됨) -->
     <div id="db-content" class="hidden">
         <div class="container">
-            <h2>DataBase</h2>
-            <!-- 검색바 -->
+            <h2>데이터베이스 관리 (CRUD)</h2>
             <div class="search-container">
                 <input type="text" id="search-input" placeholder="검색할 사용자 ID를 입력하세요 (예: 123456)">
                 <button class="btn-search" onclick="searchUser()">검색</button>
-                <button class="btn-reset" onclick="loadAllDBData()">전체 목록</button>
+                <button class="btn-reset" onclick="loadAllDBData()" style="margin-left:5px;">전체 목록</button>
             </div>
             <h3 id="result-title">사용자 목록:</h3>
-            <!-- 결과 출력 영역 -->
             <div id="result-area">
                 <div class="message-box">데이터를 불러오는 중입니다...</div>
             </div>
         </div>
     </div>
 
-    <!-- ==========================
-         모달 팝업들 (Alert 및 로그아웃)
-         ========================== -->
+    <!-- 모달 팝업들 -->
     <div id="custom-modal" class="hidden">
         <div class="modal-content">
             <p id="modal-message"></p>
@@ -163,14 +125,10 @@
         </div>
     </div>
 
-    <!-- ==========================
-         자바스크립트 로직 시작
-         ========================== -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             console.log("App initialized.");
 
-            // --- DOM 요소 참조 ---
             const loginContainer = document.getElementById('login-container');
             const mainContent = document.getElementById('main-content');
             const logContent = document.getElementById('log-content');
@@ -180,12 +138,10 @@
             const body = document.querySelector('body');
             const closeUserInfoButton = document.getElementById('closeUserInfoBtn');
 
-            // --- [설정] 도어락 고정 위치 및 반경 설정 ---
             const DOORLOCK_LAT = 37.566826; 
             const DOORLOCK_LNG = 126.9786567;
             const MAX_DISTANCE_KM = 3.0;
 
-            // --- Firebase 설정 (자신의 프로젝트 정보) ---
             const firebaseConfig = {
                 apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
                 authDomain: "smartdoorlock-b4636.web.app", 
@@ -197,17 +153,15 @@
                 measurementId: "G-4TH9MB9WPM"
             };
 
-            // 전역 변수 선언
             let database;
             let map;
-            let markers = []; // 지도 위 마커들
-            let zoneCircles = []; // 반경 원들
-            let currentPolyline; // 경로 선
-            let selectedLogMarker; // 현재 선택된 로그의 핀
-            let selectedUserId = null; // 현재 보고 있는 유저 ID
-            let currentUserLocationLogs = []; // 불러온 위치 로그 데이터
+            let markers = [];
+            let zoneCircles = [];
+            let currentPolyline;
+            let selectedLogMarker;
+            let selectedUserId = null;
+            let currentUserLocationLogs = [];
 
-            // 1. Firebase 초기화
             try {
                 if (typeof firebase === 'undefined' || !firebase.initializeApp) {
                       throw new Error("Firebase SDK not loaded correctly.");
@@ -221,15 +175,11 @@
                 return;
             }
 
-            // --- [기능] 모바일 탭 전환 함수 ---
-            // 도어락 로그 <-> 앱 로그 탭을 누를 때 호출됨
             window.switchLogTab = function(tabName) {
-                // 1. 버튼 스타일 변경 (활성화된 탭 강조)
                 const buttons = document.querySelectorAll('.log-tab-btn');
                 buttons.forEach(btn => btn.classList.remove('active'));
                 document.getElementById('tab-' + tabName).classList.add('active');
 
-                // 2. 내용 섹션 표시/숨김 전환
                 const sections = document.querySelectorAll('.log-section');
                 sections.forEach(sec => sec.classList.remove('active-tab-content'));
                 
@@ -240,10 +190,9 @@
                 }
             }
 
-            // --- [유틸] 두 좌표 간 거리 계산 (Haversine 공식) ---
             function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
                 function deg2rad(deg) { return deg * (Math.PI/180); }
-                var R = 6371; // 지구 반지름 (km)
+                var R = 6371; 
                 var dLat = deg2rad(lat2-lat1);  
                 var dLon = deg2rad(lon2-lon1); 
                 var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -252,7 +201,6 @@
                 return R * c; 
             }
 
-            // --- [UI] 커스텀 알림창 표시 ---
             function customAlert(message) {
                 const modal = document.getElementById('custom-modal');
                 const messageElem = document.getElementById('modal-message');
@@ -264,14 +212,11 @@
                 }
             }
 
-            // --- [화면 전환] 메인 컨텐츠 표시 ---
-            // 관리자 여부에 따라 다른 UI를 보여줌
             function showMainContent(isAdmin, loggedInUserId) {
                 loginContainer.classList.add('hidden');
                 header.classList.remove('hidden');
-                body.style.overflow = 'auto'; // 스크롤 허용
+                body.style.overflow = 'auto'; 
                 
-                // 모든 화면 숨기고 메인만 표시
                 mainContent.classList.remove('hidden');
                 logContent.classList.add('hidden');
                 dbContent.classList.add('hidden');
@@ -282,26 +227,21 @@
                 const mapBtn = document.getElementById('mapBtn');
                 const logBtn = document.getElementById('logBtn');
                 
-                // 메인 화면에서는 지도 버튼 비활성화
                 if (mapBtn) mapBtn.disabled = true; 
                 if (logBtn) logBtn.disabled = true; 
 
                 if (isAdmin) {
-                    // 관리자: 유저 리스트 보임, DB 조회 버튼 보임
                     if (userListDiv) userListDiv.classList.remove('hidden');
                     if (newBtn) newBtn.classList.remove('hidden');
                     if (userInfoDiv) userInfoDiv.classList.add('hidden');
-                    // 카카오 맵 로드
                     if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
                          kakao.maps.load(initMap); 
                     }
                 } else {
-                    // 일반 유저: 유저 리스트 숨김, 내 정보창 보임
                     if (userListDiv) userListDiv.classList.add('hidden');
                     if (newBtn) newBtn.classList.add('hidden');
                     if (userInfoDiv) userInfoDiv.classList.remove('hidden');
                     selectedUserId = loggedInUserId;
-                    // 카카오 맵 로드 후 내 정보 바로 표시
                     if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
                          kakao.maps.load(() => {
                             initMap(); 
@@ -312,7 +252,6 @@
                 setupMainUIEventListeners();
             }
 
-            // --- [지도] 지도 초기화 ---
             function initMap() {
                 if (typeof kakao === 'undefined' || !kakao.maps || !kakao.maps.Map) {
                     console.error("Kakao Maps SDK not loaded.");
@@ -321,23 +260,20 @@
                 const container = document.getElementById('map');
                 map = new kakao.maps.Map(container, {
                     center: new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG),
-                    level: 7 // 초기 확대 레벨
+                    level: 7 
                 });
-                // 지도 컨트롤 추가
                 map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
                 map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
 
-                drawDoorlockZones(); // 반경 원 그리기
+                drawDoorlockZones();
 
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
-                if (isAdmin) loadUserList(); // 관리자라면 유저 목록 불러오기
+                if (isAdmin) loadUserList(); 
             }
 
-            // --- [지도] 도어락 위치 및 반경 표시 ---
             function drawDoorlockZones() {
                 const doorlockPosition = new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG);
                 
-                // 도어락 마커
                 const markerImage = new kakao.maps.MarkerImage(
                     'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
                     new kakao.maps.Size(35, 35)
@@ -349,7 +285,6 @@
                     title: "우리집 도어락"
                 });
 
-                // 1km, 2km, 3km 반경 원 그리기
                 const radii = [
                     { r: 1000, color: '#FF0000' }, 
                     { r: 2000, color: '#FFA500' }, 
@@ -367,27 +302,23 @@
                 });
             }
 
-            // --- [데이터] 유저 목록 로드 (관리자용) ---
             function loadUserList() {
                 if (!database) return;
                 const userListDiv = document.getElementById('userList');
                 const h2 = userListDiv.querySelector('h2');
                 database.ref('users').once('value').then((snapshot) => {
-                    // 기존 목록 초기화 후 재생성
                     userListDiv.querySelectorAll('.user').forEach(el => el.remove());
                     snapshot.forEach((childSnapshot) => {
                         const userId = childSnapshot.key;
                         const userElement = document.createElement('div');
                         userElement.className = 'user';
                         userElement.textContent = userId;
-                        // 클릭 시 해당 유저 선택
                         userElement.addEventListener('click', () => selectUser(userId));
                         h2.insertAdjacentElement('afterend', userElement);
                     });
                 });
             }
 
-            // --- [지도] 맵 초기화 (마커, 오버레이 제거) ---
             function clearMapAndInfo() {
                 markers.forEach(m => {
                     if (m.customOverlay) m.customOverlay.setMap(null);
@@ -404,7 +335,7 @@
                 if (infoArea) infoArea.innerHTML = '';
                 
                 const logBtnElem = document.getElementById('logBtn');
-                if (logBtnElem) logBtnElem.disabled = true; // 유저 선택 전엔 로그 버튼 비활성화
+                if (logBtnElem) logBtnElem.disabled = true; 
                 
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
                 if (isAdmin) {
@@ -416,24 +347,20 @@
 
             function closeUserInfo() { clearMapAndInfo(); }
 
-            // --- [지도] 특정 위치에 마커 표시 및 지도 이동 ---
             function showLocationOnMap(lat, lng) {
                 if (!map) return;
                 
-                // 기존 선택 마커 제거
                 if (selectedLogMarker) {
                     selectedLogMarker.setMap(null);
                     if (selectedLogMarker.infoBox) selectedLogMarker.infoBox.setMap(null);
                 }
                 const position = new kakao.maps.LatLng(lat, lng);
 
-                // [중요] 클릭한 위치로 지도 중심 이동 및 확대 (250m 수준)
                 map.setCenter(position); 
                 map.setLevel(5, {animate: true});
 
                 const dist = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
                 
-                // 오버레이(말풍선) 내용 생성
                 const overlayContent = `<div class="custom-overlay-info">
                                         <strong>선택된 위치</strong><br>
                                         거리: <span style="color:blue; font-weight:bold;">${dist.toFixed(2)}km</span>
@@ -442,13 +369,11 @@
                     content: overlayContent, position: position, xAnchor: 0.5, yAnchor: 2.5, zIndex: 3
                 });
 
-                // 마커 이미지 생성
                 const markerImg = document.createElement('img');
                 markerImg.src = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png';
                 markerImg.className = 'custom-marker-pin';
                 markerImg.style.cursor = 'pointer';
                 
-                // 마우스를 올리면 말풍선 보이기
                 markerImg.addEventListener('mouseover', () => { infoOverlay.setMap(map); });
                 markerImg.addEventListener('mouseout', () => { infoOverlay.setMap(null); });
 
@@ -459,7 +384,6 @@
                 selectedLogMarker.setMap(map);
             }
 
-            // --- [데이터] 사용자 선택 및 위치 로그 불러오기 ---
             function selectUser(userId) {
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
                 if (isAdmin) clearMapAndInfo();
@@ -470,7 +394,6 @@
                 const infoArea = document.getElementById('infoArea');
                 const userInfoDiv = document.getElementById('userInfo');
                 
-                // 정보창 UI 구성
                 if (infoArea && userInfoDiv) {
                     infoArea.innerHTML = `
                         <div style="margin-bottom:10px; flex-shrink:0;"><strong>ID:</strong> ${userId}</div>
@@ -482,7 +405,6 @@
                     `;
                     userInfoDiv.classList.remove('hidden');
 
-                    // 필터 버튼 이벤트 연결
                     document.getElementById('showAllBtn').onclick = function() {
                         this.classList.add('active');
                         document.getElementById('showRangeBtn').classList.remove('active');
@@ -495,14 +417,12 @@
                     };
                 }
 
-                // Firebase에서 위치 로그 가져오기
                 database.ref('users/' + userId + '/location_logs').once('value').then((snapshot) => {
                     currentUserLocationLogs = [];
                     if (snapshot.exists()) {
                         const val = snapshot.val();
                         let isList = false;
                         
-                        // 리스트 형태 데이터 확인
                         snapshot.forEach(child => {
                             const cVal = child.val();
                             if (cVal && (cVal.latitude !== undefined || cVal.lat !== undefined)) {
@@ -511,29 +431,25 @@
                             }
                         });
 
-                        // 단일 객체 형태 데이터 확인
                         if (!isList && val && (val.latitude !== undefined || val.lat !== undefined)) {
                             currentUserLocationLogs.push(val);
                         }
                         
-                        // 최신순 정렬
                         currentUserLocationLogs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                     }
-                    renderLocationLogs(false); // 초기 렌더링 (전체 보기)
+                    renderLocationLogs(false); 
                 }).catch(err => {
                     console.error(err);
                     customAlert("위치 기록 로드 실패");
                 });
             }
 
-            // --- [UI] 위치 로그 렌더링 (사이드바 리스트 & 지도 마커) ---
             function renderLocationLogs(filterRange) {
                 const logListDiv = document.querySelector('#userInfo .log-list'); 
                 if (!logListDiv) return;
                 
-                logListDiv.innerHTML = ''; // 리스트 초기화
+                logListDiv.innerHTML = ''; 
 
-                // 기존 마커 제거
                 markers.forEach(m => {
                     if (m.customOverlay) m.customOverlay.setMap(null);
                     m.setMap(null);
@@ -547,15 +463,13 @@
                 }
 
                 let path = [];
-                const bounds = new kakao.maps.LatLngBounds(); // 지도 범위 자동 조절용
+                const bounds = new kakao.maps.LatLngBounds(); 
                 bounds.extend(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
                 let mapCount = 0;
 
                 const listFragment = document.createDocumentFragment();
 
-                // 로그 데이터 순회
                 currentUserLocationLogs.forEach((pos) => { 
-                    // 좌표 데이터 유효성 검사
                     if (!pos || (!pos.latitude && !pos.lat) || (!pos.longitude && !pos.lon)) return;
 
                     const lat = parseFloat(pos.latitude || pos.lat);
@@ -564,15 +478,12 @@
 
                     const distKm = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
 
-                    // 필터링 모드일 경우 3km 밖이면 패스
                     if (filterRange && distKm > MAX_DISTANCE_KM) return; 
 
-                    // 거리에 따른 색상 강조
                     let rowStyle = '';
                     if (distKm <= 1.0) rowStyle = 'background-color: #ffeaea;'; 
                     else if (distKm <= 2.0) rowStyle = 'background-color: #fff8e1;'; 
 
-                    // 리스트 아이템 생성
                     const logEntry = document.createElement('div');
                     logEntry.className = 'log-entry';
                     if (rowStyle) logEntry.style = rowStyle; 
@@ -587,18 +498,15 @@
                     }
                     
                     logEntry.innerHTML = entryContent;
-                    // 클릭 시 지도 이동 이벤트
                     logEntry.addEventListener('click', () => showLocationOnMap(lat, lng));
                     
                     listFragment.appendChild(logEntry);
 
-                    // 지도 마커 생성 (최대 50개 제한)
                     if (mapCount < 50) {
                         const latlng = new kakao.maps.LatLng(lat, lng);
                         path.push(latlng); 
                         bounds.extend(latlng);
                         
-                        // 작은 점(Star) 마커 생성
                         const dotContent = `<div class="custom-overlay-info">${distKm.toFixed(2)}km 지점</div>`;
                         const infoOverlay = new kakao.maps.CustomOverlay({
                             content: dotContent, position: latlng, yAnchor: 2.5, zIndex: 3
@@ -621,7 +529,6 @@
                 
                 logListDiv.appendChild(listFragment);
 
-                // 경로 선 그리기 (필터 모드일 때만)
                 if (filterRange && path.length > 0) {
                     currentPolyline = new kakao.maps.Polyline({
                         path: path, strokeWeight: 4, strokeColor: '#CC00CC', strokeOpacity: 0.8, strokeStyle: 'solid', map: map
@@ -632,7 +539,6 @@
                 }
             }
 
-            // --- [데이터] 전체 로그 조회 (도어락/앱) ---
             function loadAllLogs(userId) {
                 const doorLockLogContainer = document.querySelector('#doorLockLogs .log-entries');
                 const appLogContainer = document.querySelector('#appLogs .log-entries');
@@ -642,7 +548,6 @@
                 doorLockLogContainer.innerHTML = '<em>로딩 중...</em>';
                 appLogContainer.innerHTML = '<em>로딩 중...</em>';
 
-                // 1. 도어락 로그 가져오기
                 database.ref('doorlock_logs/' + userId).orderByKey().once('value').then((snapshot) => {
                     doorLockLogContainer.innerHTML = '';
                     if (!snapshot.exists()) {
@@ -652,7 +557,6 @@
                         const val = snapshot.val();
                         let isList = false;
 
-                        // 데이터 구조 파악 (리스트 vs 단일)
                         snapshot.forEach(c => {
                             const cVal = c.val();
                             if (cVal && (cVal.method !== undefined || cVal.timestamp !== undefined)) {
@@ -664,14 +568,12 @@
                             logs.push(val);
                         }
 
-                        // 시간순 정렬
                         logs.sort((a, b) => {
                             const tA = a.timestamp ? new Date(typeof a.timestamp === 'string' ? a.timestamp.replace(" ", "T") : a.timestamp).getTime() : 0;
                             const tB = b.timestamp ? new Date(typeof b.timestamp === 'string' ? b.timestamp.replace(" ", "T") : b.timestamp).getTime() : 0;
                             return tB - tA;
                         });
 
-                        // 화면 표시
                         logs.forEach(log => {
                             const entry = document.createElement('div');
                             entry.className = 'full-log-entry';
@@ -691,7 +593,6 @@
                     }
                 });
 
-                // 2. 앱 로그 가져오기
                 database.ref('users/' + userId + '/app_logs').once('value').then((snapshot) => {
                     appLogContainer.innerHTML = '';
                     if (!snapshot.exists()) {
@@ -707,14 +608,12 @@
                             }
                         });
                         
-                        // 시간순 정렬
                         logs.sort((a, b) => {
                             const tA = a.timestamp ? new Date(typeof a.timestamp === 'string' ? a.timestamp.replace(" ", "T") : a.timestamp).getTime() : 0;
                             const tB = b.timestamp ? new Date(typeof b.timestamp === 'string' ? b.timestamp.replace(" ", "T") : b.timestamp).getTime() : 0;
                             return tB - tA;
                         });
 
-                        // 화면 표시 (가독성 개선: 한글화)
                         logs.forEach(log => {
                             const entry = document.createElement('div');
                             entry.className = 'full-log-entry';
@@ -730,7 +629,6 @@
 
                             let msg = log.event;
                             
-                            // JSON 데이터 가공
                             if (!msg) {
                                 if (log.new_auth) msg = `인증방식 변경: ${log.new_auth}`;
                                 else if (log.new_name) msg = `이름 변경: ${log.new_name}`;
@@ -745,12 +643,12 @@
                 });
             }
 
-            // --- [DB 뷰어] 전체 데이터 로드 ---
+            // --- DB Viewer 로직 (수정/삭제 기능 추가) ---
             window.loadAllDBData = function() {
                 const resultArea = document.getElementById('result-area');
                 const title = document.getElementById('result-title');
                 
-                title.textContent = "User List:";
+                title.textContent = "전체 사용자 목록 (users):";
                 resultArea.innerHTML = '<div class="message-box">전체 데이터를 불러오는 중...</div>';
                 document.getElementById('search-input').value = '';
 
@@ -765,7 +663,6 @@
                 });
             }
 
-            // --- [DB 뷰어] 특정 사용자 검색 ---
             window.searchUser = function() {
                 const input = document.getElementById('search-input');
                 const resultArea = document.getElementById('result-area');
@@ -790,7 +687,6 @@
                 });
             }
 
-            // --- [DB 뷰어] 그리드(테이블) 렌더링 ---
             function renderGrid(data) {
                 const resultArea = document.getElementById('result-area');
                 let tableHtml = `
@@ -805,11 +701,16 @@
                             <tbody>`;
 
                 for (const [userId, userData] of Object.entries(data)) {
-                    const formattedData = createFirebaseView(userData, 0);
+                    // [수정] 루트 경로 'users/userId'를 createFirebaseView에 전달
+                    const rootPath = 'users/' + userId;
+                    const formattedData = createFirebaseView(userData, 0, rootPath);
                     tableHtml += `
                         <tr>
                             <td style="vertical-align: top; font-weight: bold; color: #007bff; background-color: #fdfdfd;">
                                 ${userId}
+                                <div style="margin-top:5px;">
+                                    <button class="btn-delete-mini" onclick="deleteData('${rootPath}')" style="width:100%;">유저 삭제</button>
+                                </div>
                             </td>
                             <td style="vertical-align: top;">
                                 <div class="firebase-view">${formattedData}</div>
@@ -820,16 +721,16 @@
                 resultArea.innerHTML = tableHtml;
             }
 
-            // --- [DB 뷰어] 트리 뷰(JSON) 생성 (재귀 함수) ---
-            function createFirebaseView(data, depth) {
+            function createFirebaseView(data, depth, currentPath) {
                 let html = '';
                 const indent = '<span class="fv-indent"></span>'.repeat(depth);
 
                 if (typeof data === 'object' && data !== null) {
                     for (const [key, value] of Object.entries(data)) {
+                        const newPath = currentPath + '/' + key;
                         const isObject = typeof value === 'object' && value !== null;
+                        
                         if (isObject) {
-                            // 기본적으로 접힌 상태(false)
                             const isExpanded = false; 
                             const arrowIcon = isExpanded ? '▼' : '▶';
                             const arrowTransform = isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
@@ -842,29 +743,32 @@
                                     <span class="fv-arrow" style="transform: ${arrowTransform};">${arrowIcon}</span>
                                     <span class="fv-key">${key}</span>
                                 </div>
+                                <button class="btn-delete-mini" onclick="deleteData('${newPath}')" title="삭제">🗑️</button>
                                 <div class="fv-children ${childrenClass}">
-                                    ${createFirebaseView(value, depth + 1)}
+                                    ${createFirebaseView(value, depth + 1, newPath)}
                                 </div>
                             </div>`;
                         } else {
                             html += `
-                            <div class="fv-item">
+                            <div class="fv-item" id="node-${newPath.replace(/\//g, '-')}">
                                 ${indent}
                                 <span style="display:inline-block; width:16px;"></span>
                                 <span class="fv-key">${key}:</span>
-                                ${formatValue(value)}
+                                <span class="fv-value">${formatValue(value)}</span>
+                                <button class="btn-edit-mini" onclick="enableEdit(this, '${newPath}', '${String(value).replace(/'/g, "\\'")}')" title="수정">✏️</button>
+                                <button class="btn-delete-mini" onclick="deleteData('${newPath}')" title="삭제">🗑️</button>
                             </div>`;
                         }
                     }
                 } else {
+                    // This case handles if the root itself is a primitive value, which is rare in this structure
                     html += `<div class="fv-item">${indent}${formatValue(data)}</div>`;
                 }
                 return html;
             }
 
-            // 트리 뷰 토글 기능
             window.toggleNode = function(element) {
-                const childrenDiv = element.nextElementSibling;
+                const childrenDiv = element.parentNode.querySelector('.fv-children');
                 const arrowSpan = element.querySelector('.fv-arrow');
                 if (childrenDiv) {
                     if (childrenDiv.classList.contains('fv-hidden')) {
@@ -879,7 +783,6 @@
                 }
             }
 
-            // 값 포맷팅 (색상 적용)
             function formatValue(val) {
                 if (typeof val === 'string') return `<span class="fv-string">"${val}"</span>`;
                 if (typeof val === 'number') return `<span class="fv-number">${val}</span>`;
@@ -888,14 +791,84 @@
                 return val;
             }
 
-            // --- [인증] 로그인 처리 ---
+            // [추가] 수정 모드 활성화
+            window.enableEdit = function(btn, path, currentVal) {
+                const container = btn.parentNode;
+                const valueSpan = container.querySelector('.fv-value');
+                
+                // 이미 수정 중인지 확인
+                if (container.querySelector('.edit-input')) return;
+
+                const originalContent = valueSpan.innerHTML;
+                valueSpan.style.display = 'none';
+                btn.style.display = 'none'; // 수정 버튼 숨김
+
+                // 입력 폼 생성
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'edit-input';
+                input.value = currentVal;
+                
+                const saveBtn = document.createElement('button');
+                saveBtn.textContent = '저장';
+                saveBtn.className = 'btn-save-mini';
+                saveBtn.onclick = () => saveEdit(path, input.value);
+
+                const cancelBtn = document.createElement('button');
+                cancelBtn.textContent = '취소';
+                cancelBtn.className = 'btn-cancel-mini';
+                cancelBtn.onclick = () => {
+                    valueSpan.style.display = 'inline';
+                    btn.style.display = 'inline-block';
+                    input.remove();
+                    saveBtn.remove();
+                    cancelBtn.remove();
+                };
+
+                container.insertBefore(input, btn);
+                container.insertBefore(saveBtn, btn);
+                container.insertBefore(cancelBtn, btn);
+            }
+
+            // [추가] 수정 저장
+            window.saveEdit = function(path, newVal) {
+                // 타입 추론 시도 (숫자, 불리언)
+                let finalVal = newVal;
+                if (newVal === 'true') finalVal = true;
+                else if (newVal === 'false') finalVal = false;
+                else if (!isNaN(Number(newVal)) && newVal.trim() !== '') finalVal = Number(newVal);
+
+                database.ref(path).set(finalVal)
+                    .then(() => {
+                        alert('수정되었습니다.');
+                        // 현재 화면 갱신 (전체 로드 혹은 검색)
+                        if (document.getElementById('search-input').value) searchUser();
+                        else loadAllDBData();
+                    })
+                    .catch(err => alert('수정 실패: ' + err.message));
+            }
+
+            // [추가] 데이터 삭제
+            window.deleteData = function(path) {
+                if (confirm('정말 삭제하시겠습니까?\n경로: ' + path)) {
+                    database.ref(path).remove()
+                        .then(() => {
+                            alert('삭제되었습니다.');
+                            if (document.getElementById('search-input').value) searchUser();
+                            else loadAllDBData();
+                        })
+                        .catch(err => alert('삭제 실패: ' + err.message));
+                }
+            }
+
+
+            // --- 로그인/로그아웃 로직 ---
             function handleLoginSubmit(e) {
                 e.preventDefault();
                 const usernameInput = document.getElementById('username')?.value.trim();
                 const passwordInput = document.getElementById('password')?.value.trim();
                 if (!database) return;
 
-                // 1. 관리자 인증 시도
                 database.ref('admin_pass').once('value').then((snap) => {
                     let loginSuccess = false;
                     let isAdmin = false;
@@ -915,7 +888,6 @@
                         showMainContent(true, loggedInUserId);
                         return;
                     }
-                    // 2. 일반 유저 인증 시도
                     return database.ref('users').once('value');
                 }).then((userSnap) => {
                     if (!userSnap) return; 
@@ -940,21 +912,19 @@
                 });
             }
 
-            // --- [인증] 로그아웃 처리 ---
             function confirmLogout() { document.getElementById('logout-confirm-modal').classList.remove('hidden'); }
             function executeLogout() {
                 sessionStorage.clear();
                 window.location.reload();
             }
 
-            // --- [네비게이션] 메뉴 이동 핸들러 ---
             function handleLogView() {
                 mainContent.classList.add('hidden');
                 dbContent.classList.add('hidden');
                 logContent.classList.remove('hidden');
 
                 document.getElementById('mapBtn').disabled = false;
-                document.getElementById('logBtn').disabled = true; // 현재 메뉴 비활성화
+                document.getElementById('logBtn').disabled = true;
                 document.getElementById('newBtn').disabled = false;
 
                 const u = selectedUserId || sessionStorage.getItem('userId');
@@ -971,7 +941,7 @@
                 document.getElementById('logBtn').disabled = false;
                 document.getElementById('newBtn').disabled = false;
                 
-                if(map) map.relayout(); // 지도 레이아웃 재조정 (필수)
+                if(map) map.relayout();
             }
 
             function handleDBView() {
@@ -986,7 +956,6 @@
                 loadAllDBData();
             }
 
-            // 이벤트 리스너 등록
             function setupMainUIEventListeners() {
                 document.getElementById('logoutBtn').onclick = confirmLogout;
                 document.getElementById('logBtn').onclick = handleLogView;
@@ -997,7 +966,6 @@
                 if (headerTitle) headerTitle.onclick = () => window.location.reload();
             }
 
-            // 초기화 (로그인 상태 체크)
             if (loginForm) loginForm.addEventListener('submit', handleLoginSubmit);
             if (closeUserInfoButton) closeUserInfoButton.onclick = closeUserInfo;
             
@@ -1007,7 +975,6 @@
                 if (e.key === 'Enter') searchUser();
             });
 
-            // 세션 스토리지 확인 후 자동 로그인
             const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
             if (isLoggedIn) {
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
@@ -1022,4 +989,3 @@
     </script>
 </body>
 </html>
-
