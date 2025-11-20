@@ -1,558 +1,936 @@
-@charset "UTF-8";
-
-/* =========================================
-   1. 기본 설정 (Global Reset & Body)
-   ========================================= */
-
-/* [강력 수정] 시스템 다크모드 강제 무시 설정 */
-:root {
-    color-scheme: light !important;
-}
-
-* { 
-    margin: 0; 
-    padding: 0; 
-    box-sizing: border-box; 
-    font-family: 'Poppins', sans-serif; 
-    /* 모든 텍스트 색상을 강제로 어두운 색으로 고정 (반전 방지) */
-    color: #333333; 
-}
-
-body { 
-    height: 100vh; 
-    /* [수정] 배경 그라디언트에 !important 추가하여 다크모드 개입 차단 */
-    background: linear-gradient(135deg, #71b7e6, #9b59b6) !important;
-    background-color: #71b7e6 !important; /* 그라디언트 로딩 전 fallback */
-    padding-top: 70px;
-    overflow: hidden;
-    transition: background-color 0.3s ease; 
-}
-
-.hidden { display: none !important; }
-
-/* =========================================
-   2. 상단 헤더 (Header)
-   ========================================= */
-#header {
-    position: fixed; 
-    top: 0; left: 0; 
-    width: 100%; 
-    height: 70px; 
-    padding: 0 30px;
-    background-color: #ffffff !important; /* 배경 흰색 강제 */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    z-index: 1000;
-    transition: all 0.3s ease;
-}
-
-#header h1 {
-    font-size: 24px; 
-    margin: 0; 
-    cursor: pointer; 
-    font-weight: 600;
-    background: linear-gradient(135deg, #71b7e6, #9b59b6) !important;
-    -webkit-background-clip: text !important; 
-    background-clip: text !important; 
-    color: transparent !important; /* 텍스트 투명화 후 배경색 보이기 */
-    white-space: nowrap;
-}
-
-#header .button-group { display: flex; gap: 0; }
-
-#header button {
-    padding: 10px 20px; 
-    border: none; 
-    color: #333 !important; /* 버튼 글씨 검은색 강제 */
-    border-radius: 0; 
-    cursor: pointer;
-    font-weight: 500; 
-    transition: 0.3s; 
-    background-color: #f8f9fa !important; /* 버튼 배경 밝은 회색 강제 */
-    font-size: 14px;
-    white-space: nowrap;
-}
-
-#header .button-group button + button { border-left: 1px solid #ddd; }
-
-#header button:hover:not(:disabled) {
-    background: linear-gradient(135deg, #71b7e6, #9b59b6) !important;
-    color: white !important;
-}
-
-#header button:disabled { 
-    color: #aaa !important; 
-    cursor: not-allowed; 
-    background: #f8f9fa !important; 
-}
-
-/* =========================================
-   3. 로그인 화면 (Login Container)
-   ========================================= */
-#login-container {
-    width: 90%; 
-    max-width: 400px; 
-    background-color: #ffffff !important; /* 흰색 배경 강제 */
-    padding: 40px;
-    border-radius: 10px; 
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    text-align: center; 
-    position: absolute; 
-    left: 50%; top: 50%;
-    transform: translate(-50%, -50%); 
-    z-index: 2000;
-}
-
-#login-container h2 { font-size: 28px; font-weight: 600; margin-bottom: 25px; color: #333 !important; }
-
-/* 입력창 스타일 강제 (다크모드에서 검게 변하는 것 방지) */
-input[type="text"], input[type="password"] {
-    width: 100%; 
-    padding: 12px 15px; 
-    border: 1px solid #ccc !important; 
-    border-radius: 5px; 
-    font-size: 16px; 
-    background-color: #ffffff !important; /* 흰색 배경 강제 */
-    color: #000000 !important; /* 검은 글씨 강제 */
-    -webkit-appearance: none; /* 브라우저 기본 스타일 제거 */
-}
-
-.input-group { margin-bottom: 20px; text-align: left; }
-.input-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; color: #555 !important; }
-
-#login-container button { 
-    width: 100%; 
-    padding: 12px; 
-    background: linear-gradient(135deg, #71b7e6, #9b59b6) !important; 
-    color: white !important; 
-    border: none; 
-    border-radius: 5px; 
-    font-size: 18px; 
-    cursor: pointer; 
-    transition: opacity 0.3s; 
-}
-#login-container button:hover { opacity: 0.9; }
-
-/* =========================================
-   4. 메인 대시보드 (Main Content)
-   ========================================= */
-#main-content { 
-    display: flex; 
-    padding: 10px; 
-    gap: 20px; 
-    width: 100%; 
-    height: calc(100vh - 70px); 
-    overflow: hidden; 
-}
-
-#sidebar { 
-    display: flex; 
-    flex-direction: column; 
-    width: 250px; 
-    gap: 15px; 
-    height: 100%; 
-    min-width: 200px; 
-    transition: all 0.3s ease;
-}
-
-#userList, #userInfo, #mapArea {
-    border: none; 
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
-    padding: 15px;
-    border-radius: 8px; 
-    background-color: #ffffff !important; /* 흰색 강제 */
-    box-sizing: border-box;
-}
-
-#userList { overflow-y: auto; flex-grow: 1; }
-
-#userInfo { 
-    overflow: hidden; 
-    flex-shrink: 0; 
-    display: flex; 
-    flex-direction: column;
-    max-height: 60vh;
-}
-
-#mapArea { flex-grow: 1; display: flex; flex-direction: column; }
-
-/* 섹션 제목 */
-h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
-
-#userList h2, #mapArea h2, .info-header h2 {
-    background: linear-gradient(135deg, #71b7e6, #9b59b6) !important; 
-    -webkit-background-clip: text !important; 
-    background-clip: text !important; 
-    color: transparent !important;
-    border-bottom: 1px solid #eee; 
-    padding-bottom: 10px;
-}
-
-.user { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s; color: #333 !important; }
-.user:hover { background-color: #f0f0f0 !important; }
-
-#infoArea { 
-    display: flex; 
-    flex-direction: column; 
-    flex: 1; 
-    overflow: hidden; 
-    min-height: 0; 
-    color: #333 !important;
-}
-
-.info-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-shrink: 0; }
-#closeUserInfoBtn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #6c757d !important; }
-#closeUserInfoBtn:hover { color: #dc3545 !important; }
-
-/* 필터 버튼 */
-.filter-group { display: flex; gap: 5px; margin-bottom: 10px; }
-.filter-btn { 
-    flex: 1; padding: 5px 0; 
-    border: 1px solid #ddd !important; 
-    background-color: #f8f9fa !important; 
-    color: #333 !important;
-    cursor: pointer; font-size: 12px; border-radius: 4px; transition: 0.3s; 
-}
-.filter-btn:hover { background-color: #e9ecef !important; }
-.filter-btn.active { background-color: #e2e8f0 !important; font-weight: bold; border-color: #adb5bd !important; color: #000 !important; }
-
-#map { width: 100%; flex-grow: 1; border-radius: 4px; }
-
-.log-list { 
-    flex: 1; 
-    overflow-y: auto; 
-    min-height: 0;
-    color: #333 !important;
-}
-.log-entry { padding: 8px; font-size: 13px; border-bottom: 1px solid #f0f0f0; cursor: pointer; border-radius: 4px; line-height: 1.4; color: #333 !important; }
-.log-entry:hover { background-color: #e9ecef !important; }
-
-/* =========================================
-   5. 상세 로그 화면 (Log Content)
-   ========================================= */
-#log-content {
-    width: 100%; 
-    height: calc(100vh - 70px); 
-    padding: 20px;
-    display: flex; 
-    flex-direction: column; 
-    gap: 20px;
-    background-color: transparent !important;
-    position: fixed; 
-    top: 70px; left: 0;
-    z-index: 600;
-    overflow-y: auto; 
-}
-
-.log-header { 
-    background-color: #ffffff !important; 
-    padding: 15px; 
-    border-radius: 8px; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
-    flex-shrink: 0;
-}
-.log-header h2 { margin: 0; }
-
-.log-container { 
-    display: flex; 
-    gap: 20px; 
-    flex-grow: 1; 
-    overflow: hidden; 
-}
-
-.log-section { 
-    flex: 1; 
-    background-color: #ffffff !important; 
-    padding: 15px; 
-    border-radius: 8px; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
-    display: flex; 
-    flex-direction: column; 
-    min-height: 300px; 
-    color: #333 !important;
-}
-
-.log-section h3 { color: #555 !important; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-.log-entries { overflow-y: auto; flex-grow: 1; }
-.full-log-entry { padding: 10px 5px; font-size: 14px; border-bottom: 1px solid #f0f0f0; color: #333 !important; }
-
-/* [추가] 데스크탑에서는 탭 버튼 숨김 */
-.log-tab-buttons {
-    display: none;
-}
-
-/* =========================================
-   6. DB 조회 화면 (DB Content)
-   ========================================= */
-#db-content {
-    width: 100%;
-    height: calc(100vh - 70px);
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    background-color: transparent !important;
-    position: fixed;
-    top: 70px; left: 0;
-    z-index: 600;
-    overflow-y: auto;
-}
-
-.container {
-    max-width: 1200px;
-    width: 100%;
-    margin: 0 auto;
-    background: #ffffff !important; /* 흰색 강제 */
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    display: flex; 
-    flex-direction: column;
-    height: 100%; 
-    min-height: 500px; 
-}
-
-.container h2 {
-    background: linear-gradient(135deg, #71b7e6, #9b59b6) !important; 
-    -webkit-background-clip: text !important; 
-    background-clip: text !important; 
-    color: transparent !important;
-    border-bottom: 1px solid #eee; 
-    padding-bottom: 10px;
-    flex-shrink: 0; 
-}
-
-.search-container {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-    padding: 15px;
-    background-color: #f8f9fa !important;
-    border-radius: 8px;
-    align-items: center;
-    flex-shrink: 0; 
-    border: 1px solid #eee;
-    flex-wrap: wrap; 
-}
-
-.search-container input[type="text"] {
-    flex: 1;
-    padding: 10px 15px;
-    border: 1px solid #ddd !important;
-    border-radius: 4px;
-    outline: none;
-    min-width: 200px; 
-    background-color: #fff !important;
-    color: #000 !important;
-}
-
-.btn-search, .btn-reset { 
-    padding: 10px 20px; 
-    border-radius: 4px; 
-    cursor: pointer; 
-    font-weight: 600; 
-    border: none; 
-    color: white !important;
-    white-space: nowrap;
-}
-.btn-search { background: linear-gradient(135deg, #71b7e6, #9b59b6) !important; }
-.btn-reset { background-color: #6c757d !important; }
-
-#result-title { flex-shrink: 0; margin-top: 5px; color: #333 !important; }
-
-#result-area {
-    flex-grow: 1; 
-    overflow-y: auto; 
-    overflow-x: auto; 
-    border: 1px solid #eee;
-    border-radius: 4px;
-    background-color: #fff !important;
-    color: #333 !important;
-}
-
-.grid-wrapper { border: none; min-width: 600px; } 
-.styled-table { width: 100%; border-collapse: collapse; font-size: 14px; background-color: white !important; }
-.styled-table th { 
-    background: #f8f9fa !important; 
-    color: #333 !important; 
-    padding: 12px 15px; 
-    text-align: left; 
-    white-space: nowrap; 
-    border-bottom: 2px solid #ddd;
-    position: sticky; top: 0; 
-    z-index: 10;
-}
-.styled-table td { padding: 12px 15px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; vertical-align: top; color: #333 !important; }
-
-.firebase-view { font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.6; color: #333 !important; }
-.fv-item { white-space: nowrap; }
-.fv-key-box { cursor: pointer; display: inline-block; user-select: none; }
-.fv-key-box:hover .fv-key { text-decoration: underline; color: #0056b3 !important; }
-.fv-key { color: #000080 !important; font-weight: bold; }
-.fv-arrow { display: inline-block; width: 14px; text-align: center; font-size: 10px; color: #555 !important; margin-right: 4px; }
-.fv-children { display: block; padding-left: 5px; border-left: 1px solid #eee; }
-.fv-hidden { display: none !important; }
-.fv-indent { display: inline-block; width: 15px; }
-
-.fv-string { color: #a31515 !important; }
-.fv-number { color: #098658 !important; }
-.fv-boolean { color: #0000ff !important; }
-.fv-null { color: #808080 !important; }
-
-/* =========================================
-   7. 모달 및 오버레이 (Modals & Overlays)
-   ========================================= */
-#custom-modal, #logout-confirm-modal { 
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-    background: rgba(0, 0, 0, 0.5); 
-    display: flex; justify-content: center; align-items: center; 
-    z-index: 3000; 
-}
-
-.modal-content { 
-    background: white !important; 
-    padding: 30px; 
-    border-radius: 10px; 
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3); 
-    max-width: 350px; 
-    width: 85%; 
-    text-align: center; 
-    color: #333 !important;
-}
-.modal-content p { margin-bottom: 20px; font-size: 16px; color: #333 !important; }
-.modal-content button { padding: 10px 20px; background-color: #71b7e6 !important; color: white !important; border: none; border-radius: 5px; cursor: pointer; }
-
-.custom-overlay-info { padding: 5px 10px; font-size: 12px; background: white !important; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1px solid #ccc; color: #333 !important; }
-.custom-overlay-info strong { color: #000 !important; }
-
-.custom-marker-pin { width: 32px; height: 35px; transform: scale(1.5); transform-origin: bottom center; }
-.custom-marker-dot { width: 12px; height: 12px; transform: scale(1.8); transform-origin: center center; }
-
-/* =========================================
-   8. 반응형 (Mobile Responsive) - 수정됨
-   ========================================= */
-@media (max-width: 768px) {
-    /* ... (헤더, 바디, 메인 레이아웃 설정 동일) ... */
-    #header { 
-        padding: 0 15px; 
-        flex-direction: column; 
-        height: auto; 
-        gap: 10px;
-        padding-bottom: 10px;
-    }
-    #header h1 { font-size: 20px; margin-top: 10px; }
-    #header .button-group { width: 100%; justify-content: space-between; }
-    #header button { flex: 1; padding: 8px 0; font-size: 12px; }
-
-    body { 
-        padding-top: 110px; 
-        overflow-y: auto !important; 
-        height: auto !important; 
-    }
-
-    #main-content { 
-        display: block; 
-        height: auto !important; 
-        padding: 10px;
-        padding-bottom: 30px; 
-        overflow: visible;
-    }
-
-    #sidebar { 
-        width: 100%; 
-        height: auto !important; 
-        flex: none;
-        margin-bottom: 20px; 
-        z-index: auto; 
-    }
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    #userInfo {
-        max-height: none !important; 
-        height: auto !important;
-    }
+    <!-- [추가] 모바일 브라우저 강제 라이트 모드 설정 -->
+    <meta name="color-scheme" content="light only">
+    <meta name="supported-color-schemes" content="light">
 
-    .log-list {
-        max-height: 400px; 
-        overflow-y: auto;
-    }
-    
-    #mapArea { 
-        width: 100%; 
-        height: 400px; 
-        flex: none;
-        z-index: 1; 
-    }
+    <title>Smart Doorlock Capstone</title>
 
-    /* --- [수정] 로그 및 DB 화면 설정 (모바일) --- */
-    #log-content, #db-content { 
-        top: 110px; 
-        height: auto !important; 
-        min-height: calc(100vh - 110px);
-        padding: 10px;
-        position: absolute; 
-        padding-bottom: 50px; 
-    }
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 
-    /* [추가] 모바일 탭 버튼 표시 */
-    .log-tab-buttons {
-        display: flex !important; 
-        width: 100%;
-        background-color: #fff;
-        border-bottom: 1px solid #eee;
-        margin-bottom: 10px; 
-        border-radius: 8px; /* 약간 둥글게 */
-        overflow: hidden;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
+    <!-- External CSS -->
+    <link rel="stylesheet" href="indexstyle.css">
 
-    .log-tab-btn {
-        flex: 1; 
-        padding: 12px 0;
-        border: none;
-        background: none !important; 
-        font-size: 14px;
-        font-weight: 500;
-        color: #888 !important;
-        border-bottom: 3px solid transparent;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
+    <!-- SDKs -->
+    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+</head>
+<body>
 
-    /* 활성 탭 스타일 (파란색 강조) */
-    .log-tab-btn.active {
-        color: #71b7e6 !important; 
-        font-weight: 700;
-        border-bottom: 3px solid #71b7e6;
-        background-color: #f9f9f9 !important;
-    }
+    <!-- 1. 로그인 화면 -->
+    <div id="login-container">
+        <h2>SmartDoorLock</h2>
+        <form id="login-form">
+            <div class="input-group">
+                <label for="username">아이디</label>
+                <input type="text" id="username" placeholder="아이디를 입력하세요" required>
+            </div>
+            <div class="input-group">
+                <label for="password">비밀번호</label>
+                <input type="password" id="password" placeholder="비밀번호를 입력하세요" required>
+            </div>
+            <button type="submit">로그인</button>
+        </form>
+    </div>
 
-    /* 모바일에서 로그 섹션 제어 (탭 기능) */
-    .log-section {
-        display: none; /* 기본 숨김 */
-        width: 100%; 
-        margin-bottom: 20px; 
-        flex: none; 
-        height: auto; 
-    }
+    <!-- 2. 상단 헤더 (공통) -->
+    <div id="header" class="hidden">
+        <h1 id="header-title" style="cursor: pointer;">Smart Doorlock</h1> 
+        <div class="button-group">
+            <button id="mapBtn" disabled>지도</button>
+            <button id="logBtn" disabled>로그 보기</button>
+            <button id="newBtn">DB 조회</button>
+            <button id="logoutBtn">로그아웃</button>
+        </div>
+    </div>
 
-    /* 활성화된 섹션만 표시 */
-    .log-section.active-tab-content {
-        display: flex; 
-        flex-direction: column;
-    }
+    <!-- 3. 메인 컨텐츠 (지도 및 사용자 리스트) -->
+    <div id="main-content" class="hidden">
+        <div id="sidebar">
+            <div id="userInfo" class="hidden">
+                <div class="info-header">
+                    <h2>User Info</h2>
+                    <button id="closeUserInfoBtn">X</button>
+                </div>
+                <div id="infoArea">사용자를 선택해주세요.</div>
+            </div>
+            <div id="userList">
+                <h2>User List</h2>
+            </div>
+        </div>
+        <div id="mapArea">
+            <h2>Map</h2>
+            <div id="map"></div> 
+        </div>
+    </div>
 
-    /* [핵심 수정] 로그 리스트 높이 제한 해제 -> 전체 페이지 스크롤로 확인 */
-    .log-entries { 
-        max-height: none; 
-        overflow: visible; 
-    }
+    <!-- 4. 로그 컨텐츠 (상세 로그) -->
+    <div id="log-content" class="hidden">
+        <div class="log-header">
+            <h2 id="logUserTitle">전체 로그</h2>
+        </div>
 
-    .container { padding: 15px; height: auto; }
-    .search-container { flex-direction: column; align-items: stretch; }
-    .search-container input { width: 100%; }
-    .btn-search, .btn-reset { width: 100%; }
-    
-    h2 { font-size: 18px; }
-    h3 { font-size: 16px; }
-}
+        <!-- [추가] 모바일 전용 탭 버튼 (데스크탑에서는 숨김) -->
+        <div class="log-tab-buttons">
+            <button id="tab-doorlock" class="log-tab-btn active" onclick="switchLogTab('doorlock')">도어락 로그</button>
+            <button id="tab-app" class="log-tab-btn" onclick="switchLogTab('app')">앱 로그</button>
+        </div>
+
+        <div class="log-container">
+            <!-- active-tab-content 클래스: 모바일에서 현재 보이는 탭 -->
+            <div id="doorLockLogs" class="log-section active-tab-content">
+                <h3>DoorLock Logs</h3>
+                <div class="log-entries"></div>
+            </div>
+            <div id="appLogs" class="log-section">
+                <h3>App Logs</h3>
+                <div class="log-entries"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. DB 조회 컨텐츠 (Tree View) -->
+    <div id="db-content" class="hidden">
+        <div class="container">
+            <h2>데이터베이스 조회 (Interactive Tree)</h2>
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="검색할 사용자 ID를 입력하세요 (예: 123456)">
+                <button class="btn-search" onclick="searchUser()">검색</button>
+                <button class="btn-reset" onclick="loadAllDBData()" style="margin-left:5px;">전체 목록</button>
+            </div>
+            <h3 id="result-title">사용자 목록:</h3>
+            <div id="result-area">
+                <div class="message-box">데이터를 불러오는 중입니다...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 모달 팝업들 -->
+    <div id="custom-modal" class="hidden">
+        <div class="modal-content">
+            <p id="modal-message"></p>
+            <button onclick="document.getElementById('custom-modal').style.display='none';">확인</button>
+        </div>
+    </div>
+
+    <div id="logout-confirm-modal" class="hidden">
+        <div class="modal-content">
+            <p>로그아웃 하시겠습니까?</p>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                <button id="confirmLogoutBtn" style="flex: 1;">확인</button>
+                <button id="cancelLogoutBtn" style="flex: 1; background-color: #aaa;">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("App initialized.");
+
+            // --- DOM 요소 ---
+            const loginContainer = document.getElementById('login-container');
+            const mainContent = document.getElementById('main-content');
+            const logContent = document.getElementById('log-content');
+            const dbContent = document.getElementById('db-content');
+            const header = document.getElementById('header');
+            const loginForm = document.getElementById('login-form');
+            const body = document.querySelector('body');
+            const closeUserInfoButton = document.getElementById('closeUserInfoBtn');
+
+            // --- [설정] 도어락 위치 ---
+            const DOORLOCK_LAT = 37.566826; 
+            const DOORLOCK_LNG = 126.9786567;
+            const MAX_DISTANCE_KM = 3.0;
+
+            // --- Firebase 설정 ---
+            const firebaseConfig = {
+                apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
+                authDomain: "smartdoorlock-b4636.web.app", 
+                databaseURL: "https://smartdoorlock-b4636-default-rtdb.firebaseio.com",
+                projectId: "smartdoorlock-b4636",
+                storageBucket: "smartdoorlock-b4636.firebasestorage.app",
+                messagingSenderId: "104489505270",
+                appId: "1:104489505270:web:eb385c8f9c5dfd512077d7",
+                measurementId: "G-4TH9MB9WPM"
+            };
+
+            let database;
+            let map;
+            let markers = [];
+            let zoneCircles = [];
+            let currentPolyline;
+            let selectedLogMarker;
+            let selectedUserId = null;
+            let currentUserLocationLogs = [];
+
+            // Firebase 초기화
+            try {
+                if (typeof firebase === 'undefined' || !firebase.initializeApp) {
+                      throw new Error("Firebase SDK not loaded correctly.");
+                }
+                firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
+                console.log("Firebase initialized successfully.");
+            } catch (e) {
+                console.error("Firebase 초기화 오류:", e);
+                customAlert("Firebase 초기화 실패.");
+                return;
+            }
+
+            // --- [추가] 모바일 탭 전환 함수 ---
+            window.switchLogTab = function(tabName) {
+                // 1. 탭 버튼 활성화 스타일 변경
+                const buttons = document.querySelectorAll('.log-tab-btn');
+                buttons.forEach(btn => btn.classList.remove('active'));
+                document.getElementById('tab-' + tabName).classList.add('active');
+
+                // 2. 보여줄 로그 섹션 전환
+                const sections = document.querySelectorAll('.log-section');
+                // 모바일용 클래스 제거
+                sections.forEach(sec => sec.classList.remove('active-tab-content'));
+                
+                if (tabName === 'doorlock') {
+                    document.getElementById('doorLockLogs').classList.add('active-tab-content');
+                } else {
+                    document.getElementById('appLogs').classList.add('active-tab-content');
+                }
+            }
+
+            // --- 거리 계산 함수 ---
+            function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+                function deg2rad(deg) { return deg * (Math.PI/180); }
+                var R = 6371; 
+                var dLat = deg2rad(lat2-lat1);  
+                var dLon = deg2rad(lon2-lon1); 
+                var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+                var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+                return R * c; 
+            }
+
+            // 커스텀 alert
+            function customAlert(message) {
+                const modal = document.getElementById('custom-modal');
+                const messageElem = document.getElementById('modal-message');
+                if (modal && messageElem) {
+                    messageElem.textContent = message;
+                    modal.style.display = 'flex';
+                } else {
+                    alert(message);
+                }
+            }
+
+            // --- 화면 전환 및 UI 표시 함수 ---
+            function showMainContent(isAdmin, loggedInUserId) {
+                loginContainer.classList.add('hidden');
+                header.classList.remove('hidden');
+                body.style.overflow = 'auto';
+                
+                mainContent.classList.remove('hidden');
+                logContent.classList.add('hidden');
+                dbContent.classList.add('hidden');
+
+                const userListDiv = document.getElementById('userList');
+                const newBtn = document.getElementById('newBtn'); 
+                const userInfoDiv = document.getElementById('userInfo');
+                const mapBtn = document.getElementById('mapBtn');
+                const logBtn = document.getElementById('logBtn');
+                
+                if (mapBtn) mapBtn.disabled = true; 
+                if (logBtn) logBtn.disabled = true; 
+
+                if (isAdmin) {
+                    if (userListDiv) userListDiv.classList.remove('hidden');
+                    if (newBtn) newBtn.classList.remove('hidden');
+                    if (userInfoDiv) userInfoDiv.classList.add('hidden');
+                    if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
+                         kakao.maps.load(initMap); 
+                    }
+                } else {
+                    if (userListDiv) userListDiv.classList.add('hidden');
+                    if (newBtn) newBtn.classList.add('hidden');
+                    if (userInfoDiv) userInfoDiv.classList.remove('hidden');
+                    selectedUserId = loggedInUserId;
+                    if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
+                         kakao.maps.load(() => {
+                            initMap(); 
+                            selectUser(loggedInUserId);
+                         });
+                    }
+                }
+                setupMainUIEventListeners();
+            }
+
+            function initMap() {
+                if (typeof kakao === 'undefined' || !kakao.maps || !kakao.maps.Map) {
+                    console.error("Kakao Maps SDK not loaded.");
+                    return;
+                }
+                const container = document.getElementById('map');
+                map = new kakao.maps.Map(container, {
+                    center: new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG),
+                    level: 7
+                });
+                map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
+                map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
+
+                drawDoorlockZones();
+
+                const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+                if (isAdmin) loadUserList();
+            }
+
+            function drawDoorlockZones() {
+                const doorlockPosition = new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG);
+                const markerImage = new kakao.maps.MarkerImage(
+                    'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
+                    new kakao.maps.Size(35, 35)
+                );
+                new kakao.maps.Marker({
+                    position: doorlockPosition,
+                    image: markerImage,
+                    map: map,
+                    title: "우리집 도어락"
+                });
+
+                const radii = [
+                    { r: 1000, color: '#FF0000' }, 
+                    { r: 2000, color: '#FFA500' }, 
+                    { r: 3000, color: '#008000' }  
+                ];
+                radii.forEach(zone => {
+                    const circle = new kakao.maps.Circle({
+                        center : doorlockPosition,
+                        radius: zone.r,
+                        strokeWeight: 1, strokeColor: zone.color, strokeOpacity: 0.8, strokeStyle: 'dashed', 
+                        fillColor: zone.color, fillOpacity: 0.1 
+                    });
+                    circle.setMap(map);
+                    zoneCircles.push(circle);
+                });
+            }
+
+            function loadUserList() {
+                if (!database) return;
+                const userListDiv = document.getElementById('userList');
+                const h2 = userListDiv.querySelector('h2');
+                database.ref('users').once('value').then((snapshot) => {
+                    userListDiv.querySelectorAll('.user').forEach(el => el.remove());
+                    snapshot.forEach((childSnapshot) => {
+                        const userId = childSnapshot.key;
+                        const userElement = document.createElement('div');
+                        userElement.className = 'user';
+                        userElement.textContent = userId;
+                        userElement.addEventListener('click', () => selectUser(userId));
+                        h2.insertAdjacentElement('afterend', userElement);
+                    });
+                });
+            }
+
+            function clearMapAndInfo() {
+                markers.forEach(m => {
+                    if (m.customOverlay) m.customOverlay.setMap(null);
+                    m.setMap(null);
+                });
+                markers = [];
+                if (currentPolyline) { currentPolyline.setMap(null); currentPolyline = null; }
+                if (selectedLogMarker) {
+                    selectedLogMarker.setMap(null);
+                    if (selectedLogMarker.infoBox) selectedLogMarker.infoBox.setMap(null);
+                    selectedLogMarker = null;
+                }
+                const infoArea = document.getElementById('infoArea');
+                if (infoArea) infoArea.innerHTML = '';
+                const logBtnElem = document.getElementById('logBtn');
+                if (logBtnElem) logBtnElem.disabled = true;
+                const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+                if (isAdmin) {
+                    const userInfoDiv = document.getElementById('userInfo');
+                    if (userInfoDiv) userInfoDiv.classList.add('hidden');
+                    selectedUserId = null;
+                }
+            }
+
+            function closeUserInfo() { clearMapAndInfo(); }
+
+            function showLocationOnMap(lat, lng) {
+                if (!map) return;
+                if (selectedLogMarker) {
+                    selectedLogMarker.setMap(null);
+                    if (selectedLogMarker.infoBox) selectedLogMarker.infoBox.setMap(null);
+                }
+                const position = new kakao.maps.LatLng(lat, lng);
+
+                // [수정] 지도 중심 이동 및 250m 단위(Level 5) 확대
+                map.setCenter(position); 
+                map.setLevel(5, {animate: true});
+
+                const dist = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
+                const overlayContent = `<div class="custom-overlay-info">
+                                        <strong>선택된 위치</strong><br>
+                                        거리: <span style="color:blue; font-weight:bold;">${dist.toFixed(2)}km</span>
+                                       </div>`;
+                const infoOverlay = new kakao.maps.CustomOverlay({
+                    content: overlayContent, position: position, xAnchor: 0.5, yAnchor: 2.5, zIndex: 3
+                });
+
+                const markerImg = document.createElement('img');
+                markerImg.src = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png';
+                markerImg.className = 'custom-marker-pin';
+                markerImg.style.cursor = 'pointer';
+                markerImg.addEventListener('mouseover', () => { infoOverlay.setMap(map); });
+                markerImg.addEventListener('mouseout', () => { infoOverlay.setMap(null); });
+
+                selectedLogMarker = new kakao.maps.CustomOverlay({
+                    position: position, content: markerImg, yAnchor: 1
+                });
+                selectedLogMarker.infoBox = infoOverlay; 
+                selectedLogMarker.setMap(map);
+            }
+
+            // --- 사용자 선택 및 데이터 로딩 ---
+            function selectUser(userId) {
+                const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+                if (isAdmin) clearMapAndInfo();
+                selectedUserId = userId;
+                const logBtnElem = document.getElementById('logBtn');
+                if (logBtnElem) logBtnElem.disabled = false;
+
+                const infoArea = document.getElementById('infoArea');
+                const userInfoDiv = document.getElementById('userInfo');
+                if (infoArea && userInfoDiv) {
+                    // HTML 구조를 미리 셋팅
+                    infoArea.innerHTML = `
+                        <div style="margin-bottom:10px; flex-shrink:0;"><strong>ID:</strong> ${userId}</div>
+                        <div class="filter-group" style="flex-shrink:0;">
+                            <button id="showAllBtn" class="filter-btn active">전체 기록</button>
+                            <button id="showRangeBtn" class="filter-btn">범위 내(3km)</button>
+                        </div>
+                        <div class="log-list">Loading...</div>
+                    `;
+                    userInfoDiv.classList.remove('hidden');
+
+                    document.getElementById('showAllBtn').onclick = function() {
+                        this.classList.add('active');
+                        document.getElementById('showRangeBtn').classList.remove('active');
+                        renderLocationLogs(false);
+                    };
+                    document.getElementById('showRangeBtn').onclick = function() {
+                        this.classList.add('active');
+                        document.getElementById('showAllBtn').classList.remove('active');
+                        renderLocationLogs(true);
+                    };
+                }
+
+                database.ref('users/' + userId + '/location_logs').once('value').then((snapshot) => {
+                    currentUserLocationLogs = [];
+                    if (snapshot.exists()) {
+                        const val = snapshot.val();
+                        let isList = false;
+                        
+                        snapshot.forEach(child => {
+                            const cVal = child.val();
+                            if (cVal && (cVal.latitude !== undefined || cVal.lat !== undefined)) {
+                                currentUserLocationLogs.push(cVal);
+                                isList = true;
+                            }
+                        });
+
+                        if (!isList && val && (val.latitude !== undefined || val.lat !== undefined)) {
+                            currentUserLocationLogs.push(val);
+                        }
+                        
+                        currentUserLocationLogs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                    }
+                    renderLocationLogs(false);
+                }).catch(err => {
+                    console.error(err);
+                    customAlert("위치 기록 로드 실패");
+                });
+            }
+
+            // --- 로그 렌더링 로직 ---
+            function renderLocationLogs(filterRange) {
+                const logListDiv = document.querySelector('#userInfo .log-list'); 
+                if (!logListDiv) return;
+                
+                logListDiv.innerHTML = '';
+
+                markers.forEach(m => {
+                    if (m.customOverlay) m.customOverlay.setMap(null);
+                    m.setMap(null);
+                });
+                markers = [];
+                if (currentPolyline) { currentPolyline.setMap(null); currentPolyline = null; }
+
+                if (currentUserLocationLogs.length === 0) {
+                    logListDiv.innerHTML = '<div style="padding:10px; color:#666;">기록 없음</div>';
+                    return;
+                }
+
+                let path = [];
+                const bounds = new kakao.maps.LatLngBounds();
+                bounds.extend(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
+                let mapCount = 0;
+
+                const listFragment = document.createDocumentFragment();
+
+                currentUserLocationLogs.forEach((pos) => { 
+                    if (!pos || (!pos.latitude && !pos.lat) || (!pos.longitude && !pos.lon)) return;
+
+                    const lat = parseFloat(pos.latitude || pos.lat);
+                    const lng = parseFloat(pos.longitude || pos.lon);
+                    const alt = pos.altitude !== undefined ? parseFloat(pos.altitude) : (pos.alt !== undefined ? parseFloat(pos.alt) : null);
+
+                    const distKm = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
+
+                    if (filterRange && distKm > MAX_DISTANCE_KM) return; 
+
+                    let rowStyle = '';
+                    if (distKm <= 1.0) rowStyle = 'background-color: #ffeaea;'; 
+                    else if (distKm <= 2.0) rowStyle = 'background-color: #fff8e1;'; 
+
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'log-entry';
+                    if (rowStyle) logEntry.style = rowStyle; 
+                    
+                    const timeStr = pos.timestamp ? new Date(pos.timestamp).toLocaleString('ko-KR') : '시간 없음';
+                    
+                    let entryContent = `<small>${timeStr}</small><br>`;
+                    entryContent += `거리: <strong>${distKm.toFixed(2)}km</strong><br>`;
+                    entryContent += `위도: ${lat.toFixed(6)} / 경도: ${lng.toFixed(6)}`;
+                    if (alt !== null && !isNaN(alt)) {
+                        entryContent += `<br>고도: ${alt.toFixed(2)}m`;
+                    }
+                    
+                    logEntry.innerHTML = entryContent;
+                    logEntry.addEventListener('click', () => showLocationOnMap(lat, lng));
+                    
+                    listFragment.appendChild(logEntry);
+
+                    if (mapCount < 50) {
+                        const latlng = new kakao.maps.LatLng(lat, lng);
+                        path.push(latlng); 
+                        bounds.extend(latlng);
+                        
+                        const dotContent = `<div class="custom-overlay-info">${distKm.toFixed(2)}km 지점</div>`;
+                        const infoOverlay = new kakao.maps.CustomOverlay({
+                            content: dotContent, position: latlng, yAnchor: 2.5, zIndex: 3
+                        });
+                        const dotImg = document.createElement('img');
+                        dotImg.src = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png';
+                        dotImg.className = 'custom-marker-dot';
+                        dotImg.addEventListener('mouseover', () => infoOverlay.setMap(map));
+                        dotImg.addEventListener('mouseout', () => infoOverlay.setMap(null));
+
+                        const overlay = new kakao.maps.CustomOverlay({
+                            position: latlng, content: dotImg, xAnchor: 0.5, yAnchor: 0.5
+                        });
+                        overlay.setMap(map);
+                        markers.push(overlay); 
+                        overlay.customOverlay = infoOverlay;
+                        mapCount++;
+                    }
+                });
+                
+                logListDiv.appendChild(listFragment);
+
+                if (filterRange && path.length > 0) {
+                    currentPolyline = new kakao.maps.Polyline({
+                        path: path, strokeWeight: 4, strokeColor: '#CC00CC', strokeOpacity: 0.8, strokeStyle: 'solid', map: map
+                    });
+                    map.setBounds(bounds);
+                } else if (!filterRange && path.length > 0) {
+                    map.setBounds(bounds);
+                }
+            }
+
+            // --- [수정됨] 로그 조회 로직 (Log View) - 도어락 로그 전체 로드 ---
+            function loadAllLogs(userId) {
+                const doorLockLogContainer = document.querySelector('#doorLockLogs .log-entries');
+                const appLogContainer = document.querySelector('#appLogs .log-entries');
+                const logUserTitle = document.getElementById('logUserTitle');
+
+                logUserTitle.textContent = `${userId} 전체 로그`;
+                doorLockLogContainer.innerHTML = '<em>로딩 중...</em>';
+                appLogContainer.innerHTML = '<em>로딩 중...</em>';
+
+                // [수정] 도어락 로그: limitToLast 제거 및 구조 대응 로직 추가
+                database.ref('doorlock_logs/' + userId).orderByKey().once('value').then((snapshot) => {
+                    doorLockLogContainer.innerHTML = '';
+                    if (!snapshot.exists()) {
+                        doorLockLogContainer.innerHTML = '로그 없음';
+                    } else {
+                        const logs = [];
+                        const val = snapshot.val();
+                        let isList = false;
+
+                        // 1. 리스트/맵 형태 확인 (자식 노드 순회)
+                        snapshot.forEach(c => {
+                            const cVal = c.val();
+                            if (cVal && (cVal.method !== undefined || cVal.timestamp !== undefined)) {
+                                logs.push(cVal);
+                                isList = true;
+                            }
+                        });
+
+                        // 2. 단일 객체 형태 확인 (리스트가 아니면서 본인이 로그일 때)
+                        if (!isList && val && (val.method !== undefined || val.timestamp !== undefined)) {
+                            logs.push(val);
+                        }
+
+                        // 3. 최신순 정렬
+                        logs.sort((a, b) => {
+                            const tA = a.timestamp ? new Date(typeof a.timestamp === 'string' ? a.timestamp.replace(" ", "T") : a.timestamp).getTime() : 0;
+                            const tB = b.timestamp ? new Date(typeof b.timestamp === 'string' ? b.timestamp.replace(" ", "T") : b.timestamp).getTime() : 0;
+                            return tB - tA;
+                        });
+
+                        logs.forEach(log => {
+                            const entry = document.createElement('div');
+                            entry.className = 'full-log-entry';
+                            
+                            let time = 'N/A';
+                            if (log.timestamp) {
+                                if (typeof log.timestamp === 'number') time = new Date(log.timestamp).toLocaleString('ko-KR');
+                                else time = log.timestamp;
+                            }
+                            
+                            const method = log.method || '방식 모름';
+                            const status = log.status || '상태 모름';
+
+                            entry.innerHTML = `<strong>[${time}]</strong> ${method} - ${status}`;
+                            doorLockLogContainer.appendChild(entry);
+                        });
+                    }
+                });
+
+                // 앱 로그
+                database.ref('users/' + userId + '/app_logs').once('value').then((snapshot) => {
+                    appLogContainer.innerHTML = '';
+                    if (!snapshot.exists()) {
+                        appLogContainer.innerHTML = '로그 없음';
+                    } else {
+                        const logs = [];
+                        snapshot.forEach(catSnap => {
+                            const settings = catSnap.val();
+                            if (typeof settings === 'object') {
+                                Object.values(settings).forEach(l => {
+                                    if(typeof l === 'object') logs.push(l);
+                                });
+                            }
+                        });
+                        
+                        logs.sort((a, b) => {
+                            const tA = a.timestamp ? new Date(typeof a.timestamp === 'string' ? a.timestamp.replace(" ", "T") : a.timestamp).getTime() : 0;
+                            const tB = b.timestamp ? new Date(typeof b.timestamp === 'string' ? b.timestamp.replace(" ", "T") : b.timestamp).getTime() : 0;
+                            return tB - tA;
+                        });
+
+                        logs.forEach(log => {
+                            const entry = document.createElement('div');
+                            entry.className = 'full-log-entry';
+                            
+                            let time = 'N/A';
+                            if (log.timestamp) {
+                                if (typeof log.timestamp === 'number') {
+                                    time = new Date(log.timestamp).toLocaleString('ko-KR');
+                                } else {
+                                    time = log.timestamp;
+                                }
+                            }
+
+                            let msg = log.event;
+                            
+                            if (!msg) {
+                                if (log.new_auth) {
+                                    msg = `인증방식 변경: ${log.new_auth}`;
+                                } else if (log.new_name) {
+                                    msg = `이름 변경: ${log.new_name}`;
+                                } else if (log.new_pw) {
+                                    msg = `비밀번호 변경: ${log.new_pw}`;
+                                } else {
+                                    msg = `<pre style="margin:0; white-space:pre-wrap; font-family:inherit; color:#555;">${JSON.stringify(log, null, 2)}</pre>`;
+                                }
+                            }
+                            
+                            entry.innerHTML = `<strong>[${time}]</strong> ${msg}`;
+                            appLogContainer.appendChild(entry);
+                        });
+                    }
+                });
+            }
+
+            // --- DB Viewer 로직 ---
+            window.loadAllDBData = function() {
+                const resultArea = document.getElementById('result-area');
+                const title = document.getElementById('result-title');
+                
+                title.textContent = "전체 사용자 목록 (users):";
+                resultArea.innerHTML = '<div class="message-box">전체 데이터를 불러오는 중...</div>';
+                document.getElementById('search-input').value = '';
+
+                database.ref('users').once('value').then((snapshot) => {
+                    if (snapshot.exists()) {
+                        renderGrid(snapshot.val());
+                    } else {
+                        resultArea.innerHTML = '<div class="message-box">저장된 사용자 데이터가 없습니다.</div>';
+                    }
+                }).catch((error) => {
+                    resultArea.innerHTML = `<div class="message-box" style="color: red;">데이터 로드 실패: ${error.message}</div>`;
+                });
+            }
+
+            window.searchUser = function() {
+                const input = document.getElementById('search-input');
+                const resultArea = document.getElementById('result-area');
+                const title = document.getElementById('result-title');
+                const userId = input.value.trim();
+
+                if (!userId) { alert("사용자 ID를 입력해주세요."); return; }
+
+                title.textContent = `'${userId}' 검색 결과:`;
+                resultArea.innerHTML = '<div class="message-box">검색 중...</div>';
+
+                database.ref('users/' + userId).once('value').then((snapshot) => {
+                    if (snapshot.exists()) {
+                        const wrapper = {};
+                        wrapper[userId] = snapshot.val();
+                        renderGrid(wrapper);
+                    } else {
+                        resultArea.innerHTML = `<div class="message-box" style="color: #dc3545;">'${userId}' 사용자를 찾을 수 없습니다.</div>`;
+                    }
+                }).catch((error) => {
+                    resultArea.innerHTML = `<div class="message-box" style="color: red;">에러 발생: ${error.message}</div>`;
+                });
+            }
+
+            function renderGrid(data) {
+                const resultArea = document.getElementById('result-area');
+                let tableHtml = `
+                    <div class="grid-wrapper">
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 150px;">사용자 ID</th>
+                                    <th>데이터 상세 내용 (Interactive Tree)</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+                for (const [userId, userData] of Object.entries(data)) {
+                    const formattedData = createFirebaseView(userData, 0);
+                    tableHtml += `
+                        <tr>
+                            <td style="vertical-align: top; font-weight: bold; color: #007bff; background-color: #fdfdfd;">
+                                ${userId}
+                            </td>
+                            <td style="vertical-align: top;">
+                                <div class="firebase-view">${formattedData}</div>
+                            </td>
+                        </tr>`;
+                }
+                tableHtml += `</tbody></table></div>`;
+                resultArea.innerHTML = tableHtml;
+            }
+
+            function createFirebaseView(data, depth) {
+                let html = '';
+                const indent = '<span class="fv-indent"></span>'.repeat(depth);
+
+                if (typeof data === 'object' && data !== null) {
+                    for (const [key, value] of Object.entries(data)) {
+                        const isObject = typeof value === 'object' && value !== null;
+                        if (isObject) {
+                            const isExpanded = false; 
+                            const arrowIcon = isExpanded ? '▼' : '▶';
+                            const arrowTransform = isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
+                            const childrenClass = isExpanded ? '' : 'fv-hidden';
+
+                            html += `
+                            <div class="fv-item">
+                                ${indent}
+                                <div class="fv-key-box" onclick="toggleNode(this)">
+                                    <span class="fv-arrow" style="transform: ${arrowTransform};">${arrowIcon}</span>
+                                    <span class="fv-key">${key}</span>
+                                </div>
+                                <div class="fv-children ${childrenClass}">
+                                    ${createFirebaseView(value, depth + 1)}
+                                </div>
+                            </div>`;
+                        } else {
+                            html += `
+                            <div class="fv-item">
+                                ${indent}
+                                <span style="display:inline-block; width:16px;"></span>
+                                <span class="fv-key">${key}:</span>
+                                ${formatValue(value)}
+                            </div>`;
+                        }
+                    }
+                } else {
+                    html += `<div class="fv-item">${indent}${formatValue(data)}</div>`;
+                }
+                return html;
+            }
+
+            window.toggleNode = function(element) {
+                const childrenDiv = element.nextElementSibling;
+                const arrowSpan = element.querySelector('.fv-arrow');
+                if (childrenDiv) {
+                    if (childrenDiv.classList.contains('fv-hidden')) {
+                        childrenDiv.classList.remove('fv-hidden');
+                        arrowSpan.textContent = '▼';
+                        arrowSpan.style.transform = 'rotate(0deg)';
+                    } else {
+                        childrenDiv.classList.add('fv-hidden');
+                        arrowSpan.textContent = '▶';
+                        arrowSpan.style.transform = 'rotate(-90deg)';
+                    }
+                }
+            }
+
+            function formatValue(val) {
+                if (typeof val === 'string') return `<span class="fv-string">"${val}"</span>`;
+                if (typeof val === 'number') return `<span class="fv-number">${val}</span>`;
+                if (typeof val === 'boolean') return `<span class="fv-boolean">${val}</span>`;
+                if (val === null) return `<span class="fv-null">null</span>`;
+                return val;
+            }
+
+            // --- 로그인/로그아웃 로직 ---
+            function handleLoginSubmit(e) {
+                e.preventDefault();
+                const usernameInput = document.getElementById('username')?.value.trim();
+                const passwordInput = document.getElementById('password')?.value.trim();
+                if (!database) return;
+
+                database.ref('admin_pass').once('value').then((snap) => {
+                    let loginSuccess = false;
+                    let isAdmin = false;
+                    let loggedInUserId = null;
+                    if (snap.exists()) {
+                        snap.forEach(c => {
+                            const d = c.val();
+                            if (d && d.adminId === usernameInput && d.password === passwordInput) {
+                                loginSuccess = true; isAdmin = true; loggedInUserId = d.adminId;
+                            }
+                        });
+                    }
+                    if (loginSuccess) {
+                        sessionStorage.setItem('isLoggedIn', 'true');
+                        sessionStorage.setItem('isAdmin', 'true');
+                        sessionStorage.setItem('userId', loggedInUserId);
+                        showMainContent(true, loggedInUserId);
+                        return;
+                    }
+                    return database.ref('users').once('value');
+                }).then((userSnap) => {
+                    if (!userSnap) return; 
+                    let loginSuccess = false;
+                    let loggedInUserId = null;
+                    if (userSnap.exists()) {
+                        userSnap.forEach(c => {
+                            const d = c.val();
+                            if (d && d.username === usernameInput && d.password === passwordInput) {
+                                loginSuccess = true; loggedInUserId = c.key;
+                            }
+                        });
+                    }
+                    if (loginSuccess) {
+                        sessionStorage.setItem('isLoggedIn', 'true');
+                        sessionStorage.setItem('isAdmin', 'false');
+                        sessionStorage.setItem('userId', loggedInUserId);
+                        showMainContent(false, loggedInUserId);
+                    } else {
+                        customAlert('아이디 또는 비밀번호 오류');
+                    }
+                });
+            }
+
+            function confirmLogout() { document.getElementById('logout-confirm-modal').classList.remove('hidden'); }
+            function executeLogout() {
+                sessionStorage.clear();
+                window.location.reload();
+            }
+
+            // --- 네비게이션 핸들러 ---
+            function handleLogView() {
+                mainContent.classList.add('hidden');
+                dbContent.classList.add('hidden');
+                logContent.classList.remove('hidden');
+
+                document.getElementById('mapBtn').disabled = false;
+                document.getElementById('logBtn').disabled = true;
+                document.getElementById('newBtn').disabled = false;
+
+                const u = selectedUserId || sessionStorage.getItem('userId');
+                if (u) loadAllLogs(u);
+                else customAlert("사용자 선택 필요");
+            }
+
+            function handleBackToMap() {
+                logContent.classList.add('hidden');
+                dbContent.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+
+                document.getElementById('mapBtn').disabled = true;
+                document.getElementById('logBtn').disabled = false;
+                document.getElementById('newBtn').disabled = false;
+                
+                if(map) map.relayout();
+            }
+
+            function handleDBView() {
+                mainContent.classList.add('hidden');
+                logContent.classList.add('hidden');
+                dbContent.classList.remove('hidden');
+
+                document.getElementById('mapBtn').disabled = false;
+                document.getElementById('logBtn').disabled = false;
+                document.getElementById('newBtn').disabled = true;
+
+                loadAllDBData();
+            }
+
+            function setupMainUIEventListeners() {
+                document.getElementById('logoutBtn').onclick = confirmLogout;
+                document.getElementById('logBtn').onclick = handleLogView;
+                document.getElementById('newBtn').onclick = handleDBView;
+                document.getElementById('mapBtn').onclick = handleBackToMap;
+                
+                const headerTitle = document.getElementById('header-title');
+                if (headerTitle) headerTitle.onclick = () => window.location.reload();
+            }
+
+            if (loginForm) loginForm.addEventListener('submit', handleLoginSubmit);
+            if (closeUserInfoButton) closeUserInfoButton.onclick = closeUserInfo;
+            
+            document.getElementById('confirmLogoutBtn').onclick = executeLogout;
+            document.getElementById('cancelLogoutBtn').onclick = () => document.getElementById('logout-confirm-modal').classList.add('hidden');
+            document.getElementById('search-input').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') searchUser();
+            });
+
+            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+            if (isLoggedIn) {
+                const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+                const userId = sessionStorage.getItem('userId');
+                showMainContent(isAdmin, userId);
+            } else {
+                loginContainer.classList.remove('hidden');
+                mainContent.classList.add('hidden');
+                header.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
