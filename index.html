@@ -5,51 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Doorlock Capstone</title>
 
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 
+    <!-- External CSS -->
     <link rel="stylesheet" href="indexstyle.css">
 
+    <!-- SDKs -->
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-
-    <style>
-        /* --- [추가] DB Viewer (Tree View) 스타일 통합 --- */
-        #db-content { padding: 20px; }
-        .search-container { margin-bottom: 20px; display: flex; gap: 10px; }
-        .search-container input { padding: 10px; border: 1px solid #ddd; border-radius: 4px; flex: 1; }
-        .btn-search { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
-        .btn-reset { background-color: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
-        
-        /* Table Style */
-        .grid-wrapper { overflow-x: auto; border: 1px solid #eee; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .styled-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        .styled-table th, .styled-table td { padding: 12px 15px; border-bottom: 1px solid #ddd; text-align: left; }
-        
-        /* JSON Tree View Style */
-        .firebase-view { font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.5; color: #333; }
-        .fv-item { display: flex; flex-wrap: wrap; align-items: center; margin: 2px 0; }
-        .fv-indent { display: inline-block; width: 20px; border-left: 1px dashed #ccc; height: 100%; margin-right: 5px; }
-        .fv-key-box { cursor: pointer; display: inline-flex; align-items: center; user-select: none; color: #2c3e50; font-weight: 600; }
-        .fv-key-box:hover { color: #007bff; }
-        .fv-arrow { display: inline-block; width: 16px; text-align: center; margin-right: 4px; font-size: 10px; transition: transform 0.1s; }
-        .fv-key { margin-right: 5px; }
-        .fv-children { width: 100%; display: block; }
-        .fv-hidden { display: none; }
-        
-        /* Value Colors */
-        .fv-string { color: #22863a; }    /* Green */
-        .fv-number { color: #005cc5; }    /* Blue */
-        .fv-boolean { color: #d73a49; }   /* Red */
-        .fv-null { color: #6a737d; font-style: italic; } /* Grey */
-        
-        .message-box { padding: 20px; text-align: center; color: #666; background: #f9f9f9; border-radius: 8px; }
-    </style>
 </head>
 <body>
 
+    <!-- 1. 로그인 화면 -->
     <div id="login-container">
         <h2>SmartDoorLock</h2>
         <form id="login-form">
@@ -65,15 +36,18 @@
         </form>
     </div>
 
+    <!-- 2. 상단 헤더 (공통) -->
     <div id="header" class="hidden">
         <h1 id="header-title" style="cursor: pointer;">Smart Doorlock</h1> 
         <div class="button-group">
             <button id="mapBtn" disabled>지도</button>
             <button id="logBtn" disabled>로그 보기</button>
-            <button id="newBtn">DB 조회</button> <button id="logoutBtn">로그아웃</button>
+            <button id="newBtn">DB 조회</button>
+            <button id="logoutBtn">로그아웃</button>
         </div>
     </div>
 
+    <!-- 3. 메인 컨텐츠 (지도 및 사용자 리스트) -->
     <div id="main-content" class="hidden">
         <div id="sidebar">
             <div id="userInfo" class="hidden">
@@ -93,6 +67,7 @@
         </div>
     </div>
 
+    <!-- 4. 로그 컨텐츠 (상세 로그) -->
     <div id="log-content" class="hidden">
         <div class="log-header">
             <h2 id="logUserTitle">전체 로그</h2>
@@ -109,6 +84,7 @@
         </div>
     </div>
 
+    <!-- 5. DB 조회 컨텐츠 (Tree View) -->
     <div id="db-content" class="hidden">
         <div class="container">
             <h2>데이터베이스 조회 (Interactive Tree)</h2>
@@ -124,6 +100,7 @@
         </div>
     </div>
 
+    <!-- 모달 팝업들 -->
     <div id="custom-modal" class="hidden">
         <div class="modal-content">
             <p id="modal-message"></p>
@@ -149,7 +126,7 @@
             const loginContainer = document.getElementById('login-container');
             const mainContent = document.getElementById('main-content');
             const logContent = document.getElementById('log-content');
-            const dbContent = document.getElementById('db-content'); // 추가됨
+            const dbContent = document.getElementById('db-content');
             const header = document.getElementById('header');
             const loginForm = document.getElementById('login-form');
             const body = document.querySelector('body');
@@ -225,7 +202,6 @@
                 header.classList.remove('hidden');
                 body.style.overflow = 'auto';
                 
-                // 모든 컨텐츠 숨기고 메인만 표시
                 mainContent.classList.remove('hidden');
                 logContent.classList.add('hidden');
                 dbContent.classList.add('hidden');
@@ -261,7 +237,6 @@
                 setupMainUIEventListeners();
             }
 
-            // --- 지도 관련 로직 ---
             function initMap() {
                 if (typeof kakao === 'undefined' || !kakao.maps || !kakao.maps.Map) {
                     console.error("Kakao Maps SDK not loaded.");
@@ -311,7 +286,6 @@
                 });
             }
 
-            // 사용자 리스트 (Admin)
             function loadUserList() {
                 if (!database) return;
                 const userListDiv = document.getElementById('userList');
@@ -386,6 +360,7 @@
                 map.panTo(position);
             }
 
+            // --- [수정] 사용자 선택 시 데이터 로딩 로직 개선 ---
             function selectUser(userId) {
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
                 if (isAdmin) clearMapAndInfo();
@@ -421,8 +396,16 @@
                 database.ref('users/' + userId + '/location_logs').once('value').then((snapshot) => {
                     currentUserLocationLogs = [];
                     if (snapshot.exists()) {
-                        snapshot.forEach(child => currentUserLocationLogs.push(child.val()));
-                        currentUserLocationLogs.sort((a, b) => b.timestamp - a.timestamp);
+                        const val = snapshot.val();
+                        // 만약 데이터가 리스트가 아니라 단일 객체로 저장되어 있을 경우(키가 없는 경우) 예외처리
+                        if (val.latitude && val.longitude) {
+                             currentUserLocationLogs.push(val);
+                        } else {
+                             // 일반적인 경우: 리스트 형태
+                             snapshot.forEach(child => currentUserLocationLogs.push(child.val()));
+                        }
+                        // 최신순 정렬
+                        currentUserLocationLogs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                     }
                     renderLocationLogs(false);
                 }).catch(err => {
@@ -431,11 +414,15 @@
                 });
             }
 
+            // --- [수정] 로그 렌더링 로직 (초기화 문제 해결) ---
             function renderLocationLogs(filterRange) {
-                const logListDiv = document.querySelector('.log-list');
+                const logListDiv = document.querySelector('#userInfo .log-list'); // 선택자 구체화
                 if (!logListDiv) return;
+                
+                // 목록 초기화는 여기서 *한 번만* 실행
                 logListDiv.innerHTML = '';
 
+                // 지도 마커 초기화
                 markers.forEach(m => {
                     if (m.customOverlay) m.customOverlay.setMap(null);
                     m.setMap(null);
@@ -444,7 +431,7 @@
                 if (currentPolyline) { currentPolyline.setMap(null); currentPolyline = null; }
 
                 if (currentUserLocationLogs.length === 0) {
-                    logListDiv.innerHTML = '기록 없음';
+                    logListDiv.innerHTML = '<div style="padding:10px; color:#666;">기록 없음</div>';
                     return;
                 }
 
@@ -453,14 +440,20 @@
                 bounds.extend(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
                 let mapCount = 0;
 
+                // Fragment를 사용하여 DOM 조작 최소화 (성능 개선)
+                const listFragment = document.createDocumentFragment();
+
                 currentUserLocationLogs.forEach((pos) => { 
-                    if (!pos || !pos.latitude || !pos.longitude) return;
+                    if (!pos || !pos.latitude || !pos.longitude) return; // 유효성 검사
+
                     const lat = parseFloat(pos.latitude);
                     const lng = parseFloat(pos.longitude);
                     const distKm = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
 
+                    // 필터링 모드일 때 거리 체크
                     if (filterRange && distKm > MAX_DISTANCE_KM) return; 
 
+                    // 리스트 아이템 스타일
                     let rowStyle = '';
                     if (distKm <= 1.0) rowStyle = 'background-color: #ffeaea;'; 
                     else if (distKm <= 2.0) rowStyle = 'background-color: #fff8e1;'; 
@@ -468,11 +461,14 @@
                     const logEntry = document.createElement('div');
                     logEntry.className = 'log-entry';
                     if (rowStyle) logEntry.style = rowStyle; 
+                    
                     const timeStr = pos.timestamp ? new Date(pos.timestamp).toLocaleString('ko-KR') : '시간 없음';
                     logEntry.innerHTML = `<small>${timeStr}</small><br>거리: <strong>${distKm.toFixed(2)}km</strong>`;
                     logEntry.addEventListener('click', () => showLocationOnMap(lat, lng));
-                    logListDiv.appendChild(logEntry);
+                    
+                    listFragment.appendChild(logEntry); // Fragment에 추가
 
+                    // 지도 마커 추가 (최대 50개)
                     if (mapCount < 50) {
                         const latlng = new kakao.maps.LatLng(lat, lng);
                         path.push(latlng); 
@@ -497,7 +493,10 @@
                         mapCount++;
                     }
                 });
+                
+                logListDiv.appendChild(listFragment); // 최종적으로 DOM에 추가
 
+                // 경로 그리기
                 if (filterRange && path.length > 0) {
                     currentPolyline = new kakao.maps.Polyline({
                         path: path, strokeWeight: 4, strokeColor: '#CC00CC', strokeOpacity: 0.8, strokeStyle: 'solid', map: map
@@ -565,7 +564,7 @@
                 });
             }
 
-            // --- [추가] DB Viewer (Tree View) 로직 ---
+            // --- DB Viewer 로직 ---
             window.loadAllDBData = function() {
                 const resultArea = document.getElementById('result-area');
                 const title = document.getElementById('result-title');
@@ -678,7 +677,6 @@
                 return html;
             }
 
-            // 전역 함수로 등록 (HTML onclick에서 접근 가능하도록)
             window.toggleNode = function(element) {
                 const childrenDiv = element.nextElementSibling;
                 const arrowSpan = element.querySelector('.fv-arrow');
@@ -702,7 +700,6 @@
                 if (val === null) return `<span class="fv-null">null</span>`;
                 return val;
             }
-            // ------------------------------------------------
 
             // --- 로그인/로그아웃 로직 ---
             function handleLoginSubmit(e) {
@@ -711,7 +708,6 @@
                 const passwordInput = document.getElementById('password')?.value.trim();
                 if (!database) return;
 
-                // Admin 체크
                 database.ref('admin_pass').once('value').then((snap) => {
                     let loginSuccess = false;
                     let isAdmin = false;
@@ -731,7 +727,6 @@
                         showMainContent(true, loggedInUserId);
                         return;
                     }
-                    // 일반 유저 체크
                     return database.ref('users').once('value');
                 }).then((userSnap) => {
                     if (!userSnap) return; 
@@ -786,12 +781,10 @@
                 document.getElementById('logBtn').disabled = false;
                 document.getElementById('newBtn').disabled = false;
                 
-                // 맵 리사이즈 (숨겨졌다 나타나면 깨지는 현상 방지)
                 if(map) map.relayout();
             }
 
             function handleDBView() {
-                // 페이지 이동 대신 화면 전환
                 mainContent.classList.add('hidden');
                 logContent.classList.add('hidden');
                 dbContent.classList.remove('hidden');
@@ -800,21 +793,19 @@
                 document.getElementById('logBtn').disabled = false;
                 document.getElementById('newBtn').disabled = true;
 
-                loadAllDBData(); // DB 데이터 로드
+                loadAllDBData();
             }
 
-            // --- 초기화 이벤트 리스너 ---
             function setupMainUIEventListeners() {
                 document.getElementById('logoutBtn').onclick = confirmLogout;
                 document.getElementById('logBtn').onclick = handleLogView;
-                document.getElementById('newBtn').onclick = handleDBView; // 함수 변경
+                document.getElementById('newBtn').onclick = handleDBView;
                 document.getElementById('mapBtn').onclick = handleBackToMap;
                 
                 const headerTitle = document.getElementById('header-title');
                 if (headerTitle) headerTitle.onclick = () => window.location.reload();
             }
 
-            // 앱 시작점
             if (loginForm) loginForm.addEventListener('submit', handleLoginSubmit);
             if (closeUserInfoButton) closeUserInfoButton.onclick = closeUserInfo;
             
@@ -838,4 +829,3 @@
     </script>
 </body>
 </html>
-
