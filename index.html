@@ -50,7 +50,6 @@
     <!-- 3. 메인 컨텐츠 (지도 및 사용자 리스트) -->
     <div id="main-content" class="hidden">
         <div id="sidebar">
-            <!-- [수정] 사용자 정보창 (스크롤 및 레이아웃 개선) -->
             <div id="userInfo" class="hidden">
                 <div class="info-header">
                     <h2>User Info</h2>
@@ -361,7 +360,7 @@
                 map.panTo(position);
             }
 
-            // --- [수정됨] 사용자 선택 및 데이터 로딩 로직 (리스트/단일객체 모두 대응) ---
+            // --- 사용자 선택 및 데이터 로딩 ---
             function selectUser(userId) {
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
                 if (isAdmin) clearMapAndInfo();
@@ -372,7 +371,7 @@
                 const infoArea = document.getElementById('infoArea');
                 const userInfoDiv = document.getElementById('userInfo');
                 if (infoArea && userInfoDiv) {
-                    // HTML 구조를 미리 셋팅하여 renderLocationLogs에서 찾을 수 있게 함
+                    // HTML 구조를 미리 셋팅
                     infoArea.innerHTML = `
                         <div style="margin-bottom:10px; flex-shrink:0;"><strong>ID:</strong> ${userId}</div>
                         <div class="filter-group" style="flex-shrink:0;">
@@ -401,23 +400,18 @@
                         const val = snapshot.val();
                         let isList = false;
                         
-                        // 1. 자식 노드들을 순회하며 로그인지 확인 (리스트 형태 우선 감지)
-                        // snapshot.forEach는 배열이나 객체 맵 모두 순회합니다.
                         snapshot.forEach(child => {
                             const cVal = child.val();
-                            // 자식이 latitude나 lat 속성을 가지고 있다면 로그 데이터로 판단
                             if (cVal && (cVal.latitude !== undefined || cVal.lat !== undefined)) {
                                 currentUserLocationLogs.push(cVal);
                                 isList = true;
                             }
                         });
 
-                        // 2. 자식에서 로그를 하나도 못 찾았는데, 본인이 로그라면 (단일 객체/덮어쓰기 형태)
                         if (!isList && val && (val.latitude !== undefined || val.lat !== undefined)) {
                             currentUserLocationLogs.push(val);
                         }
                         
-                        // 3. 최신순 정렬
                         currentUserLocationLogs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                     }
                     renderLocationLogs(false);
@@ -427,7 +421,7 @@
                 });
             }
 
-            // --- [수정됨] 로그 렌더링 로직 ---
+            // --- 로그 렌더링 로직 ---
             function renderLocationLogs(filterRange) {
                 const logListDiv = document.querySelector('#userInfo .log-list'); 
                 if (!logListDiv) return;
@@ -458,6 +452,8 @@
 
                     const lat = parseFloat(pos.latitude || pos.lat);
                     const lng = parseFloat(pos.longitude || pos.lon);
+                    const alt = pos.altitude !== undefined ? parseFloat(pos.altitude) : (pos.alt !== undefined ? parseFloat(pos.alt) : null);
+
                     const distKm = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
 
                     if (filterRange && distKm > MAX_DISTANCE_KM) return; 
@@ -471,7 +467,15 @@
                     if (rowStyle) logEntry.style = rowStyle; 
                     
                     const timeStr = pos.timestamp ? new Date(pos.timestamp).toLocaleString('ko-KR') : '시간 없음';
-                    logEntry.innerHTML = `<small>${timeStr}</small><br>거리: <strong>${distKm.toFixed(2)}km</strong>`;
+                    
+                    let entryContent = `<small>${timeStr}</small><br>`;
+                    entryContent += `거리: <strong>${distKm.toFixed(2)}km</strong><br>`;
+                    entryContent += `위도: ${lat.toFixed(6)} / 경도: ${lng.toFixed(6)}`;
+                    if (alt !== null && !isNaN(alt)) {
+                        entryContent += `<br>고도: ${alt.toFixed(2)}m`;
+                    }
+                    
+                    logEntry.innerHTML = entryContent;
                     logEntry.addEventListener('click', () => showLocationOnMap(lat, lng));
                     
                     listFragment.appendChild(logEntry);
@@ -651,7 +655,8 @@
                     for (const [key, value] of Object.entries(data)) {
                         const isObject = typeof value === 'object' && value !== null;
                         if (isObject) {
-                            const isExpanded = depth < 2; 
+                            // [수정됨] 초기 로딩 시 모든 노드를 접힌 상태(false)로 시작
+                            const isExpanded = false; 
                             const arrowIcon = isExpanded ? '▼' : '▶';
                             const arrowTransform = isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
                             const childrenClass = isExpanded ? '' : 'fv-hidden';
