@@ -80,8 +80,8 @@
 
         <!-- [추가] 모바일 전용 탭 버튼 (데스크탑에서는 숨김) -->
         <div class="log-tab-buttons">
-            <button id="tab-doorlock" class="log-tab-btn active" onclick="switchLogTab('doorlock')">도어락 로그</button>
-            <button id="tab-app" class="log-tab-btn" onclick="switchLogTab('app')">앱 로그</button>
+            <button id="tab-doorlock" class="log-tab-btn active" onclick="switchLogTab('doorlock')">DoorLock Logs</button>
+            <button id="tab-app" class="log-tab-btn" onclick="switchLogTab('app')">App Logs</button>
         </div>
 
         <div class="log-container">
@@ -100,11 +100,11 @@
     <!-- 5. DB 조회 컨텐츠 (Tree View) -->
     <div id="db-content" class="hidden">
         <div class="container">
-            <h2>데이터베이스 조회 (Interactive Tree)</h2>
+            <h2>Database</h2>
             <div class="search-container">
                 <input type="text" id="search-input" placeholder="검색할 사용자 ID를 입력하세요 (예: 123456)">
                 <button class="btn-search" onclick="searchUser()">검색</button>
-                <button class="btn-reset" onclick="loadAllDBData()" style="margin-left:5px;">전체 목록</button>
+                <button class="btn-reset" onclick="loadAllDBData()">전체 목록</button>
             </div>
             <h3 id="result-title">사용자 목록:</h3>
             <div id="result-area">
@@ -411,8 +411,8 @@
                     infoArea.innerHTML = `
                         <div style="margin-bottom:10px; flex-shrink:0;"><strong>ID:</strong> ${userId}</div>
                         <div class="filter-group" style="flex-shrink:0;">
-                            <button id="showAllBtn" class="filter-btn active">전체 기록</button>
-                            <button id="showRangeBtn" class="filter-btn">범위 내(3km)</button>
+                            <button id="showAllBtn" class="filter-btn active">ALL Logs</button>
+                            <button id="showRangeBtn" class="filter-btn">In Range(3km)</button>
                         </div>
                         <div class="log-list">Loading...</div>
                     `;
@@ -559,7 +559,7 @@
                 const appLogContainer = document.querySelector('#appLogs .log-entries');
                 const logUserTitle = document.getElementById('logUserTitle');
 
-                logUserTitle.textContent = `${userId} 전체 로그`;
+                logUserTitle.textContent = `${userId} Logs`;
                 doorLockLogContainer.innerHTML = '<em>로딩 중...</em>';
                 appLogContainer.innerHTML = '<em>로딩 중...</em>';
 
@@ -674,7 +674,7 @@
                 const resultArea = document.getElementById('result-area');
                 const title = document.getElementById('result-title');
                 
-                title.textContent = "전체 사용자 목록 (users):";
+                title.textContent = "Users List:";
                 resultArea.innerHTML = '<div class="message-box">전체 데이터를 불러오는 중...</div>';
                 document.getElementById('search-input').value = '';
 
@@ -713,7 +713,6 @@
                 });
             }
 
-            // [수정됨] 사용자 ID 열 너비 조정
             function renderGrid(data) {
                 const resultArea = document.getElementById('result-area');
                 let tableHtml = `
@@ -721,7 +720,7 @@
                         <table class="styled-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 80px;">사용자 ID</th> <!-- 150px -> 80px로 너비 축소 -->
+                                    <th style="width: 150px;">사용자 ID</th>
                                     <th>데이터 상세 내용 (Interactive Tree)</th>
                                 </tr>
                             </thead>
@@ -935,3 +934,4 @@
     </script>
 </body>
 </html>
+
