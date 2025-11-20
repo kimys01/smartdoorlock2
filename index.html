@@ -2,599 +2,40 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <!-- 모바일 화면에서 적절한 비율로 보이도록 설정 (반응형 웹 필수) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- [추가] 모바일 브라우저 강제 라이트 모드 설정 -->
+    <!-- [중요] 모바일 브라우저(특히 다크모드)에서 색상 반전을 막고 라이트 모드로 강제 설정 -->
     <meta name="color-scheme" content="light only">
     <meta name="supported-color-schemes" content="light">
 
     <title>Smart Doorlock Capstone</title>
 
-    <!-- Fonts -->
+    <!-- 구글 폰트 (Poppins) 불러오기 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 
-    <!-- SDKs -->
+    <!-- 외부 CSS 파일 연결 -->
+    <link rel="stylesheet" href="indexstyle.css">
+
+    <!-- 외부 라이브러리(SDK) 로드 -->
+    <!-- 1. 카카오 지도 SDK (지도 기능) -->
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
+    <!-- 2. Firebase SDK (데이터베이스 및 인증 기능) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
+    <!-- CSS가 로드되지 않을 경우를 대비한 내부 스타일 (필요시 사용, 현재는 외부 파일 사용 중) -->
     <style>
-        @charset "UTF-8";
-
-        /* =========================================
-           1. 기본 설정 (Global Reset & Body)
-           ========================================= */
-
-        /* [강력 수정] 시스템 다크모드 강제 무시 설정 */
-        :root {
-            color-scheme: light !important;
-        }
-
-        * { 
-            margin: 0; 
-            padding: 0; 
-            box-sizing: border-box; 
-            font-family: 'Poppins', sans-serif; 
-            /* 모든 텍스트 색상을 강제로 어두운 색으로 고정 (반전 방지) */
-            color: #333333; 
-        }
-
-        body { 
-            height: 100vh; 
-            /* [수정] 배경 그라디언트에 !important 추가하여 다크모드 개입 차단 */
-            background: linear-gradient(135deg, #71b7e6, #9b59b6) !important;
-            background-color: #71b7e6 !important; /* 그라디언트 로딩 전 fallback */
-            padding-top: 70px;
-            overflow: hidden;
-            transition: background-color 0.3s ease; 
-        }
-
-        .hidden { display: none !important; }
-
-        /* =========================================
-           2. 상단 헤더 (Header)
-           ========================================= */
-        #header {
-            position: fixed; 
-            top: 0; left: 0; 
-            width: 100%; 
-            height: 70px; 
-            padding: 0 30px;
-            background-color: #ffffff !important; /* 배경 흰색 강제 */
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            z-index: 1000;
-            transition: all 0.3s ease;
-        }
-
-        #header h1 {
-            font-size: 24px; 
-            margin: 0; 
-            cursor: pointer; 
-            font-weight: 600;
-            background: linear-gradient(135deg, #71b7e6, #9b59b6) !important;
-            -webkit-background-clip: text !important; 
-            background-clip: text !important; 
-            color: transparent !important; /* 텍스트 투명화 후 배경색 보이기 */
-            white-space: nowrap;
-        }
-
-        #header .button-group { display: flex; gap: 0; }
-
-        #header button {
-            padding: 10px 20px; 
-            border: none; 
-            color: #333 !important; /* 버튼 글씨 검은색 강제 */
-            border-radius: 0; 
-            cursor: pointer;
-            font-weight: 500; 
-            transition: 0.3s; 
-            background-color: #f8f9fa !important; /* 버튼 배경 밝은 회색 강제 */
-            font-size: 14px;
-            white-space: nowrap;
-        }
-
-        #header .button-group button + button { border-left: 1px solid #ddd; }
-
-        #header button:hover:not(:disabled) {
-            background: linear-gradient(135deg, #71b7e6, #9b59b6) !important;
-            color: white !important;
-        }
-
-        #header button:disabled { 
-            color: #aaa !important; 
-            cursor: not-allowed; 
-            background: #f8f9fa !important; 
-        }
-
-        /* =========================================
-           3. 로그인 화면 (Login Container)
-           ========================================= */
-        #login-container {
-            width: 90%; 
-            max-width: 400px; 
-            background-color: #ffffff !important; /* 흰색 배경 강제 */
-            padding: 40px;
-            border-radius: 10px; 
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            text-align: center; 
-            position: absolute; 
-            left: 50%; top: 50%;
-            transform: translate(-50%, -50%); 
-            z-index: 2000;
-        }
-
-        #login-container h2 { font-size: 28px; font-weight: 600; margin-bottom: 25px; color: #333 !important; }
-
-        /* 입력창 스타일 강제 (다크모드에서 검게 변하는 것 방지) */
-        input[type="text"], input[type="password"] {
-            width: 100%; 
-            padding: 12px 15px; 
-            border: 1px solid #ccc !important; 
-            border-radius: 5px; 
-            font-size: 16px; 
-            background-color: #ffffff !important; /* 흰색 배경 강제 */
-            color: #000000 !important; /* 검은 글씨 강제 */
-            -webkit-appearance: none; /* 브라우저 기본 스타일 제거 */
-        }
-
-        .input-group { margin-bottom: 20px; text-align: left; }
-        .input-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; color: #555 !important; }
-
-        #login-container button { 
-            width: 100%; 
-            padding: 12px; 
-            background: linear-gradient(135deg, #71b7e6, #9b59b6) !important; 
-            color: white !important; 
-            border: none; 
-            border-radius: 5px; 
-            font-size: 18px; 
-            cursor: pointer; 
-            transition: opacity 0.3s; 
-        }
-        #login-container button:hover { opacity: 0.9; }
-
-        /* =========================================
-           4. 메인 대시보드 (Main Content)
-           ========================================= */
-        #main-content { 
-            display: flex; 
-            padding: 10px; 
-            gap: 20px; 
-            width: 100%; 
-            height: calc(100vh - 70px); 
-            overflow: hidden; 
-        }
-
-        #sidebar { 
-            display: flex; 
-            flex-direction: column; 
-            width: 250px; 
-            gap: 15px; 
-            height: 100%; 
-            min-width: 200px; 
-            transition: all 0.3s ease;
-        }
-
-        #userList, #userInfo, #mapArea {
-            border: none; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
-            padding: 15px;
-            border-radius: 8px; 
-            background-color: #ffffff !important; /* 흰색 강제 */
-            box-sizing: border-box;
-        }
-
-        #userList { overflow-y: auto; flex-grow: 1; }
-
-        #userInfo { 
-            overflow: hidden; 
-            flex-shrink: 0; 
-            display: flex; 
-            flex-direction: column;
-            max-height: 60vh;
-        }
-
-        #mapArea { flex-grow: 1; display: flex; flex-direction: column; }
-
-        /* 섹션 제목 */
-        h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
-
-        #userList h2, #mapArea h2, .info-header h2 {
-            background: linear-gradient(135deg, #71b7e6, #9b59b6) !important; 
-            -webkit-background-clip: text !important; 
-            background-clip: text !important; 
-            color: transparent !important;
-            border-bottom: 1px solid #eee; 
-            padding-bottom: 10px;
-        }
-
-        .user { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s; color: #333 !important; }
-        .user:hover { background-color: #f0f0f0 !important; }
-
-        #infoArea { 
-            display: flex; 
-            flex-direction: column; 
-            flex: 1; 
-            overflow: hidden; 
-            min-height: 0; 
-            color: #333 !important;
-        }
-
-        .info-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-shrink: 0; }
-        #closeUserInfoBtn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #6c757d !important; }
-        #closeUserInfoBtn:hover { color: #dc3545 !important; }
-
-        /* 필터 버튼 */
-        .filter-group { display: flex; gap: 5px; margin-bottom: 10px; }
-        .filter-btn { 
-            flex: 1; padding: 5px 0; 
-            border: 1px solid #ddd !important; 
-            background-color: #f8f9fa !important; 
-            color: #333 !important;
-            cursor: pointer; font-size: 12px; border-radius: 4px; transition: 0.3s; 
-        }
-        .filter-btn:hover { background-color: #e9ecef !important; }
-        .filter-btn.active { background-color: #e2e8f0 !important; font-weight: bold; border-color: #adb5bd !important; color: #000 !important; }
-
-        #map { width: 100%; flex-grow: 1; border-radius: 4px; }
-
-        .log-list { 
-            flex: 1; 
-            overflow-y: auto; 
-            min-height: 0;
-            color: #333 !important;
-        }
-        .log-entry { padding: 8px; font-size: 13px; border-bottom: 1px solid #f0f0f0; cursor: pointer; border-radius: 4px; line-height: 1.4; color: #333 !important; }
-        .log-entry:hover { background-color: #e9ecef !important; }
-
-        /* =========================================
-           5. 상세 로그 화면 (Log Content)
-           ========================================= */
-        #log-content {
-            width: 100%; 
-            height: calc(100vh - 70px); 
-            padding: 20px;
-            display: flex; 
-            flex-direction: column; 
-            gap: 20px;
-            background-color: transparent !important;
-            position: fixed; 
-            top: 70px; left: 0;
-            z-index: 600;
-            overflow-y: auto; 
-        }
-
-        .log-header { 
-            background-color: #ffffff !important; 
-            padding: 15px; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
-            flex-shrink: 0;
-        }
-        .log-header h2 { margin: 0; }
-
-        .log-container { 
-            display: flex; 
-            gap: 20px; 
-            flex-grow: 1; 
-            overflow: hidden; 
-        }
-
-        .log-section { 
-            flex: 1; 
-            background-color: #ffffff !important; 
-            padding: 15px; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
-            display: flex; 
-            flex-direction: column; 
-            min-height: 300px; 
-            color: #333 !important;
-        }
-
-        .log-section h3 { color: #555 !important; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .log-entries { overflow-y: auto; flex-grow: 1; }
-        .full-log-entry { padding: 10px 5px; font-size: 14px; border-bottom: 1px solid #f0f0f0; color: #333 !important; }
-
-        /* [추가] 데스크탑에서는 탭 버튼 숨김 */
-        .log-tab-buttons {
-            display: none;
-        }
-
-        /* =========================================
-           6. DB 조회 화면 (DB Content)
-           ========================================= */
-        #db-content {
-            width: 100%;
-            height: calc(100vh - 70px);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            background-color: transparent !important;
-            position: fixed;
-            top: 70px; left: 0;
-            z-index: 600;
-            overflow-y: auto;
-        }
-
-        .container {
-            max-width: 1200px;
-            width: 100%;
-            margin: 0 auto;
-            background: #ffffff !important; /* 흰색 강제 */
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            display: flex; 
-            flex-direction: column;
-            height: 100%; 
-            min-height: 500px; 
-        }
-
-        .container h2 {
-            background: linear-gradient(135deg, #71b7e6, #9b59b6) !important; 
-            -webkit-background-clip: text !important; 
-            background-clip: text !important; 
-            color: transparent !important;
-            border-bottom: 1px solid #eee; 
-            padding-bottom: 10px;
-            flex-shrink: 0; 
-        }
-
-        .search-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            padding: 15px;
-            background-color: #f8f9fa !important;
-            border-radius: 8px;
-            align-items: center;
-            flex-shrink: 0; 
-            border: 1px solid #eee;
-            flex-wrap: wrap; 
-        }
-
-        .search-container input[type="text"] {
-            flex: 1;
-            padding: 10px 15px;
-            border: 1px solid #ddd !important;
-            border-radius: 4px;
-            outline: none;
-            min-width: 200px; 
-            background-color: #fff !important;
-            color: #000 !important;
-        }
-
-        .btn-search, .btn-reset { 
-            padding: 10px 20px; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-weight: 600; 
-            border: none; 
-            color: white !important;
-            white-space: nowrap;
-        }
-        .btn-search { background: linear-gradient(135deg, #71b7e6, #9b59b6) !important; }
-        .btn-reset { background-color: #6c757d !important; }
-
-        #result-title { flex-shrink: 0; margin-top: 5px; color: #333 !important; }
-
-        #result-area {
-            flex-grow: 1; 
-            overflow-y: auto; 
-            overflow-x: auto; 
-            border: 1px solid #eee;
-            border-radius: 4px;
-            background-color: #fff !important;
-            color: #333 !important;
-        }
-
-        .grid-wrapper { border: none; min-width: 600px; } 
-        .styled-table { width: 100%; border-collapse: collapse; font-size: 14px; background-color: white !important; }
-        
-        .styled-table th { 
-            background: #f8f9fa !important; 
-            color: #333 !important; 
-            padding: 12px 10px; 
-            text-align: left; 
-            white-space: nowrap; 
-            border-bottom: 2px solid #ddd;
-            position: sticky; top: 0; 
-            z-index: 10;
-        }
-        .styled-table td { padding: 12px 10px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; vertical-align: top; color: #333 !important; }
-
-        .firebase-view { font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.6; color: #333 !important; }
-        .fv-item { white-space: nowrap; }
-        .fv-key-box { cursor: pointer; display: inline-block; user-select: none; }
-        .fv-key-box:hover .fv-key { text-decoration: underline; color: #0056b3 !important; }
-        .fv-key { color: #000080 !important; font-weight: bold; }
-        .fv-arrow { display: inline-block; width: 14px; text-align: center; font-size: 10px; color: #555 !important; margin-right: 4px; }
-        .fv-children { display: block; padding-left: 5px; border-left: 1px solid #eee; }
-        .fv-hidden { display: none !important; }
-        .fv-indent { display: inline-block; width: 15px; }
-
-        .fv-string { color: #a31515 !important; }
-        .fv-number { color: #098658 !important; }
-        .fv-boolean { color: #0000ff !important; }
-        .fv-null { color: #808080 !important; }
-
-        /* =========================================
-           7. 모달 및 오버레이 (Modals & Overlays)
-           ========================================= */
-        #custom-modal, #logout-confirm-modal { 
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-            background: rgba(0, 0, 0, 0.5); 
-            display: flex; justify-content: center; align-items: center; 
-            z-index: 3000; 
-        }
-
-        .modal-content { 
-            background: white !important; 
-            padding: 30px; 
-            border-radius: 10px; 
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3); 
-            max-width: 350px; 
-            width: 85%; 
-            text-align: center; 
-            color: #333 !important;
-        }
-        .modal-content p { margin-bottom: 20px; font-size: 16px; color: #333 !important; }
-        .modal-content button { padding: 10px 20px; background-color: #71b7e6 !important; color: white !important; border: none; border-radius: 5px; cursor: pointer; }
-
-        .custom-overlay-info { padding: 5px 10px; font-size: 12px; background: white !important; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1px solid #ccc; color: #333 !important; }
-        .custom-overlay-info strong { color: #000 !important; }
-
-        .custom-marker-pin { width: 32px; height: 35px; transform: scale(1.5); transform-origin: bottom center; }
-        .custom-marker-dot { width: 12px; height: 12px; transform: scale(1.8); transform-origin: center center; }
-
-        /* =========================================
-           8. 반응형 (Mobile Responsive) - 수정됨
-           ========================================= */
-        @media (max-width: 768px) {
-            /* 헤더 조정 */
-            #header { 
-                padding: 0 15px; 
-                flex-direction: column; 
-                height: auto; 
-                gap: 10px;
-                padding-bottom: 10px;
-            }
-            #header h1 { font-size: 20px; margin-top: 10px; }
-            #header .button-group { width: 100%; justify-content: space-between; }
-            #header button { flex: 1; padding: 8px 0; font-size: 12px; }
-
-            body { 
-                padding-top: 110px; 
-                overflow-y: auto !important; 
-                height: auto !important; 
-            }
-
-            #main-content { 
-                display: block; 
-                height: auto !important; 
-                padding: 10px;
-                padding-bottom: 30px; 
-                overflow: visible;
-            }
-
-            #sidebar { 
-                width: 100%; 
-                height: auto !important; 
-                flex: none;
-                margin-bottom: 20px; 
-                z-index: auto; 
-            }
-            
-            /* [추가] 모바일에서 유저 리스트 스크롤 뷰로 제한 */
-            #userList {
-                max-height: 300px; /* 리스트가 길어지면 이 높이 안에서 스크롤 */
-                overflow-y: auto;
-                border: 1px solid #eee; /* 구분선 추가 */
-            }
-            
-            #userInfo {
-                max-height: none !important; 
-                height: auto !important;
-            }
-
-            .log-list {
-                max-height: 400px; 
-                overflow-y: auto;
-            }
-            
-            #mapArea { 
-                width: 100%; 
-                height: 400px; 
-                flex: none;
-                z-index: 1; 
-            }
-
-            /* --- 로그 및 DB 화면 설정 --- */
-            #log-content, #db-content { 
-                top: 110px; 
-                height: auto !important; 
-                min-height: calc(100vh - 110px);
-                padding: 10px;
-                position: absolute; 
-                padding-bottom: 50px; 
-            }
-
-            /* [추가] 모바일 탭 버튼 표시 */
-            .log-tab-buttons {
-                display: flex !important; 
-                width: 100%;
-                background-color: #fff;
-                border-bottom: 1px solid #eee;
-                margin-bottom: 10px; 
-                border-radius: 8px; 
-                overflow: hidden;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            }
-
-            .log-tab-btn {
-                flex: 1; 
-                padding: 12px 0;
-                border: none;
-                background: none !important; 
-                font-size: 14px;
-                font-weight: 500;
-                color: #888 !important;
-                border-bottom: 3px solid transparent;
-                cursor: pointer;
-                transition: all 0.2s;
-            }
-
-            .log-tab-btn.active {
-                color: #71b7e6 !important; 
-                font-weight: 700;
-                border-bottom: 3px solid #71b7e6;
-                background-color: #f9f9f9 !important;
-            }
-
-            .log-section {
-                display: none; 
-                width: 100%; 
-                margin-bottom: 20px; 
-                flex: none; 
-                height: auto; 
-            }
-
-            .log-section.active-tab-content {
-                display: flex; 
-                flex-direction: column;
-            }
-
-            .log-entries { 
-                max-height: none; 
-                overflow: visible; 
-            }
-
-            .container { padding: 15px; height: auto; }
-            
-            /* [핵심 수정] DB 결과 테이블 스크롤 뷰 */
-            #result-area {
-                max-height: 60vh; /* 높이 제한하여 내부 스크롤 유도 */
-                overflow-y: auto;
-            }
-            
-            .search-container { flex-direction: column; align-items: stretch; }
-            .search-container input { width: 100%; }
-            .btn-search, .btn-reset { width: 100%; }
-            
-            h2 { font-size: 18px; }
-            h3 { font-size: 16px; }
-        }
+        /* 외부 파일(indexstyle.css)이 우선 적용됩니다. */
     </style>
 </head>
 <body>
 
-    <!-- 1. 로그인 화면 -->
+    <!-- ==========================
+         1. 로그인 화면 (초기 화면)
+         ========================== -->
     <div id="login-container">
         <h2>SmartDoorLock</h2>
         <form id="login-form">
@@ -610,55 +51,71 @@
         </form>
     </div>
 
-    <!-- 2. 상단 헤더 (공통) -->
+    <!-- ==========================
+         2. 상단 헤더 (로그인 후 표시)
+         ========================== -->
     <div id="header" class="hidden">
+        <!-- 로고 클릭 시 새로고침 -->
         <h1 id="header-title" style="cursor: pointer;">Smart Doorlock</h1> 
+        
+        <!-- 네비게이션 버튼 그룹 -->
         <div class="button-group">
-            <button id="mapBtn" disabled>지도</button>
-            <button id="logBtn" disabled>로그 보기</button>
-            <button id="newBtn">DB 조회</button>
+            <button id="mapBtn" disabled>지도</button>       <!-- 메인 화면으로 이동 -->
+            <button id="logBtn" disabled>로그 보기</button>  <!-- 로그 화면으로 이동 -->
+            <button id="newBtn">DB 조회</button>             <!-- DB 전체 조회 화면으로 이동 -->
             <button id="logoutBtn">로그아웃</button>
         </div>
     </div>
 
-    <!-- 3. 메인 컨텐츠 (지도 및 사용자 리스트) -->
+    <!-- ==========================
+         3. 메인 컨텐츠 (지도 + 유저 정보)
+         ========================== -->
     <div id="main-content" class="hidden">
+        <!-- 좌측(모바일: 상단) 사이드바 -->
         <div id="sidebar">
+            <!-- (1) 일반 유저용 정보창 -->
             <div id="userInfo" class="hidden">
                 <div class="info-header">
                     <h2>User Info</h2>
-                    <button id="closeUserInfoBtn">X</button>
+                    <button id="closeUserInfoBtn">X</button> <!-- 정보창 닫기/초기화 -->
                 </div>
+                <!-- 로그 리스트가 표시될 영역 -->
                 <div id="infoArea">사용자를 선택해주세요.</div>
             </div>
+            <!-- (2) 관리자용 유저 리스트 -->
             <div id="userList">
                 <h2>User List</h2>
             </div>
         </div>
+        
+        <!-- 우측(모바일: 하단) 지도 영역 -->
         <div id="mapArea">
             <h2>Map</h2>
             <div id="map"></div> 
         </div>
     </div>
 
-    <!-- 4. 로그 컨텐츠 (상세 로그) -->
+    <!-- ==========================
+         4. 로그 컨텐츠 (상세 로그 화면)
+         ========================== -->
     <div id="log-content" class="hidden">
         <div class="log-header">
             <h2 id="logUserTitle">전체 로그</h2>
         </div>
 
-        <!-- [추가] 모바일 전용 탭 버튼 (데스크탑에서는 숨김) -->
+        <!-- 모바일 전용 탭 버튼 (CSS로 데스크탑에선 숨김 처리됨) -->
         <div class="log-tab-buttons">
             <button id="tab-doorlock" class="log-tab-btn active" onclick="switchLogTab('doorlock')">도어락 로그</button>
             <button id="tab-app" class="log-tab-btn" onclick="switchLogTab('app')">앱 로그</button>
         </div>
 
         <div class="log-container">
-            <!-- active-tab-content 클래스: 모바일에서 현재 보이는 탭 -->
+            <!-- 도어락 로그 섹션 -->
             <div id="doorLockLogs" class="log-section active-tab-content">
                 <h3>DoorLock Logs</h3>
                 <div class="log-entries"></div>
             </div>
+            <!-- 앱 로그 섹션 -->
             <div id="appLogs" class="log-section">
                 <h3>App Logs</h3>
                 <div class="log-entries"></div>
@@ -666,23 +123,29 @@
         </div>
     </div>
 
-    <!-- 5. DB 조회 컨텐츠 (Tree View) -->
+    <!-- ==========================
+         5. DB 조회 컨텐츠 (트리 뷰)
+         ========================== -->
     <div id="db-content" class="hidden">
         <div class="container">
             <h2>데이터베이스 조회 (Interactive Tree)</h2>
+            <!-- 검색바 -->
             <div class="search-container">
                 <input type="text" id="search-input" placeholder="검색할 사용자 ID를 입력하세요 (예: 123456)">
                 <button class="btn-search" onclick="searchUser()">검색</button>
                 <button class="btn-reset" onclick="loadAllDBData()" style="margin-left:5px;">전체 목록</button>
             </div>
             <h3 id="result-title">사용자 목록:</h3>
+            <!-- 결과 출력 영역 -->
             <div id="result-area">
                 <div class="message-box">데이터를 불러오는 중입니다...</div>
             </div>
         </div>
     </div>
 
-    <!-- 모달 팝업들 -->
+    <!-- ==========================
+         모달 팝업들 (Alert 및 로그아웃)
+         ========================== -->
     <div id="custom-modal" class="hidden">
         <div class="modal-content">
             <p id="modal-message"></p>
@@ -700,11 +163,14 @@
         </div>
     </div>
 
+    <!-- ==========================
+         자바스크립트 로직 시작
+         ========================== -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             console.log("App initialized.");
 
-            // --- DOM 요소 ---
+            // --- DOM 요소 참조 ---
             const loginContainer = document.getElementById('login-container');
             const mainContent = document.getElementById('main-content');
             const logContent = document.getElementById('log-content');
@@ -714,12 +180,12 @@
             const body = document.querySelector('body');
             const closeUserInfoButton = document.getElementById('closeUserInfoBtn');
 
-            // --- [설정] 도어락 위치 ---
+            // --- [설정] 도어락 고정 위치 및 반경 설정 ---
             const DOORLOCK_LAT = 37.566826; 
             const DOORLOCK_LNG = 126.9786567;
             const MAX_DISTANCE_KM = 3.0;
 
-            // --- Firebase 설정 ---
+            // --- Firebase 설정 (자신의 프로젝트 정보) ---
             const firebaseConfig = {
                 apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
                 authDomain: "smartdoorlock-b4636.web.app", 
@@ -731,16 +197,17 @@
                 measurementId: "G-4TH9MB9WPM"
             };
 
+            // 전역 변수 선언
             let database;
             let map;
-            let markers = [];
-            let zoneCircles = [];
-            let currentPolyline;
-            let selectedLogMarker;
-            let selectedUserId = null;
-            let currentUserLocationLogs = [];
+            let markers = []; // 지도 위 마커들
+            let zoneCircles = []; // 반경 원들
+            let currentPolyline; // 경로 선
+            let selectedLogMarker; // 현재 선택된 로그의 핀
+            let selectedUserId = null; // 현재 보고 있는 유저 ID
+            let currentUserLocationLogs = []; // 불러온 위치 로그 데이터
 
-            // Firebase 초기화
+            // 1. Firebase 초기화
             try {
                 if (typeof firebase === 'undefined' || !firebase.initializeApp) {
                       throw new Error("Firebase SDK not loaded correctly.");
@@ -754,16 +221,16 @@
                 return;
             }
 
-            // --- [추가] 모바일 탭 전환 함수 ---
+            // --- [기능] 모바일 탭 전환 함수 ---
+            // 도어락 로그 <-> 앱 로그 탭을 누를 때 호출됨
             window.switchLogTab = function(tabName) {
-                // 1. 탭 버튼 활성화 스타일 변경
+                // 1. 버튼 스타일 변경 (활성화된 탭 강조)
                 const buttons = document.querySelectorAll('.log-tab-btn');
                 buttons.forEach(btn => btn.classList.remove('active'));
                 document.getElementById('tab-' + tabName).classList.add('active');
 
-                // 2. 보여줄 로그 섹션 전환
+                // 2. 내용 섹션 표시/숨김 전환
                 const sections = document.querySelectorAll('.log-section');
-                // 모바일용 클래스 제거
                 sections.forEach(sec => sec.classList.remove('active-tab-content'));
                 
                 if (tabName === 'doorlock') {
@@ -773,10 +240,10 @@
                 }
             }
 
-            // --- 거리 계산 함수 ---
+            // --- [유틸] 두 좌표 간 거리 계산 (Haversine 공식) ---
             function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
                 function deg2rad(deg) { return deg * (Math.PI/180); }
-                var R = 6371; 
+                var R = 6371; // 지구 반지름 (km)
                 var dLat = deg2rad(lat2-lat1);  
                 var dLon = deg2rad(lon2-lon1); 
                 var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -785,7 +252,7 @@
                 return R * c; 
             }
 
-            // 커스텀 alert
+            // --- [UI] 커스텀 알림창 표시 ---
             function customAlert(message) {
                 const modal = document.getElementById('custom-modal');
                 const messageElem = document.getElementById('modal-message');
@@ -797,12 +264,14 @@
                 }
             }
 
-            // --- 화면 전환 및 UI 표시 함수 ---
+            // --- [화면 전환] 메인 컨텐츠 표시 ---
+            // 관리자 여부에 따라 다른 UI를 보여줌
             function showMainContent(isAdmin, loggedInUserId) {
                 loginContainer.classList.add('hidden');
                 header.classList.remove('hidden');
-                body.style.overflow = 'auto';
+                body.style.overflow = 'auto'; // 스크롤 허용
                 
+                // 모든 화면 숨기고 메인만 표시
                 mainContent.classList.remove('hidden');
                 logContent.classList.add('hidden');
                 dbContent.classList.add('hidden');
@@ -813,21 +282,26 @@
                 const mapBtn = document.getElementById('mapBtn');
                 const logBtn = document.getElementById('logBtn');
                 
+                // 메인 화면에서는 지도 버튼 비활성화
                 if (mapBtn) mapBtn.disabled = true; 
                 if (logBtn) logBtn.disabled = true; 
 
                 if (isAdmin) {
+                    // 관리자: 유저 리스트 보임, DB 조회 버튼 보임
                     if (userListDiv) userListDiv.classList.remove('hidden');
                     if (newBtn) newBtn.classList.remove('hidden');
                     if (userInfoDiv) userInfoDiv.classList.add('hidden');
+                    // 카카오 맵 로드
                     if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
                          kakao.maps.load(initMap); 
                     }
                 } else {
+                    // 일반 유저: 유저 리스트 숨김, 내 정보창 보임
                     if (userListDiv) userListDiv.classList.add('hidden');
                     if (newBtn) newBtn.classList.add('hidden');
                     if (userInfoDiv) userInfoDiv.classList.remove('hidden');
                     selectedUserId = loggedInUserId;
+                    // 카카오 맵 로드 후 내 정보 바로 표시
                     if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
                          kakao.maps.load(() => {
                             initMap(); 
@@ -838,6 +312,7 @@
                 setupMainUIEventListeners();
             }
 
+            // --- [지도] 지도 초기화 ---
             function initMap() {
                 if (typeof kakao === 'undefined' || !kakao.maps || !kakao.maps.Map) {
                     console.error("Kakao Maps SDK not loaded.");
@@ -846,19 +321,23 @@
                 const container = document.getElementById('map');
                 map = new kakao.maps.Map(container, {
                     center: new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG),
-                    level: 7
+                    level: 7 // 초기 확대 레벨
                 });
+                // 지도 컨트롤 추가
                 map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
                 map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
 
-                drawDoorlockZones();
+                drawDoorlockZones(); // 반경 원 그리기
 
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
-                if (isAdmin) loadUserList();
+                if (isAdmin) loadUserList(); // 관리자라면 유저 목록 불러오기
             }
 
+            // --- [지도] 도어락 위치 및 반경 표시 ---
             function drawDoorlockZones() {
                 const doorlockPosition = new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG);
+                
+                // 도어락 마커
                 const markerImage = new kakao.maps.MarkerImage(
                     'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
                     new kakao.maps.Size(35, 35)
@@ -870,6 +349,7 @@
                     title: "우리집 도어락"
                 });
 
+                // 1km, 2km, 3km 반경 원 그리기
                 const radii = [
                     { r: 1000, color: '#FF0000' }, 
                     { r: 2000, color: '#FFA500' }, 
@@ -887,23 +367,27 @@
                 });
             }
 
+            // --- [데이터] 유저 목록 로드 (관리자용) ---
             function loadUserList() {
                 if (!database) return;
                 const userListDiv = document.getElementById('userList');
                 const h2 = userListDiv.querySelector('h2');
                 database.ref('users').once('value').then((snapshot) => {
+                    // 기존 목록 초기화 후 재생성
                     userListDiv.querySelectorAll('.user').forEach(el => el.remove());
                     snapshot.forEach((childSnapshot) => {
                         const userId = childSnapshot.key;
                         const userElement = document.createElement('div');
                         userElement.className = 'user';
                         userElement.textContent = userId;
+                        // 클릭 시 해당 유저 선택
                         userElement.addEventListener('click', () => selectUser(userId));
                         h2.insertAdjacentElement('afterend', userElement);
                     });
                 });
             }
 
+            // --- [지도] 맵 초기화 (마커, 오버레이 제거) ---
             function clearMapAndInfo() {
                 markers.forEach(m => {
                     if (m.customOverlay) m.customOverlay.setMap(null);
@@ -918,8 +402,10 @@
                 }
                 const infoArea = document.getElementById('infoArea');
                 if (infoArea) infoArea.innerHTML = '';
+                
                 const logBtnElem = document.getElementById('logBtn');
-                if (logBtnElem) logBtnElem.disabled = true;
+                if (logBtnElem) logBtnElem.disabled = true; // 유저 선택 전엔 로그 버튼 비활성화
+                
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
                 if (isAdmin) {
                     const userInfoDiv = document.getElementById('userInfo');
@@ -930,19 +416,24 @@
 
             function closeUserInfo() { clearMapAndInfo(); }
 
+            // --- [지도] 특정 위치에 마커 표시 및 지도 이동 ---
             function showLocationOnMap(lat, lng) {
                 if (!map) return;
+                
+                // 기존 선택 마커 제거
                 if (selectedLogMarker) {
                     selectedLogMarker.setMap(null);
                     if (selectedLogMarker.infoBox) selectedLogMarker.infoBox.setMap(null);
                 }
                 const position = new kakao.maps.LatLng(lat, lng);
 
-                // [수정] 지도 중심 이동 및 250m 단위(Level 5) 확대
+                // [중요] 클릭한 위치로 지도 중심 이동 및 확대 (250m 수준)
                 map.setCenter(position); 
                 map.setLevel(5, {animate: true});
 
                 const dist = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
+                
+                // 오버레이(말풍선) 내용 생성
                 const overlayContent = `<div class="custom-overlay-info">
                                         <strong>선택된 위치</strong><br>
                                         거리: <span style="color:blue; font-weight:bold;">${dist.toFixed(2)}km</span>
@@ -951,10 +442,13 @@
                     content: overlayContent, position: position, xAnchor: 0.5, yAnchor: 2.5, zIndex: 3
                 });
 
+                // 마커 이미지 생성
                 const markerImg = document.createElement('img');
                 markerImg.src = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png';
                 markerImg.className = 'custom-marker-pin';
                 markerImg.style.cursor = 'pointer';
+                
+                // 마우스를 올리면 말풍선 보이기
                 markerImg.addEventListener('mouseover', () => { infoOverlay.setMap(map); });
                 markerImg.addEventListener('mouseout', () => { infoOverlay.setMap(null); });
 
@@ -965,7 +459,7 @@
                 selectedLogMarker.setMap(map);
             }
 
-            // --- 사용자 선택 및 데이터 로딩 ---
+            // --- [데이터] 사용자 선택 및 위치 로그 불러오기 ---
             function selectUser(userId) {
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
                 if (isAdmin) clearMapAndInfo();
@@ -975,8 +469,9 @@
 
                 const infoArea = document.getElementById('infoArea');
                 const userInfoDiv = document.getElementById('userInfo');
+                
+                // 정보창 UI 구성
                 if (infoArea && userInfoDiv) {
-                    // HTML 구조를 미리 셋팅
                     infoArea.innerHTML = `
                         <div style="margin-bottom:10px; flex-shrink:0;"><strong>ID:</strong> ${userId}</div>
                         <div class="filter-group" style="flex-shrink:0;">
@@ -987,6 +482,7 @@
                     `;
                     userInfoDiv.classList.remove('hidden');
 
+                    // 필터 버튼 이벤트 연결
                     document.getElementById('showAllBtn').onclick = function() {
                         this.classList.add('active');
                         document.getElementById('showRangeBtn').classList.remove('active');
@@ -999,12 +495,14 @@
                     };
                 }
 
+                // Firebase에서 위치 로그 가져오기
                 database.ref('users/' + userId + '/location_logs').once('value').then((snapshot) => {
                     currentUserLocationLogs = [];
                     if (snapshot.exists()) {
                         const val = snapshot.val();
                         let isList = false;
                         
+                        // 리스트 형태 데이터 확인
                         snapshot.forEach(child => {
                             const cVal = child.val();
                             if (cVal && (cVal.latitude !== undefined || cVal.lat !== undefined)) {
@@ -1013,26 +511,29 @@
                             }
                         });
 
+                        // 단일 객체 형태 데이터 확인
                         if (!isList && val && (val.latitude !== undefined || val.lat !== undefined)) {
                             currentUserLocationLogs.push(val);
                         }
                         
+                        // 최신순 정렬
                         currentUserLocationLogs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                     }
-                    renderLocationLogs(false);
+                    renderLocationLogs(false); // 초기 렌더링 (전체 보기)
                 }).catch(err => {
                     console.error(err);
                     customAlert("위치 기록 로드 실패");
                 });
             }
 
-            // --- 로그 렌더링 로직 ---
+            // --- [UI] 위치 로그 렌더링 (사이드바 리스트 & 지도 마커) ---
             function renderLocationLogs(filterRange) {
                 const logListDiv = document.querySelector('#userInfo .log-list'); 
                 if (!logListDiv) return;
                 
-                logListDiv.innerHTML = '';
+                logListDiv.innerHTML = ''; // 리스트 초기화
 
+                // 기존 마커 제거
                 markers.forEach(m => {
                     if (m.customOverlay) m.customOverlay.setMap(null);
                     m.setMap(null);
@@ -1046,13 +547,15 @@
                 }
 
                 let path = [];
-                const bounds = new kakao.maps.LatLngBounds();
+                const bounds = new kakao.maps.LatLngBounds(); // 지도 범위 자동 조절용
                 bounds.extend(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
                 let mapCount = 0;
 
                 const listFragment = document.createDocumentFragment();
 
+                // 로그 데이터 순회
                 currentUserLocationLogs.forEach((pos) => { 
+                    // 좌표 데이터 유효성 검사
                     if (!pos || (!pos.latitude && !pos.lat) || (!pos.longitude && !pos.lon)) return;
 
                     const lat = parseFloat(pos.latitude || pos.lat);
@@ -1061,12 +564,15 @@
 
                     const distKm = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
 
+                    // 필터링 모드일 경우 3km 밖이면 패스
                     if (filterRange && distKm > MAX_DISTANCE_KM) return; 
 
+                    // 거리에 따른 색상 강조
                     let rowStyle = '';
                     if (distKm <= 1.0) rowStyle = 'background-color: #ffeaea;'; 
                     else if (distKm <= 2.0) rowStyle = 'background-color: #fff8e1;'; 
 
+                    // 리스트 아이템 생성
                     const logEntry = document.createElement('div');
                     logEntry.className = 'log-entry';
                     if (rowStyle) logEntry.style = rowStyle; 
@@ -1081,15 +587,18 @@
                     }
                     
                     logEntry.innerHTML = entryContent;
+                    // 클릭 시 지도 이동 이벤트
                     logEntry.addEventListener('click', () => showLocationOnMap(lat, lng));
                     
                     listFragment.appendChild(logEntry);
 
+                    // 지도 마커 생성 (최대 50개 제한)
                     if (mapCount < 50) {
                         const latlng = new kakao.maps.LatLng(lat, lng);
                         path.push(latlng); 
                         bounds.extend(latlng);
                         
+                        // 작은 점(Star) 마커 생성
                         const dotContent = `<div class="custom-overlay-info">${distKm.toFixed(2)}km 지점</div>`;
                         const infoOverlay = new kakao.maps.CustomOverlay({
                             content: dotContent, position: latlng, yAnchor: 2.5, zIndex: 3
@@ -1112,6 +621,7 @@
                 
                 logListDiv.appendChild(listFragment);
 
+                // 경로 선 그리기 (필터 모드일 때만)
                 if (filterRange && path.length > 0) {
                     currentPolyline = new kakao.maps.Polyline({
                         path: path, strokeWeight: 4, strokeColor: '#CC00CC', strokeOpacity: 0.8, strokeStyle: 'solid', map: map
@@ -1122,7 +632,7 @@
                 }
             }
 
-            // --- [수정됨] 로그 조회 로직 (Log View) - 도어락 로그 전체 로드 ---
+            // --- [데이터] 전체 로그 조회 (도어락/앱) ---
             function loadAllLogs(userId) {
                 const doorLockLogContainer = document.querySelector('#doorLockLogs .log-entries');
                 const appLogContainer = document.querySelector('#appLogs .log-entries');
@@ -1132,7 +642,7 @@
                 doorLockLogContainer.innerHTML = '<em>로딩 중...</em>';
                 appLogContainer.innerHTML = '<em>로딩 중...</em>';
 
-                // [수정] 도어락 로그: limitToLast 제거 및 구조 대응 로직 추가
+                // 1. 도어락 로그 가져오기
                 database.ref('doorlock_logs/' + userId).orderByKey().once('value').then((snapshot) => {
                     doorLockLogContainer.innerHTML = '';
                     if (!snapshot.exists()) {
@@ -1142,7 +652,7 @@
                         const val = snapshot.val();
                         let isList = false;
 
-                        // 1. 리스트/맵 형태 확인 (자식 노드 순회)
+                        // 데이터 구조 파악 (리스트 vs 단일)
                         snapshot.forEach(c => {
                             const cVal = c.val();
                             if (cVal && (cVal.method !== undefined || cVal.timestamp !== undefined)) {
@@ -1150,19 +660,18 @@
                                 isList = true;
                             }
                         });
-
-                        // 2. 단일 객체 형태 확인 (리스트가 아니면서 본인이 로그일 때)
                         if (!isList && val && (val.method !== undefined || val.timestamp !== undefined)) {
                             logs.push(val);
                         }
 
-                        // 3. 최신순 정렬
+                        // 시간순 정렬
                         logs.sort((a, b) => {
                             const tA = a.timestamp ? new Date(typeof a.timestamp === 'string' ? a.timestamp.replace(" ", "T") : a.timestamp).getTime() : 0;
                             const tB = b.timestamp ? new Date(typeof b.timestamp === 'string' ? b.timestamp.replace(" ", "T") : b.timestamp).getTime() : 0;
                             return tB - tA;
                         });
 
+                        // 화면 표시
                         logs.forEach(log => {
                             const entry = document.createElement('div');
                             entry.className = 'full-log-entry';
@@ -1182,7 +691,7 @@
                     }
                 });
 
-                // 앱 로그
+                // 2. 앱 로그 가져오기
                 database.ref('users/' + userId + '/app_logs').once('value').then((snapshot) => {
                     appLogContainer.innerHTML = '';
                     if (!snapshot.exists()) {
@@ -1198,12 +707,14 @@
                             }
                         });
                         
+                        // 시간순 정렬
                         logs.sort((a, b) => {
                             const tA = a.timestamp ? new Date(typeof a.timestamp === 'string' ? a.timestamp.replace(" ", "T") : a.timestamp).getTime() : 0;
                             const tB = b.timestamp ? new Date(typeof b.timestamp === 'string' ? b.timestamp.replace(" ", "T") : b.timestamp).getTime() : 0;
                             return tB - tA;
                         });
 
+                        // 화면 표시 (가독성 개선: 한글화)
                         logs.forEach(log => {
                             const entry = document.createElement('div');
                             entry.className = 'full-log-entry';
@@ -1219,16 +730,12 @@
 
                             let msg = log.event;
                             
+                            // JSON 데이터 가공
                             if (!msg) {
-                                if (log.new_auth) {
-                                    msg = `인증방식 변경: ${log.new_auth}`;
-                                } else if (log.new_name) {
-                                    msg = `이름 변경: ${log.new_name}`;
-                                } else if (log.new_pw) {
-                                    msg = `비밀번호 변경: ${log.new_pw}`;
-                                } else {
-                                    msg = `<pre style="margin:0; white-space:pre-wrap; font-family:inherit; color:#555;">${JSON.stringify(log, null, 2)}</pre>`;
-                                }
+                                if (log.new_auth) msg = `인증방식 변경: ${log.new_auth}`;
+                                else if (log.new_name) msg = `이름 변경: ${log.new_name}`;
+                                else if (log.new_pw) msg = `비밀번호 변경: ${log.new_pw}`;
+                                else msg = `<pre style="margin:0; white-space:pre-wrap; font-family:inherit; color:#555;">${JSON.stringify(log, null, 2)}</pre>`;
                             }
                             
                             entry.innerHTML = `<strong>[${time}]</strong> ${msg}`;
@@ -1238,7 +745,7 @@
                 });
             }
 
-            // --- DB Viewer 로직 ---
+            // --- [DB 뷰어] 전체 데이터 로드 ---
             window.loadAllDBData = function() {
                 const resultArea = document.getElementById('result-area');
                 const title = document.getElementById('result-title');
@@ -1258,6 +765,7 @@
                 });
             }
 
+            // --- [DB 뷰어] 특정 사용자 검색 ---
             window.searchUser = function() {
                 const input = document.getElementById('search-input');
                 const resultArea = document.getElementById('result-area');
@@ -1282,7 +790,7 @@
                 });
             }
 
-            // [수정됨] 사용자 ID 열 너비 조정
+            // --- [DB 뷰어] 그리드(테이블) 렌더링 ---
             function renderGrid(data) {
                 const resultArea = document.getElementById('result-area');
                 let tableHtml = `
@@ -1290,7 +798,7 @@
                         <table class="styled-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 80px;">사용자 ID</th> <!-- 150px -> 80px로 너비 축소 -->
+                                    <th style="width: 80px;">사용자 ID</th>
                                     <th>데이터 상세 내용 (Interactive Tree)</th>
                                 </tr>
                             </thead>
@@ -1312,6 +820,7 @@
                 resultArea.innerHTML = tableHtml;
             }
 
+            // --- [DB 뷰어] 트리 뷰(JSON) 생성 (재귀 함수) ---
             function createFirebaseView(data, depth) {
                 let html = '';
                 const indent = '<span class="fv-indent"></span>'.repeat(depth);
@@ -1320,6 +829,7 @@
                     for (const [key, value] of Object.entries(data)) {
                         const isObject = typeof value === 'object' && value !== null;
                         if (isObject) {
+                            // 기본적으로 접힌 상태(false)
                             const isExpanded = false; 
                             const arrowIcon = isExpanded ? '▼' : '▶';
                             const arrowTransform = isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
@@ -1352,6 +862,7 @@
                 return html;
             }
 
+            // 트리 뷰 토글 기능
             window.toggleNode = function(element) {
                 const childrenDiv = element.nextElementSibling;
                 const arrowSpan = element.querySelector('.fv-arrow');
@@ -1368,6 +879,7 @@
                 }
             }
 
+            // 값 포맷팅 (색상 적용)
             function formatValue(val) {
                 if (typeof val === 'string') return `<span class="fv-string">"${val}"</span>`;
                 if (typeof val === 'number') return `<span class="fv-number">${val}</span>`;
@@ -1376,13 +888,14 @@
                 return val;
             }
 
-            // --- 로그인/로그아웃 로직 ---
+            // --- [인증] 로그인 처리 ---
             function handleLoginSubmit(e) {
                 e.preventDefault();
                 const usernameInput = document.getElementById('username')?.value.trim();
                 const passwordInput = document.getElementById('password')?.value.trim();
                 if (!database) return;
 
+                // 1. 관리자 인증 시도
                 database.ref('admin_pass').once('value').then((snap) => {
                     let loginSuccess = false;
                     let isAdmin = false;
@@ -1402,6 +915,7 @@
                         showMainContent(true, loggedInUserId);
                         return;
                     }
+                    // 2. 일반 유저 인증 시도
                     return database.ref('users').once('value');
                 }).then((userSnap) => {
                     if (!userSnap) return; 
@@ -1426,20 +940,21 @@
                 });
             }
 
+            // --- [인증] 로그아웃 처리 ---
             function confirmLogout() { document.getElementById('logout-confirm-modal').classList.remove('hidden'); }
             function executeLogout() {
                 sessionStorage.clear();
                 window.location.reload();
             }
 
-            // --- 네비게이션 핸들러 ---
+            // --- [네비게이션] 메뉴 이동 핸들러 ---
             function handleLogView() {
                 mainContent.classList.add('hidden');
                 dbContent.classList.add('hidden');
                 logContent.classList.remove('hidden');
 
                 document.getElementById('mapBtn').disabled = false;
-                document.getElementById('logBtn').disabled = true;
+                document.getElementById('logBtn').disabled = true; // 현재 메뉴 비활성화
                 document.getElementById('newBtn').disabled = false;
 
                 const u = selectedUserId || sessionStorage.getItem('userId');
@@ -1456,7 +971,7 @@
                 document.getElementById('logBtn').disabled = false;
                 document.getElementById('newBtn').disabled = false;
                 
-                if(map) map.relayout();
+                if(map) map.relayout(); // 지도 레이아웃 재조정 (필수)
             }
 
             function handleDBView() {
@@ -1471,6 +986,7 @@
                 loadAllDBData();
             }
 
+            // 이벤트 리스너 등록
             function setupMainUIEventListeners() {
                 document.getElementById('logoutBtn').onclick = confirmLogout;
                 document.getElementById('logBtn').onclick = handleLogView;
@@ -1481,6 +997,7 @@
                 if (headerTitle) headerTitle.onclick = () => window.location.reload();
             }
 
+            // 초기화 (로그인 상태 체크)
             if (loginForm) loginForm.addEventListener('submit', handleLoginSubmit);
             if (closeUserInfoButton) closeUserInfoButton.onclick = closeUserInfo;
             
@@ -1490,6 +1007,7 @@
                 if (e.key === 'Enter') searchUser();
             });
 
+            // 세션 스토리지 확인 후 자동 로그인
             const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
             if (isLoggedIn) {
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
