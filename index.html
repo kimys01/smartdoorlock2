@@ -91,7 +91,7 @@
         </div>
     </div>
 
-    <!-- 5. DB 조회 컨텐츠 (수정/삭제 기능 추가됨) -->
+    <!-- 5. DB 조회 컨텐츠 -->
     <div id="db-content" class="hidden">
         <div class="container">
             <h2>데이터베이스 관리 (CRUD)</h2>
@@ -643,7 +643,6 @@
                 });
             }
 
-            // --- DB Viewer 로직 (수정/삭제 기능 추가) ---
             window.loadAllDBData = function() {
                 const resultArea = document.getElementById('result-area');
                 const title = document.getElementById('result-title');
@@ -687,6 +686,7 @@
                 });
             }
 
+            // [수정됨] 유저 삭제 버튼 아이콘화 (✕)
             function renderGrid(data) {
                 const resultArea = document.getElementById('result-area');
                 let tableHtml = `
@@ -701,15 +701,14 @@
                             <tbody>`;
 
                 for (const [userId, userData] of Object.entries(data)) {
-                    // [수정] 루트 경로 'users/userId'를 createFirebaseView에 전달
                     const rootPath = 'users/' + userId;
                     const formattedData = createFirebaseView(userData, 0, rootPath);
                     tableHtml += `
                         <tr>
                             <td style="vertical-align: top; font-weight: bold; color: #007bff; background-color: #fdfdfd;">
-                                ${userId}
-                                <div style="margin-top:5px;">
-                                    <button class="btn-delete-mini" onclick="deleteData('${rootPath}')" style="width:100%;">유저 삭제</button>
+                                <div style="display: flex; align-items: center; justify-content: space-between;">
+                                    <span>${userId}</span>
+                                    <button class="btn-delete-mini" onclick="deleteData('${rootPath}')" title="유저 삭제">✕</button>
                                 </div>
                             </td>
                             <td style="vertical-align: top;">
@@ -721,6 +720,7 @@
                 resultArea.innerHTML = tableHtml;
             }
 
+            // [수정됨] 삭제 버튼 아이콘화 (✕)
             function createFirebaseView(data, depth, currentPath) {
                 let html = '';
                 const indent = '<span class="fv-indent"></span>'.repeat(depth);
@@ -743,7 +743,7 @@
                                     <span class="fv-arrow" style="transform: ${arrowTransform};">${arrowIcon}</span>
                                     <span class="fv-key">${key}</span>
                                 </div>
-                                <button class="btn-delete-mini" onclick="deleteData('${newPath}')" title="삭제">🗑️</button>
+                                <button class="btn-delete-mini" onclick="deleteData('${newPath}')" title="삭제">✕</button>
                                 <div class="fv-children ${childrenClass}">
                                     ${createFirebaseView(value, depth + 1, newPath)}
                                 </div>
@@ -756,12 +756,11 @@
                                 <span class="fv-key">${key}:</span>
                                 <span class="fv-value">${formatValue(value)}</span>
                                 <button class="btn-edit-mini" onclick="enableEdit(this, '${newPath}', '${String(value).replace(/'/g, "\\'")}')" title="수정">✏️</button>
-                                <button class="btn-delete-mini" onclick="deleteData('${newPath}')" title="삭제">🗑️</button>
+                                <button class="btn-delete-mini" onclick="deleteData('${newPath}')" title="삭제">✕</button>
                             </div>`;
                         }
                     }
                 } else {
-                    // This case handles if the root itself is a primitive value, which is rare in this structure
                     html += `<div class="fv-item">${indent}${formatValue(data)}</div>`;
                 }
                 return html;
@@ -791,19 +790,15 @@
                 return val;
             }
 
-            // [추가] 수정 모드 활성화
             window.enableEdit = function(btn, path, currentVal) {
                 const container = btn.parentNode;
                 const valueSpan = container.querySelector('.fv-value');
                 
-                // 이미 수정 중인지 확인
                 if (container.querySelector('.edit-input')) return;
 
-                const originalContent = valueSpan.innerHTML;
                 valueSpan.style.display = 'none';
-                btn.style.display = 'none'; // 수정 버튼 숨김
+                btn.style.display = 'none';
 
-                // 입력 폼 생성
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.className = 'edit-input';
@@ -830,9 +825,7 @@
                 container.insertBefore(cancelBtn, btn);
             }
 
-            // [추가] 수정 저장
             window.saveEdit = function(path, newVal) {
-                // 타입 추론 시도 (숫자, 불리언)
                 let finalVal = newVal;
                 if (newVal === 'true') finalVal = true;
                 else if (newVal === 'false') finalVal = false;
@@ -841,14 +834,12 @@
                 database.ref(path).set(finalVal)
                     .then(() => {
                         alert('수정되었습니다.');
-                        // 현재 화면 갱신 (전체 로드 혹은 검색)
                         if (document.getElementById('search-input').value) searchUser();
                         else loadAllDBData();
                     })
                     .catch(err => alert('수정 실패: ' + err.message));
             }
 
-            // [추가] 데이터 삭제
             window.deleteData = function(path) {
                 if (confirm('정말 삭제하시겠습니까?\n경로: ' + path)) {
                     database.ref(path).remove()
@@ -861,8 +852,6 @@
                 }
             }
 
-
-            // --- 로그인/로그아웃 로직 ---
             function handleLoginSubmit(e) {
                 e.preventDefault();
                 const usernameInput = document.getElementById('username')?.value.trim();
