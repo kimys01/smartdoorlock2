@@ -1,431 +1,10 @@
-@charset "UTF-8";
-
-/* =========================================
-   1. 기본 설정 (Global Reset & Body)
-   ========================================= */
-
-/* [강력 수정] 시스템 다크모드 강제 무시 설정 */
-:root {
-    color-scheme: light !important;
-}
-
-* { 
-    margin: 0; 
-    padding: 0; 
-    box-sizing: border-box; 
-    font-family: 'Poppins', sans-serif; 
-    color: #333333; 
-}
-
-body { 
-    height: 100vh; 
-    background: linear-gradient(135deg, #71b7e6, #9b59b6) !important;
-    background-color: #71b7e6 !important; 
-    padding-top: 70px;
-    overflow: hidden; /* 데스크탑: 스크롤 방지 */
-    transition: background-color 0.3s ease; 
-}
-
-.hidden { display: none !important; }
-
-/* =========================================
-   2. 상단 헤더 (Header)
-   ========================================= */
-#header {
-    position: fixed; 
-    top: 0; left: 0; 
-    width: 100%; 
-    height: 70px; 
-    padding: 0 30px;
-    background-color: #ffffff !important; 
-    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    z-index: 1000;
-    transition: all 0.3s ease;
-}
-
-#header h1 {
-    font-size: 24px; 
-    margin: 0; 
-    cursor: pointer; 
-    font-weight: 600;
-    background: linear-gradient(135deg, #71b7e6, #9b59b6) !important;
-    -webkit-background-clip: text !important; 
-    background-clip: text !important; 
-    color: transparent !important; 
-    white-space: nowrap;
-}
-
-#header .button-group { display: flex; gap: 0; }
-
-#header button {
-    padding: 10px 20px; 
-    border: none; 
-    color: #333 !important; 
-    border-radius: 0; 
-    cursor: pointer; 
-    font-weight: 500; 
-    transition: 0.3s; 
-    background-color: #f8f9fa !important; 
-    font-size: 14px;
-    white-space: nowrap;
-}
-
-#header .button-group button + button { border-left: 1px solid #ddd; }
-
-#header button:hover:not(:disabled) {
-    background: linear-gradient(135deg, #71b7e6, #9b59b6) !important;
-    color: white !important;
-}
-
-#header button:disabled { 
-    color: #aaa !important; 
-    cursor: not-allowed; 
-    background: #f8f9fa !important; 
-}
-
-/* =========================================
-   3. 로그인 화면 (Login Container)
-   ========================================= */
-#login-container {
-    width: 90%; 
-    max-width: 400px; 
-    background-color: #ffffff !important; 
-    padding: 40px;
-    border-radius: 10px; 
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    text-align: center; 
-    position: absolute; 
-    left: 50%; top: 50%;
-    transform: translate(-50%, -50%); 
-    z-index: 2000;
-}
-
-#login-container h2 { font-size: 28px; font-weight: 600; margin-bottom: 25px; color: #333 !important; }
-
-input[type="text"], input[type="password"] {
-    width: 100%; 
-    padding: 12px 15px; 
-    border: 1px solid #ccc !important; 
-    border-radius: 5px; 
-    font-size: 16px; 
-    background-color: #ffffff !important; 
-    color: #000000 !important; 
-    -webkit-appearance: none; 
-}
-
-.input-group { margin-bottom: 20px; text-align: left; }
-.input-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; color: #555 !important; }
-
-#login-container button { 
-    width: 100%; 
-    padding: 12px; 
-    background: linear-gradient(135deg, #71b7e6, #9b59b6) !important; 
-    color: white !important; 
-    border: none; 
-    border-radius: 5px; 
-    font-size: 18px; 
-    cursor: pointer; 
-    transition: opacity 0.3s; 
-}
-#login-container button:hover { opacity: 0.9; }
-
-/* =========================================
-   4. 메인 대시보드 (Main Content)
-   ========================================= */
-#main-content { 
-    display: flex; 
-    padding: 10px; 
-    gap: 20px; 
-    width: 100%; 
-    height: calc(100vh - 70px); 
-    overflow: hidden; 
-}
-
-#sidebar { 
-    display: flex; 
-    flex-direction: column; 
-    width: 250px; 
-    gap: 15px; 
-    height: 100%; 
-    min-width: 200px; 
-    transition: all 0.3s ease;
-}
-
-#userList, #userInfo, #mapArea {
-    border: none; 
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
-    padding: 15px;
-    border-radius: 8px; 
-    background-color: #ffffff !important; 
-    box-sizing: border-box;
-}
-
-#userList { overflow-y: auto; flex-grow: 1; }
-
-#userInfo { 
-    overflow: hidden; 
-    flex-shrink: 0; 
-    display: flex; 
-    flex-direction: column;
-    max-height: 60vh; /* 데스크탑: 너무 길어지지 않게 제한 */
-}
-
-#mapArea { flex-grow: 1; display: flex; flex-direction: column; }
-
-/* 섹션 제목 */
-h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
-
-#userList h2, #mapArea h2, .info-header h2 {
-    background: linear-gradient(135deg, #71b7e6, #9b59b6) !important; 
-    -webkit-background-clip: text !important; 
-    background-clip: text !important; 
-    color: transparent !important;
-    border-bottom: 1px solid #eee; 
-    padding-bottom: 10px;
-}
-
-.user { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s; color: #333 !important; }
-.user:hover { background-color: #f0f0f0 !important; }
-
-#infoArea { 
-    display: flex; 
-    flex-direction: column; 
-    flex: 1; 
-    overflow: hidden; 
-    min-height: 0; 
-    color: #333 !important;
-}
-
-.info-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-shrink: 0; }
-#closeUserInfoBtn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #6c757d !important; }
-#closeUserInfoBtn:hover { color: #dc3545 !important; }
-
-/* 필터 버튼 */
-.filter-group { display: flex; gap: 5px; margin-bottom: 10px; }
-.filter-btn { 
-    flex: 1; padding: 5px 0; 
-    border: 1px solid #ddd !important; 
-    background-color: #f8f9fa !important; 
-    color: #333 !important;
-    cursor: pointer; font-size: 12px; border-radius: 4px; transition: 0.3s; 
-}
-.filter-btn:hover { background-color: #e9ecef !important; }
-.filter-btn.active { background-color: #e2e8f0 !important; font-weight: bold; border-color: #adb5bd !important; color: #000 !important; }
-
-#map { width: 100%; flex-grow: 1; border-radius: 4px; }
-
-.log-list { 
-    flex: 1; 
-    overflow-y: auto; 
-    min-height: 0;
-    color: #333 !important;
-}
-.log-entry { padding: 8px; font-size: 13px; border-bottom: 1px solid #f0f0f0; cursor: pointer; border-radius: 4px; line-height: 1.4; color: #333 !important; }
-.log-entry:hover { background-color: #e9ecef !important; }
-
-/* =========================================
-   5. 상세 로그 화면 (Log Content)
-   ========================================= */
-#log-content {
-    width: 100%; 
-    height: calc(100vh - 70px); 
-    padding: 20px;
-    display: flex; 
-    flex-direction: column; 
-    gap: 20px;
-    background-color: transparent !important;
-    position: fixed; 
-    top: 70px; left: 0;
-    z-index: 600;
-    overflow-y: auto; 
-}
-
-.log-header { 
-    background-color: #ffffff !important; 
-    padding: 15px; 
-    border-radius: 8px; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
-    flex-shrink: 0;
-}
-.log-header h2 { margin: 0; }
-
-.log-container { 
-    display: flex; 
-    gap: 20px; 
-    flex-grow: 1; 
-    overflow: hidden; 
-}
-
-.log-section { 
-    flex: 1; 
-    background-color: #ffffff !important; 
-    padding: 15px; 
-    border-radius: 8px; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
-    display: flex; 
-    flex-direction: column; 
-    min-height: 300px; 
-    color: #333 !important;
-}
-
-.log-section h3 { color: #555 !important; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-.log-entries { overflow-y: auto; flex-grow: 1; }
-.full-log-entry { padding: 10px 5px; font-size: 14px; border-bottom: 1px solid #f0f0f0; color: #333 !important; }
-
-/* =========================================
-   6. DB 조회 화면 (DB Content)
-   ========================================= */
-#db-content {
-    width: 100%;
-    height: calc(100vh - 70px);
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    background-color: transparent !important;
-    position: fixed;
-    top: 70px; left: 0;
-    z-index: 600;
-    overflow-y: auto;
-}
-
-.container {
-    max-width: 1200px;
-    width: 100%;
-    margin: 0 auto;
-    background: #ffffff !important; /* 흰색 강제 */
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    display: flex; 
-    flex-direction: column;
-    height: 100%; 
-    min-height: 500px; 
-}
-
-.container h2 {
-    background: linear-gradient(135deg, #71b7e6, #9b59b6) !important; 
-    -webkit-background-clip: text !important; 
-    background-clip: text !important; 
-    color: transparent !important;
-    border-bottom: 1px solid #eee; 
-    padding-bottom: 10px;
-    flex-shrink: 0; 
-}
-
-.search-container {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-    padding: 15px;
-    background-color: #f8f9fa !important;
-    border-radius: 8px;
-    align-items: center;
-    flex-shrink: 0; 
-    border: 1px solid #eee;
-    flex-wrap: wrap; 
-}
-
-.search-container input[type="text"] {
-    flex: 1;
-    padding: 10px 15px;
-    border: 1px solid #ddd !important;
-    border-radius: 4px;
-    outline: none;
-    min-width: 200px; 
-    background-color: #fff !important;
-    color: #000 !important;
-}
-
-.btn-search, .btn-reset { 
-    padding: 10px 20px; 
-    border-radius: 4px; 
-    cursor: pointer; 
-    font-weight: 600; 
-    border: none; 
-    color: white !important;
-    white-space: nowrap;
-}
-.btn-search { background: linear-gradient(135deg, #71b7e6, #9b59b6) !important; }
-.btn-reset { background-color: #6c757d !important; }
-
-#result-title { flex-shrink: 0; margin-top: 5px; color: #333 !important; }
-
-#result-area {
-    flex-grow: 1; 
-    overflow-y: auto; 
-    overflow-x: auto; 
-    border: 1px solid #eee;
-    border-radius: 4px;
-    background-color: #fff !important;
-    color: #333 !important;
-}
-
-.grid-wrapper { border: none; min-width: 600px; } 
-.styled-table { width: 100%; border-collapse: collapse; font-size: 14px; background-color: white !important; }
-.styled-table th { 
-    background: #f8f9fa !important; 
-    color: #333 !important; 
-    padding: 12px 15px; 
-    text-align: left; 
-    white-space: nowrap; 
-    border-bottom: 2px solid #ddd;
-    position: sticky; top: 0; 
-    z-index: 10;
-}
-.styled-table td { padding: 12px 15px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; vertical-align: top; color: #333 !important; }
-
-.firebase-view { font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.6; color: #333 !important; }
-.fv-item { white-space: nowrap; }
-.fv-key-box { cursor: pointer; display: inline-block; user-select: none; }
-.fv-key-box:hover .fv-key { text-decoration: underline; color: #0056b3 !important; }
-.fv-key { color: #000080 !important; font-weight: bold; }
-.fv-arrow { display: inline-block; width: 14px; text-align: center; font-size: 10px; color: #555 !important; margin-right: 4px; }
-.fv-children { display: block; padding-left: 5px; border-left: 1px solid #eee; }
-.fv-hidden { display: none !important; }
-.fv-indent { display: inline-block; width: 15px; }
-
-.fv-string { color: #a31515 !important; }
-.fv-number { color: #098658 !important; }
-.fv-boolean { color: #0000ff !important; }
-.fv-null { color: #808080 !important; }
-
-/* =========================================
-   7. 모달 및 오버레이 (Modals & Overlays)
-   ========================================= */
-#custom-modal, #logout-confirm-modal { 
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-    background: rgba(0, 0, 0, 0.5); 
-    display: flex; justify-content: center; align-items: center; 
-    z-index: 3000; 
-}
-
-.modal-content { 
-    background: white !important; 
-    padding: 30px; 
-    border-radius: 10px; 
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3); 
-    max-width: 350px; 
-    width: 85%; 
-    text-align: center; 
-    color: #333 !important;
-}
-.modal-content p { margin-bottom: 20px; font-size: 16px; color: #333 !important; }
-.modal-content button { padding: 10px 20px; background-color: #71b7e6 !important; color: white !important; border: none; border-radius: 5px; cursor: pointer; }
-
-.custom-overlay-info { padding: 5px 10px; font-size: 12px; background: white !important; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1px solid #ccc; color: #333 !important; }
-.custom-overlay-info strong { color: #000 !important; }
-
-.custom-marker-pin { width: 32px; height: 35px; transform: scale(1.5); transform-origin: bottom center; }
-.custom-marker-dot { width: 12px; height: 12px; transform: scale(1.8); transform-origin: center center; }
+/* ... (이전 코드는 동일) ... */
 
 /* =========================================
    8. 반응형 (Mobile Responsive) - 수정됨
    ========================================= */
 @media (max-width: 768px) {
-    /* 헤더 조정 */
+    /* ... (헤더, 바디, 메인 레이아웃 설정 동일) ... */
     #header { 
         padding: 0 15px; 
         flex-direction: column; 
@@ -437,65 +16,72 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
     #header .button-group { width: 100%; justify-content: space-between; }
     #header button { flex: 1; padding: 8px 0; font-size: 12px; }
 
-    /* [수정] Body Scroll 활성화 (전체 페이지 스크롤) */
     body { 
         padding-top: 110px; 
-        overflow-y: auto !important; /* 강제 스크롤 활성화 */
-        height: auto !important;     /* 고정 높이 해제 */
+        overflow-y: auto !important; 
+        height: auto !important; 
     }
 
-    /* [수정] 메인 레이아웃 (세로 배치, 높이 자동) */
     #main-content { 
-        display: block; /* flex 대신 block으로 변경하여 자연스러운 흐름 유도 */
+        display: block; 
         height: auto !important; 
         padding: 10px;
-        padding-bottom: 30px; /* 하단 여백 */
+        padding-bottom: 30px; 
         overflow: visible;
     }
 
-    /* [수정] 사이드바 (정보창) */
     #sidebar { 
         width: 100%; 
-        height: auto !important; /* 내용만큼 늘어나도록 설정 */
+        height: auto !important; 
         flex: none;
-        margin-bottom: 20px; /* 지도와의 간격 */
-        z-index: auto; /* z-index 해제하여 자연스럽게 배치 */
+        margin-bottom: 20px; 
+        z-index: auto; 
     }
     
     #userInfo {
-        max-height: none !important; /* 내부 스크롤 제거하고 전체 길이 표시 */
+        max-height: none !important; 
         height: auto !important;
     }
 
-    /* [수정] 정보창 내부 리스트 */
     .log-list {
-        max-height: 400px; /* 리스트가 너무 길어지면 내부 스크롤 (선택사항) */
+        max-height: 400px; 
         overflow-y: auto;
     }
     
-    /* [수정] 지도 영역 (하단 배치) */
     #mapArea { 
         width: 100%; 
-        height: 400px; /* 지도 높이 고정 */
+        height: 400px; 
         flex: none;
-        z-index: 1; /* 기본 레벨 */
+        z-index: 1; 
     }
 
-    /* 로그 화면 및 DB 화면 */
+    /* --- [수정] 로그 및 DB 화면 설정 --- */
     #log-content, #db-content { 
         top: 110px; 
         height: auto !important; 
         min-height: calc(100vh - 110px);
         padding: 10px;
-        position: absolute; /* 스크롤 가능하게 절대 위치 */
+        position: absolute; 
+        padding-bottom: 50px; /* 하단 여백 추가 */
     }
 
     .log-container { 
         flex-direction: column; 
         overflow: visible;
     }
-    .log-section { width: 100%; margin-bottom: 20px; flex: none; height: auto; }
-    .log-entries { max-height: 300px; }
+    
+    .log-section { 
+        width: 100%; 
+        margin-bottom: 20px; 
+        flex: none; 
+        height: auto; 
+    }
+
+    /* [핵심 수정] 로그 리스트 높이 제한 해제 -> 전체 페이지 스크롤로 확인 */
+    .log-entries { 
+        max-height: none; /* 300px 제한 제거 */
+        overflow: visible; 
+    }
 
     .container { padding: 15px; height: auto; }
     .search-container { flex-direction: column; align-items: stretch; }
