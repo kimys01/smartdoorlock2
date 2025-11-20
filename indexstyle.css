@@ -122,7 +122,17 @@ body {
 }
 
 #userList { overflow-y: auto; flex-grow: 1; }
-#userInfo { overflow: hidden; flex-shrink: 0; display: flex; flex-direction: column; }
+
+/* [수정] UserInfo 패널 레이아웃 (스크롤 문제 해결) */
+#userInfo { 
+    overflow: hidden; 
+    flex-shrink: 0; 
+    display: flex; 
+    flex-direction: column;
+    /* 높이를 제한하여 스크롤이 생기도록 유도 (화면 높이의 60% 최대) */
+    max-height: 60vh;
+}
+
 #mapArea { flex-grow: 1; display: flex; flex-direction: column; }
 
 /* 섹션 제목 공통 */
@@ -144,9 +154,16 @@ h2, h3 {
 .user { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s; }
 .user:hover { background-color: #f0f0f0; }
 
-/* 사용자 정보창 내부 */
-#infoArea { display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; }
-.info-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+/* [수정] 사용자 정보창 내부 컨테이너 */
+#infoArea { 
+    display: flex; 
+    flex-direction: column; 
+    flex: 1; /* 남은 공간 채우기 */
+    overflow: hidden; /* 내부 스크롤을 위해 넘치는 것 숨김 */
+    min-height: 0; /* Flexbox 스크롤 버그 방지 */
+}
+
+.info-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-shrink: 0; }
 #closeUserInfoBtn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #6c757d; }
 #closeUserInfoBtn:hover { color: #dc3545; }
 
@@ -159,8 +176,12 @@ h2, h3 {
 /* 지도 요소 */
 #map { width: 100%; flex-grow: 1; border-radius: 4px; }
 
-/* 사이드바 로그 리스트 */
-.log-list { flex-grow: 1; overflow-y: auto; }
+/* [수정] 사이드바 로그 리스트 (스크롤 가능하도록) */
+.log-list { 
+    flex: 1; /* 부모의 남은 공간 채우기 */
+    overflow-y: auto; /* 세로 스크롤 활성화 */
+    min-height: 0;
+}
 .log-entry { padding: 8px; font-size: 13px; border-bottom: 1px solid #f0f0f0; cursor: pointer; border-radius: 4px; line-height: 1.4; }
 .log-entry:hover { background-color: #e9ecef; }
 
@@ -174,7 +195,7 @@ h2, h3 {
     display: flex; 
     flex-direction: column; 
     gap: 20px;
-    /* 배경색 제거 (투명)하여 body의 그라데이션이 보이도록 함 */
+    /* [수정] 배경색 투명 처리 (Body의 그라데이션 보이게) */
     background-color: transparent;
     position: fixed; 
     top: 70px; left: 0;
@@ -213,7 +234,7 @@ h2, h3 {
     padding: 20px;
     display: flex;
     flex-direction: column;
-    /* 배경색 제거 (투명)하여 body의 그라데이션이 보이도록 함 */
+    /* [수정] 배경색 투명 처리 (Body의 그라데이션 보이게) */
     background-color: transparent;
     position: fixed;
     top: 70px; left: 0;
