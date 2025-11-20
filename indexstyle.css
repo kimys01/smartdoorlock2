@@ -3,8 +3,6 @@
 /* =========================================
    1. 기본 설정 (Global Reset & Body)
    ========================================= */
-
-/* [강력 수정] 시스템 다크모드 강제 무시 설정 (!important 사용) */
 :root {
     color-scheme: light !important;
 }
@@ -14,21 +12,18 @@
     padding: 0; 
     box-sizing: border-box; 
     font-family: 'Poppins', sans-serif; 
-    /* 모든 텍스트 색상을 강제로 어두운 색으로 고정하여 다크모드 반전 방지 */
     color: #333333; 
 }
 
 body { 
     height: 100vh; 
-    /* 배경 그라디언트 (보라색+파란색) 설정 */
     background: linear-gradient(135deg, #71b7e6, #9b59b6) !important;
-    background-color: #71b7e6 !important; /* 그라디언트 로딩 전 fallback */
-    padding-top: 70px; /* 헤더 높이만큼 상단 여백 */
-    overflow: hidden; /* 데스크탑에서는 스크롤 방지 (내부 스크롤 사용) */
+    background-color: #71b7e6 !important; 
+    padding-top: 70px; 
+    overflow: hidden; 
     transition: background-color 0.3s ease; 
 }
 
-/* 화면 숨김 클래스 (JavaScript 제어용) */
 .hidden { display: none !important; }
 
 /* =========================================
@@ -40,12 +35,12 @@ body {
     width: 100%; 
     height: 70px; 
     padding: 0 30px;
-    background-color: #ffffff !important; /* 배경 흰색 강제 */
+    background-color: #ffffff !important; 
     box-shadow: 0 2px 4px rgba(0,0,0,0.08);
     display: flex; 
     justify-content: space-between; 
     align-items: center; 
-    z-index: 1000; /* 다른 요소보다 위에 표시 */
+    z-index: 1000; 
     transition: all 0.3s ease;
 }
 
@@ -54,12 +49,11 @@ body {
     margin: 0; 
     cursor: pointer; 
     font-weight: 600;
-    /* 텍스트에 그라디언트 효과 적용 */
     background: linear-gradient(135deg, #71b7e6, #9b59b6) !important;
     -webkit-background-clip: text !important; 
     background-clip: text !important; 
     color: transparent !important; 
-    white-space: nowrap; /* 줄바꿈 방지 */
+    white-space: nowrap;
 }
 
 #header .button-group { display: flex; gap: 0; }
@@ -101,7 +95,6 @@ body {
     border-radius: 10px; 
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     text-align: center; 
-    /* 화면 정중앙 배치 */
     position: absolute; 
     left: 50%; top: 50%;
     transform: translate(-50%, -50%); 
@@ -110,7 +103,6 @@ body {
 
 #login-container h2 { font-size: 28px; font-weight: 600; margin-bottom: 25px; color: #333 !important; }
 
-/* 입력창 스타일 */
 input[type="text"], input[type="password"] {
     width: 100%; 
     padding: 12px 15px; 
@@ -146,11 +138,10 @@ input[type="text"], input[type="password"] {
     padding: 10px; 
     gap: 20px; 
     width: 100%; 
-    height: calc(100vh - 70px); /* 헤더 제외한 높이 */
+    height: calc(100vh - 70px); 
     overflow: hidden; 
 }
 
-/* 좌측 사이드바 */
 #sidebar { 
     display: flex; 
     flex-direction: column; 
@@ -161,7 +152,6 @@ input[type="text"], input[type="password"] {
     transition: all 0.3s ease;
 }
 
-/* 공통 박스 스타일 (쉐도우, 둥근 모서리) */
 #userList, #userInfo, #mapArea {
     border: none; 
     box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
@@ -178,13 +168,11 @@ input[type="text"], input[type="password"] {
     flex-shrink: 0; 
     display: flex; 
     flex-direction: column;
-    max-height: 60vh; /* 데스크탑 높이 제한 */
+    max-height: 60vh;
 }
 
-/* 우측 지도 영역 */
 #mapArea { flex-grow: 1; display: flex; flex-direction: column; }
 
-/* 섹션 제목 스타일 */
 h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
 
 #userList h2, #mapArea h2, .info-header h2 {
@@ -212,7 +200,6 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
 #closeUserInfoBtn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #6c757d !important; }
 #closeUserInfoBtn:hover { color: #dc3545 !important; }
 
-/* 필터 버튼 (전체 기록 / 범위 내) */
 .filter-group { display: flex; gap: 5px; margin-bottom: 10px; }
 .filter-btn { 
     flex: 1; padding: 5px 0; 
@@ -245,7 +232,7 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
     display: flex; 
     flex-direction: column; 
     gap: 20px;
-    background-color: transparent !important; /* 배경 투명 (메인 배경 보이게) */
+    background-color: transparent !important; 
     position: fixed; 
     top: 70px; left: 0;
     z-index: 600;
@@ -284,7 +271,6 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
 .log-entries { overflow-y: auto; flex-grow: 1; }
 .full-log-entry { padding: 10px 5px; font-size: 14px; border-bottom: 1px solid #f0f0f0; color: #333 !important; }
 
-/* [추가] 데스크탑에서는 탭 버튼 숨김 */
 .log-tab-buttons {
     display: none;
 }
@@ -309,7 +295,7 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
     max-width: 1200px;
     width: 100%;
     margin: 0 auto;
-    background: #ffffff !important; /* 흰색 강제 */
+    background: #ffffff !important; 
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
@@ -379,22 +365,21 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
 
 .grid-wrapper { border: none; min-width: 600px; } 
 .styled-table { width: 100%; border-collapse: collapse; font-size: 14px; background-color: white !important; }
-/* [수정] 테이블 헤더 셀의 패딩을 줄여서 너비 축소 효과를 돕습니다 */
 .styled-table th { 
     background: #f8f9fa !important; 
     color: #333 !important; 
-    padding: 12px 10px; /* 패딩 축소 */
+    padding: 12px 10px; 
     text-align: left; 
     white-space: nowrap; 
     border-bottom: 2px solid #ddd;
     position: sticky; top: 0; 
     z-index: 10;
 }
-/* [수정] 테이블 데이터 셀의 패딩을 줄여서 너비 축소 효과를 돕습니다 */
 .styled-table td { padding: 12px 10px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; vertical-align: top; color: #333 !important; }
 
 .firebase-view { font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.6; color: #333 !important; }
-.fv-item { white-space: nowrap; display: flex; align-items: center; flex-wrap: wrap; }
+.fv-item { white-space: nowrap; display: flex; align-items: center; flex-wrap: wrap; padding: 2px 0; cursor: pointer; } /* pointer for touch target */
+
 .fv-key-box { cursor: pointer; display: inline-block; user-select: none; margin-right: 5px; }
 .fv-key-box:hover .fv-key { text-decoration: underline; color: #0056b3 !important; }
 .fv-key { color: #000080 !important; font-weight: bold; }
@@ -408,35 +393,50 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
 .fv-boolean { color: #0000ff !important; }
 .fv-null { color: #808080 !important; }
 
-/* [완벽 수정] 수정/삭제 버튼: 박스, 배경, 테두리 모두 제거하고 아이콘만 남김 */
+/* [수정됨] 아이콘 버튼 스타일: 기본 숨김, 호버/액티브 시 표시 */
 .btn-edit-mini, .btn-delete-mini {
-    background-color: transparent !important; /* 배경 투명 */
-    border: none !important;                  /* 테두리 없음 */
-    box-shadow: none !important;              /* 그림자 없음 */
+    background-color: transparent !important; 
+    border: none !important;                  
+    box-shadow: none !important;              
     border-radius: 0;
     cursor: pointer;
-    font-size: 18px; /* 아이콘 크기 약간 키움 */
-    margin-left: 5px;
-    padding: 0 !important; /* 패딩 제거하여 박스 느낌 삭제 */
+    font-size: 18px; 
+    margin-left: 8px;
+    padding: 0 !important; 
     line-height: 1;
-    color: #adb5bd !important; /* 은은한 회색 */
-    transition: color 0.2s, transform 0.2s;
-    display: inline-flex; /* 아이콘 수직 정렬 */
+    color: #adb5bd !important; 
+    transition: all 0.2s ease-in-out;
+    display: inline-flex; 
     align-items: center;
     justify-content: center;
+    opacity: 0; /* 기본 숨김 */
+    pointer-events: none; /* 클릭 방지 */
 }
 
-/* 호버 시 아이콘 색상만 변경 */
+/* 데스크탑 호버 효과 */
+.fv-item:hover .btn-edit-mini, 
+.fv-item:hover .btn-delete-mini,
+tr:hover .btn-delete-mini {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 모바일 터치 활성화 클래스 (JS로 추가됨) */
+.mobile-active .btn-edit-mini,
+.mobile-active .btn-delete-mini {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    color: #666 !important; /* 모바일에서는 좀 더 진하게 */
+}
+
 .btn-edit-mini:hover {
-    color: #007bff !important; /* 파란색 */
-    transform: scale(1.1);     /* 살짝 커짐 */
-    background-color: transparent !important;
+    color: #007bff !important; 
+    transform: scale(1.2);     
 }
 
 .btn-delete-mini:hover {
-    color: #dc3545 !important; /* 빨간색 */
-    transform: scale(1.1);
-    background-color: transparent !important;
+    color: #dc3545 !important; 
+    transform: scale(1.2);
 }
 
 .btn-save-mini, .btn-cancel-mini {
@@ -490,13 +490,12 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
 .custom-marker-dot { width: 12px; height: 12px; transform: scale(1.8); transform-origin: center center; }
 
 /* =========================================
-   8. 반응형 (Mobile Responsive) - 모바일 화면 설정
+   8. 반응형 (Mobile Responsive)
    ========================================= */
 @media (max-width: 768px) {
-    /* 헤더 조정 */
     #header { 
         padding: 0 15px; 
-        flex-direction: column; /* 로고와 버튼을 세로 배치 */
+        flex-direction: column; 
         height: auto; 
         gap: 10px;
         padding-bottom: 10px;
@@ -505,14 +504,12 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
     #header .button-group { width: 100%; justify-content: space-between; }
     #header button { flex: 1; padding: 8px 0; font-size: 12px; }
 
-    /* Body Padding 및 스크롤 설정 */
     body { 
-        padding-top: 110px; /* 헤더 높이만큼 패딩 */
-        overflow-y: auto !important; /* 전체 스크롤 허용 */
-        height: auto !important; /* 고정 높이 해제 */
+        padding-top: 110px; 
+        overflow-y: auto !important; 
+        height: auto !important; 
     }
 
-    /* 메인 레이아웃 (세로 배치, 전체 스크롤) */
     #main-content { 
         display: block; 
         height: auto !important; 
@@ -521,7 +518,6 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
         overflow: visible;
     }
 
-    /* 사이드바 (유저 정보) */
     #sidebar { 
         width: 100%; 
         height: auto !important; 
@@ -530,7 +526,6 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
         z-index: auto; 
     }
     
-    /* 유저 리스트 스크롤 뷰로 제한 (길어지면 내부 스크롤) */
     #userList {
         max-height: 300px; 
         overflow-y: auto;
@@ -547,7 +542,6 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
         overflow-y: auto;
     }
     
-    /* 지도 영역 (하단 배치, 고정 높이) */
     #mapArea { 
         width: 100%; 
         height: 400px; 
@@ -555,7 +549,6 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
         z-index: 1; 
     }
 
-    /* 로그 및 DB 화면 설정 (절대 위치로 스크롤 가능하게) */
     #log-content, #db-content { 
         top: 110px; 
         height: auto !important; 
@@ -565,7 +558,6 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
         padding-bottom: 50px; 
     }
 
-    /* 모바일 탭 버튼 표시 */
     .log-tab-buttons {
         display: flex !important; 
         width: 100%;
@@ -597,9 +589,8 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
         background-color: #f9f9f9 !important;
     }
 
-    /* 로그 섹션 탭 제어 */
     .log-section {
-        display: none; /* 기본 숨김 */
+        display: none; 
         width: 100%; 
         margin-bottom: 20px; 
         flex: none; 
@@ -607,7 +598,7 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
     }
 
     .log-section.active-tab-content {
-        display: flex; /* 활성화된 탭만 보임 */
+        display: flex; 
         flex-direction: column;
     }
 
@@ -618,7 +609,6 @@ h2, h3 { font-weight: 600; margin-bottom: 10px; color: #333 !important; }
 
     .container { padding: 15px; height: auto; }
     
-    /* DB 결과 테이블 스크롤 뷰 */
     #result-area {
         max-height: 60vh; 
         overflow-y: auto;
