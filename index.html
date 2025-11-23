@@ -21,7 +21,6 @@
 </head>
 <body>
 
-    <!-- 1. 로그인 화면 -->
     <div id="login-container">
         <h2>SmartDoorLock</h2>
         <form id="login-form">
@@ -37,7 +36,6 @@
         </form>
     </div>
 
-    <!-- 2. 상단 헤더 -->
     <div id="header" class="hidden">
         <h1 id="header-title" style="cursor: pointer;">Smart Doorlock</h1> 
         <div class="button-group">
@@ -48,7 +46,6 @@
         </div>
     </div>
 
-    <!-- 3. 메인 컨텐츠 -->
     <div id="main-content" class="hidden">
         <div id="sidebar">
             <div id="userInfo" class="hidden">
@@ -68,7 +65,6 @@
         </div>
     </div>
 
-    <!-- 4. 로그 컨텐츠 -->
     <div id="log-content" class="hidden">
         <div class="log-header">
             <h2 id="logUserTitle">전체 로그</h2>
@@ -91,7 +87,6 @@
         </div>
     </div>
 
-    <!-- 5. DB 조회 컨텐츠 -->
     <div id="db-content" class="hidden">
         <div class="container">
             <h2>DataBase</h2>
@@ -107,7 +102,6 @@
         </div>
     </div>
 
-    <!-- 모달 팝업들 -->
     <div id="custom-modal" class="hidden">
         <div class="modal-content">
             <p id="modal-message"></p>
@@ -171,7 +165,7 @@
                 console.log("Firebase initialized successfully.");
             } catch (e) {
                 console.error("Firebase 초기화 오류:", e);
-                customAlert("Firebase 초기화 실패.");
+                customAlert("Firebase 초기화 실패. 인터넷 연결을 확인하거나 새로고침하세요.");
                 return;
             }
 
@@ -190,7 +184,7 @@
                 }
             }
 
-            // [추가] 모바일 터치 시 버튼 표시 (1분 타이머)
+            // 모바일 터치 시 버튼 표시 (1분 타이머)
             window.toggleMobileButtons = function(element, event) {
                 if (event.target.tagName === 'BUTTON' || event.target.classList.contains('fv-arrow')) {
                     return;
@@ -251,7 +245,7 @@
                     if (newBtn) newBtn.classList.remove('hidden');
                     if (userInfoDiv) userInfoDiv.classList.add('hidden');
                     if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
-                         kakao.maps.load(initMap); 
+                          kakao.maps.load(initMap); 
                     }
                 } else {
                     if (userListDiv) userListDiv.classList.add('hidden');
@@ -259,10 +253,10 @@
                     if (userInfoDiv) userInfoDiv.classList.remove('hidden');
                     selectedUserId = loggedInUserId;
                     if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
-                         kakao.maps.load(() => {
+                          kakao.maps.load(() => {
                             initMap(); 
                             selectUser(loggedInUserId);
-                         });
+                          });
                     }
                 }
                 setupMainUIEventListeners();
@@ -676,7 +670,7 @@
                 resultArea.innerHTML = tableHtml;
             }
 
-            // [수정됨] 항목 터치 시 버튼 토글 기능 연결
+            // 항목 터치 시 버튼 토글 기능 연결
             function createFirebaseView(data, depth, currentPath) {
                 let html = '';
                 const indent = '<span class="fv-indent"></span>'.repeat(depth);
@@ -692,7 +686,6 @@
                             const arrowTransform = isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
                             const childrenClass = isExpanded ? '' : 'fv-hidden';
 
-                            // [추가] onclick="toggleMobileButtons(this, event)" 연결
                             html += `
                             <div class="fv-item" onclick="toggleMobileButtons(this, event)">
                                 ${indent}
@@ -706,7 +699,6 @@
                                 </div>
                             </div>`;
                         } else {
-                            // [추가] onclick="toggleMobileButtons(this, event)" 연결
                             html += `
                             <div class="fv-item" id="node-${newPath.replace(/\//g, '-')}">
                                 <div class="fv-item-content" style="display:inline-flex; align-items:center; width:100%;" onclick="toggleMobileButtons(this.parentElement, event)">
@@ -818,51 +810,94 @@
                 }
             }
 
+            // [수정된 로그인 처리 로직]
             function handleLoginSubmit(e) {
                 e.preventDefault();
                 const usernameInput = document.getElementById('username')?.value.trim();
                 const passwordInput = document.getElementById('password')?.value.trim();
-                if (!database) return;
+                
+                if (!database) {
+                    customAlert("DB 연결이 되지 않았습니다.");
+                    return;
+                }
+                if (!usernameInput || !passwordInput) {
+                    customAlert("아이디와 비밀번호를 입력해주세요.");
+                    return;
+                }
+
+                console.log("로그인 시도:", usernameInput);
+
+                // 1. 관리자 체크
                 database.ref('admin_pass').once('value').then((snap) => {
-                    let loginSuccess = false;
-                    let isAdmin = false;
-                    let loggedInUserId = null;
+                    let adminFound = false;
                     if (snap.exists()) {
+                        // 관리자 데이터가 Object인지 List인지 확인하며 체크
+                        const data = snap.val();
                         snap.forEach(c => {
                             const d = c.val();
                             if (d && d.adminId === usernameInput && d.password === passwordInput) {
-                                loginSuccess = true; isAdmin = true; loggedInUserId = d.adminId;
+                                adminFound = true;
                             }
                         });
+                        // List가 아니라 단일 객체일 경우에 대한 대비
+                        if (!adminFound && data.adminId === usernameInput && data.password === passwordInput) {
+                            adminFound = true;
+                        }
                     }
-                    if (loginSuccess) {
+
+                    if (adminFound) {
+                        console.log("관리자 로그인 성공");
                         sessionStorage.setItem('isLoggedIn', 'true');
                         sessionStorage.setItem('isAdmin', 'true');
-                        sessionStorage.setItem('userId', loggedInUserId);
-                        showMainContent(true, loggedInUserId);
-                        return;
+                        sessionStorage.setItem('userId', usernameInput);
+                        showMainContent(true, usernameInput);
+                        // 관리자로 로그인되면 여기서 체인을 끊기 위해 특정 객체 반환
+                        return { type: 'admin_success' };
                     }
+                    
+                    // 관리자가 아니면 users 테이블 조회
                     return database.ref('users').once('value');
-                }).then((userSnap) => {
-                    if (!userSnap) return; 
-                    let loginSuccess = false;
-                    let loggedInUserId = null;
-                    if (userSnap.exists()) {
+                })
+                .then((result) => {
+                    // 이미 관리자로 로그인 성공했으면 종료
+                    if (result && result.type === 'admin_success') return;
+
+                    const userSnap = result; // users 스냅샷
+                    let userFound = false;
+                    let foundUserId = null;
+
+                    if (userSnap && userSnap.exists()) {
                         userSnap.forEach(c => {
+                            const key = c.key; // 사용자의 고유키 (예: user1, 123456 등)
                             const d = c.val();
-                            if (d && d.username === usernameInput && d.password === passwordInput) {
-                                loginSuccess = true; loggedInUserId = c.key;
+
+                            // [체크 1] 입력한 ID가 DB의 Key와 같고 비밀번호가 일치하는 경우
+                            if (key === usernameInput && d.password === passwordInput) {
+                                userFound = true;
+                                foundUserId = key;
+                            }
+                            // [체크 2] 입력한 ID가 DB 내부의 'username' 필드와 일치하는 경우
+                            else if (d.username === usernameInput && d.password === passwordInput) {
+                                userFound = true;
+                                foundUserId = key; // 실제 DB Key를 세션에 저장
                             }
                         });
                     }
-                    if (loginSuccess) {
+
+                    if (userFound) {
+                        console.log("사용자 로그인 성공. UID:", foundUserId);
                         sessionStorage.setItem('isLoggedIn', 'true');
                         sessionStorage.setItem('isAdmin', 'false');
-                        sessionStorage.setItem('userId', loggedInUserId);
-                        showMainContent(false, loggedInUserId);
+                        sessionStorage.setItem('userId', foundUserId);
+                        showMainContent(false, foundUserId);
                     } else {
-                        customAlert('아이디 또는 비밀번호 오류');
+                        console.log("로그인 실패: 일치하는 정보 없음");
+                        customAlert('아이디 또는 비밀번호가 올바르지 않습니다.');
                     }
+                })
+                .catch((error) => {
+                    console.error("로그인 에러 발생:", error);
+                    customAlert("로그인 중 오류가 발생했습니다.\n" + error.message);
                 });
             }
 
@@ -936,4 +971,3 @@
     </script>
 </body>
 </html>
-
