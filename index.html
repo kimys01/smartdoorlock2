@@ -149,8 +149,10 @@
             // --- Helper Functions ---
             function formatTimestamp(ts) {
                 if (!ts) return '시간 없음';
+                // DB에 이미 "YYYY-MM-DD HH:mm:ss" 문자열로 저장된 경우 그대로 반환하거나 Date 변환 시도
                 const date = new Date(ts);
                 if (isNaN(date.getTime())) return ts; 
+                
                 return date.toLocaleString('ko-KR', {
                     year: 'numeric', month: '2-digit', day: '2-digit',
                     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
@@ -198,7 +200,7 @@
                 });
             }
 
-            // --- [최종 수정] 도어락 로그도 앱 로그처럼 "전부" 보여주기 ---
+            // --- [최종 수정] 모든 로그 불러오기 (반복문 강화) ---
             function loadAllLogs(userId) {
                 const dlContainer = document.querySelector('#doorLockLogs .log-entries');
                 const appContainer = document.querySelector('#appLogs .log-entries');
@@ -211,7 +213,7 @@
                     const user = userSnap.val();
                     
                     // ---------------------------------------------
-                    // 1. APP LOGS
+                    // 1. APP LOGS (app_logs 하위 모든 항목 가져오기)
                     // ---------------------------------------------
                     database.ref(`users/${userId}/app_logs`).once('value').then(snap => {
                         if (!snap.exists()) {
@@ -219,29 +221,50 @@
                         } else {
                             appContainer.innerHTML = '';
                             const logs = [];
-                            snap.forEach(c => logs.push(c.val())); 
+                            
+                            // [중요] forEach로 모든 자식 노드를 배열에 담음
+                            snap.forEach(childSnapshot => {
+                                const logData = childSnapshot.val();
+                                // 키 값도 필요하면 childSnapshot.key 사용
+                                logs.push(logData); 
+                            });
+                            
+                            // 날짜 정렬 (내림차순: 최신이 위로)
                             logs.sort((a, b) => {
-                                const ta = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-                                const tb = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-                                return tb - ta; 
+                                const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+                                const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+                                return timeB - timeA; 
                             });
 
                             logs.forEach(log => {
                                 const div = document.createElement('div');
                                 div.className = 'log-card status-app'; 
                                 
+                                // DB 사진 구조: message, timestamp
                                 let title = "앱 활동";
                                 let detail = "";
 
-                                if (log.message) { title = log.message; } 
-                                else if (log.event) { title = log.event; } 
-                                else if (log.new_auth) { title = "인증 방식 변경"; detail = `값: ${log.new_auth}`; } 
-                                else if (log.detailSettings) { title = "설정 변경"; detail = JSON.stringify(log.detailSettings).replace(/["{}]/g, "").replace(/,/g, ", "); } 
-                                else { detail = JSON.stringify(log).replace(/["{}]/g, ""); }
+                                if (log.message) {
+                                    title = log.message; 
+                                } else if (log.event) {
+                                    title = log.event;
+                                } else if (log.new_auth) {
+                                    title = "인증 방식 변경"; detail = `값: ${log.new_auth}`;
+                                } else if (log.detailSettings) {
+                                    title = "설정 변경";
+                                    detail = JSON.stringify(log.detailSettings).replace(/["{}]/g, "").replace(/,/g, ", ");
+                                } else {
+                                    detail = JSON.stringify(log).replace(/["{}]/g, ""); 
+                                }
 
                                 div.innerHTML = `
-                                    <div class="log-header-row"><span>🕒 ${formatTimestamp(log.timestamp)}</span><span>📱 App</span></div>
-                                    <div class="log-body-row"><span style="font-weight:600; color:#333; font-size:15px;">${title}</span></div>
+                                    <div class="log-header-row">
+                                        <span>🕒 ${formatTimestamp(log.timestamp)}</span>
+                                        <span>📱 App</span>
+                                    </div>
+                                    <div class="log-body-row">
+                                        <span style="font-weight:600; color:#333; font-size:15px;">${title}</span>
+                                    </div>
                                     ${detail ? `<div class="log-detail-box">${detail}</div>` : ''}
                                 `;
                                 appContainer.appendChild(div);
@@ -250,7 +273,7 @@
                     });
 
                     // ---------------------------------------------
-                    // 2. DOORLOCK LOGS (무조건 다 보여주기)
+                    // 2. DOORLOCK LOGS (모든 도어락 로그 통합)
                     // ---------------------------------------------
                     let doorlockIds = [];
                     if (user && user.my_doorlocks) {
@@ -260,10 +283,12 @@
                     if (doorlockIds.length === 0) {
                         dlContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#dc3545;">연결된 도어락이 없습니다.</div>';
                     } else {
+                        // 여러 도어락의 로그를 병렬로 가져옴
                         const promises = doorlockIds.map(id => database.ref(`doorlocks/${id}/logs`).once('value'));
                         
                         Promise.all(promises).then(snapshots => {
                             let allLogs = [];
+                            
                             snapshots.forEach(snap => {
                                 if (snap.exists()) {
                                     snap.forEach(c => allLogs.push(c.val()));
@@ -275,7 +300,6 @@
                             } else {
                                 dlContainer.innerHTML = '';
                                 
-                                // 최신순 정렬
                                 allLogs.sort((a, b) => {
                                     const ta = a.timestamp ? new Date(a.timestamp).getTime() : 0;
                                     const tb = b.timestamp ? new Date(b.timestamp).getTime() : 0;
@@ -285,53 +309,36 @@
                                 allLogs.forEach(log => {
                                     const div = document.createElement('div');
                                     
-                                    // [중요] 어떤 필드가 있든 최대한 보기 좋게 조합
-                                    let mainTitle = "도어락 이벤트";
-                                    let subInfo = "";
-                                    let statusClass = "";
-                                    let actionIcon = "🔔";
+                                    let who = log.user || log.userId || "알 수 없음";
+                                    let methodRaw = log.method || "";
+                                    let methodDisp = methodRaw || "기타";
+                                    let methodIcon = "🔑";
+                                    
+                                    if(methodRaw.toUpperCase().includes("PASSWORD") || methodRaw.toUpperCase().includes("PW")) { methodDisp="비밀번호"; methodIcon="🔢"; }
+                                    else if(methodRaw.toUpperCase().includes("RF") || methodRaw.toUpperCase().includes("CARD")) { methodDisp="카드키"; methodIcon="💳"; }
+                                    else if(methodRaw.toUpperCase().includes("BLE") || methodRaw.toUpperCase().includes("APP")) { methodDisp="앱(블루투스)"; methodIcon="📱"; }
+                                    else if(methodRaw.toUpperCase().includes("FINGER")) { methodDisp="지문"; methodIcon="👆"; }
 
-                                    // 1. 메인 타이틀 결정 (message > command > status > event 순)
-                                    if (log.message) mainTitle = log.message;
-                                    else if (log.command) {
-                                        mainTitle = `명령: ${log.command}`;
-                                        if(log.command.toUpperCase().includes("UNLOCK")) { mainTitle = "문 열림"; statusClass = "status-open"; actionIcon = "🔓"; }
-                                        if(log.command.toUpperCase().includes("LOCK")) { mainTitle = "문 잠김"; statusClass = "status-close"; actionIcon = "🔒"; }
-                                    }
-                                    else if (log.status) {
-                                        mainTitle = `상태: ${log.status}`;
-                                        if(log.status.toUpperCase().includes("OPEN")) { mainTitle = "문 열림"; statusClass = "status-open"; actionIcon = "🔓"; }
-                                        if(log.status.toUpperCase().includes("CLOSE")) { mainTitle = "문 잠김"; statusClass = "status-close"; actionIcon = "🔒"; }
-                                    }
-                                    else if (log.event) mainTitle = log.event;
+                                    let actionRaw = log.command || log.status || "알 수 없음";
+                                    let actionDisp = actionRaw;
+                                    let statusClass = ""; 
+                                    let actionIcon = "❓";
 
-                                    // 2. 상세 정보 조합 (user, method 등)
-                                    let details = [];
-                                    if(log.user || log.userId) details.push(`사용자: ${log.user || log.userId}`);
-                                    if(log.method) {
-                                        let m = log.method;
-                                        if(m.includes("PASS") || m.includes("pw")) m = "비밀번호";
-                                        if(m.includes("RF")) m = "카드키";
-                                        if(m.includes("BLE")) m = "앱";
-                                        details.push(`방식: ${m}`);
-                                    }
-
-                                    // 3. 만약 위 필드들이 하나도 없다면 JSON 통째로 출력
-                                    if (mainTitle === "도어락 이벤트" && details.length === 0) {
-                                        // 이미 표시한 timestamp 제외하고 나머지 출력
-                                        let temp = {...log}; delete temp.timestamp;
-                                        subInfo = JSON.stringify(temp).replace(/["{}]/g, "").replace(/,/g, ", ");
-                                    } else {
-                                        subInfo = details.join(' | ');
-                                    }
+                                    if(actionRaw.toUpperCase().includes("UNLOCK")) { actionDisp="문 열림"; statusClass="status-open"; actionIcon="🔓"; }
+                                    else if(actionRaw.toUpperCase().includes("LOCK")) { actionDisp="문 잠김"; statusClass="status-close"; actionIcon="🔒"; }
 
                                     div.className = `log-card ${statusClass}`;
                                     div.innerHTML = `
                                         <div class="log-header-row"><span>🕒 ${formatTimestamp(log.timestamp)}</span></div>
                                         <div class="log-body-row">
-                                            <span style="font-weight:600; font-size:15px;">${actionIcon} ${mainTitle}</span>
+                                            <div style="display:flex;align-items:center;">
+                                                <span class="badge user">👤 ${who}</span>
+                                                <span class="badge method">${methodIcon} ${methodDisp}</span>
+                                            </div>
+                                            <div class="status-text ${statusClass === 'status-open' ? 'text-blue' : (statusClass === 'status-close' ? 'text-red' : '')}">
+                                                ${actionIcon} ${actionDisp}
+                                            </div>
                                         </div>
-                                        ${subInfo ? `<div class="log-detail-box">${subInfo}</div>` : ''}
                                     `;
                                     dlContainer.appendChild(div);
                                 });
