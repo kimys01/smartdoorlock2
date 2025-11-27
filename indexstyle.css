@@ -1,7 +1,7 @@
 @charset "UTF-8";
 
 /* =========================================
-   1. 기본 설정 (Global Reset & Body)
+   1. 기본 설정 (Global Reset & Body)ㅣㅐㅎ
    ========================================= */
 :root { color-scheme: light !important; }
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; color: #333; }
@@ -113,10 +113,20 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
    5. 로그 상세 화면 (Log Content)
    ========================================= */
 #log-content {
-    width: 100%; height: calc(100vh - 70px); padding: 20px;
-    display: flex; flex-direction: column; gap: 15px;
-    position: fixed; top: 70px; left: 0; z-index: 600;
-    background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(5px);
+    width: 100%;
+    height: calc(100vh - 70px);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    position: fixed;
+    top: 70px;
+    left: 0;
+    z-index: 3000; /* 기존 값 유지 또는 약간 상향 */
+    background: linear-gradient(135deg, #71b7e6, #9b59b6);
+    pointer-events: auto;
+    transform: none;
+    isolation: isolate;
 }
 
 .log-header { background: #fff; padding: 15px; border-radius: 8px; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
@@ -166,11 +176,23 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 /* =========================================
    6. DB 조회 화면 (DB Content)
    ========================================= */
+/* 기존 #db-content 블록의 background 라인만 교체 */
 #db-content {
-    width: 100%; height: calc(100vh - 70px); padding: 20px;
-    display: flex; flex-direction: column; position: fixed; top: 70px; left: 0; z-index: 600;
-    background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(5px);
+    width: 100%;
+    height: calc(100vh - 70px);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 70px;
+    left: 0;
+    z-index: 3000; /* 기존 값 유지 또는 약간 상향 */
+    background: linear-gradient(135deg, #71b7e6, #9b59b6);
+    pointer-events: auto;
+    transform: none;
+    isolation: isolate;
 }
+
 .container {
     max-width: 1200px; width: 100%; margin: 0 auto; background: #fff; padding: 20px;
     border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-direction: column; height: 100%;
