@@ -135,7 +135,6 @@
             const body = document.querySelector('body');
             const closeUserInfoButton = document.getElementById('closeUserInfoBtn');
 
-            // 초기값 (DB 로드 실패 시 사용)
             let DOORLOCK_LAT = 37.566826;   
             let DOORLOCK_LNG = 126.9786567;
             let MAX_DISTANCE_KM = 3.0;
@@ -161,7 +160,6 @@
             let selectedUserId = null;
             let currentUserLocationLogs = [];
 
-            // --- Firebase 초기화 ---
             try {
                 if (typeof firebase === 'undefined' || !firebase.initializeApp) {
                       throw new Error("Firebase SDK 로드 실패.");
@@ -175,59 +173,41 @@
                 return;
             }
 
-            // --- [핵심 수정 부분] DB 구조에 맞게 도어락 정보 가져오기 ---
+            // --- [지도 초기화 및 도어락 좌표 로드] ---
             function loadUserDoorlockAndInit(userId, callback) {
-                console.log(`[${userId}] 사용자의 도어락 정보를 조회합니다...`);
+                console.log(`[${userId}] 도어락 정보 조회...`);
                 
-                // 1. Users 테이블에서 my_doorlocks 확인
                 database.ref('users/' + userId).once('value').then((snap) => {
                     const user = snap.val();
-                    
-                    // 스크린샷 1번: my_doorlocks 객체 확인
                     if (!user || !user.my_doorlocks) {
-                        throw new Error("이 사용자는 연결된 도어락(my_doorlocks)이 없습니다.");
+                        throw new Error("연결된 도어락(my_doorlocks)이 없습니다.");
                     }
                     
-                    // my_doorlocks: { "도어락ID": true } 형태이므로 키(ID)들을 배열로 가져옴
                     const doorlockKeys = Object.keys(user.my_doorlocks);
-                    if (doorlockKeys.length === 0) {
-                        throw new Error("my_doorlocks 목록이 비어있습니다.");
-                    }
+                    if (doorlockKeys.length === 0) throw new Error("도어락 목록이 비어있습니다.");
 
-                    // 첫 번째 도어락 ID를 사용 (여러 개일 경우 첫 번째 것 기준)
-                    const doorlockId = doorlockKeys[0];
-                    console.log(`연결된 도어락 ID 찾음: ${doorlockId}`);
+                    const doorlockId = doorlockKeys[0]; // 첫 번째 도어락 ID 사용
+                    console.log(`Target Doorlock ID: ${doorlockId}`);
 
-                    // 2. Doorlocks 테이블에서 실제 좌표 확인
                     return database.ref('doorlocks/' + doorlockId).once('value');
                 }).then((snap) => {
                     const dlData = snap.val();
-                    
-                    // 스크린샷 2번: location 객체 안에 latitude, longitude가 있음
                     if (!dlData || !dlData.location) {
-                        throw new Error("해당 도어락의 위치 정보(location)가 없습니다.");
+                        throw new Error("도어락 위치 정보(location)가 없습니다.");
                     }
-
                     const location = dlData.location;
-
-                    // 3. 전역 변수 업데이트 (location 내부 좌표 사용)
                     if (location.latitude) DOORLOCK_LAT = parseFloat(location.latitude);
                     if (location.longitude) DOORLOCK_LNG = parseFloat(location.longitude);
                     
-                    console.log(`도어락 위치 갱신: ${DOORLOCK_LAT}, ${DOORLOCK_LNG}`);
-
-                    // 4. 지도 갱신
                     if (map) {
                         const moveLatLon = new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG);
                         map.setCenter(moveLatLon);
-                        drawDoorlockZones(); // 도어락 마커 다시 그리기
+                        drawDoorlockZones();
                     }
-
                     if (callback) callback();
-
                 }).catch((err) => {
                     console.error("도어락 정보 로드 실패:", err);
-                    customAlert(`도어락 정보를 불러오지 못했습니다.\n(${err.message})\n기본 위치를 사용합니다.`);
+                    customAlert(`도어락 정보 로드 실패: ${err.message}`);
                     if (callback) callback();
                 });
             }
@@ -329,10 +309,6 @@
             }
 
             function initMap() {
-                if (typeof kakao === 'undefined' || !kakao.maps || !kakao.maps.Map) {
-                    console.error("Kakao Maps SDK not loaded.");
-                    return;
-                }
                 const container = document.getElementById('map');
                 map = new kakao.maps.Map(container, {
                     center: new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG),
@@ -612,95 +588,96 @@
                 }
             }
 
+            // --- [핵심 수정] 로그 전체 불러오기 (도어락 + 앱 로그) ---
             function loadAllLogs(userId) {
                 const doorLockLogContainer = document.querySelector('#doorLockLogs .log-entries');
                 const appLogContainer = document.querySelector('#appLogs .log-entries');
                 const logUserTitle = document.getElementById('logUserTitle');
                 
                 logUserTitle.textContent = `${userId} 전체 로그`;
-                doorLockLogContainer.innerHTML = '<em>로딩 중...</em>';
-                appLogContainer.innerHTML = '<em>로딩 중...</em>';
-                
-                database.ref('doorlock_logs/' + userId).orderByKey().once('value').then((snapshot) => {
-                    doorLockLogContainer.innerHTML = '';
-                    if (!snapshot.exists()) {
-                        doorLockLogContainer.innerHTML = '로그 없음';
-                    } else {
-                        const logs = [];
-                        const val = snapshot.val();
-                        let isList = false;
-                        snapshot.forEach(c => {
-                            const cVal = c.val();
-                            if (cVal && (cVal.method !== undefined || cVal.timestamp !== undefined)) {
-                                logs.push(cVal);
-                                isList = true;
-                            }
-                        });
-                        if (!isList && val && (val.method !== undefined || val.timestamp !== undefined)) {
-                            logs.push(val);
-                        }
-                        logs.sort((a, b) => {
-                            const tA = a.timestamp ? new Date(typeof a.timestamp === 'string' ? a.timestamp.replace(" ", "T") : a.timestamp).getTime() : 0;
-                            const tB = b.timestamp ? new Date(typeof b.timestamp === 'string' ? b.timestamp.replace(" ", "T") : b.timestamp).getTime() : 0;
-                            return tB - tA;
-                        });
-                        logs.forEach(log => {
-                            const entry = document.createElement('div');
-                            entry.className = 'full-log-entry';
-                            let time = 'N/A';
-                            if (log.timestamp) {
-                                if (typeof log.timestamp === 'number') time = new Date(log.timestamp).toLocaleString('ko-KR');
-                                else time = log.timestamp;
-                            }
-                            const method = log.method || '방식 모름';
-                            const status = log.status || '상태 모름';
-                            entry.innerHTML = `<strong>[${time}]</strong> ${method} - ${status}`;
-                            doorLockLogContainer.appendChild(entry);
-                        });
+                doorLockLogContainer.innerHTML = '<div class="message-box" style="padding:10px;">로딩 중...</div>';
+                appLogContainer.innerHTML = '<div class="message-box" style="padding:10px;">로딩 중...</div>';
+
+                // 1. 도어락 ID 찾기
+                database.ref('users/' + userId).once('value').then((userSnap) => {
+                    const user = userSnap.val();
+                    let doorlockId = null;
+
+                    if (user && user.my_doorlocks) {
+                        // my_doorlocks: { "id": true, ... } 형태
+                        doorlockId = Object.keys(user.my_doorlocks)[0];
                     }
-                });
-                
-                database.ref('users/' + userId + '/app_logs').once('value').then((snapshot) => {
-                    appLogContainer.innerHTML = '';
-                    if (!snapshot.exists()) {
-                        appLogContainer.innerHTML = '로그 없음';
-                    } else {
-                        const logs = [];
-                        snapshot.forEach(catSnap => {
-                            const settings = catSnap.val();
-                            if (typeof settings === 'object') {
-                                Object.values(settings).forEach(l => {
-                                    if(typeof l === 'object') logs.push(l);
+
+                    // --- 2. App Logs 가져오기 (users/{userId}/app_logs) ---
+                    const appLogsRef = database.ref(`users/${userId}/app_logs`);
+                    appLogsRef.once('value').then(snapshot => {
+                        if (!snapshot.exists()) {
+                            appLogContainer.innerHTML = '<div class="message-box" style="padding:10px; color:#888;">로그 없음</div>';
+                        } else {
+                            appLogContainer.innerHTML = '';
+                            const logs = [];
+                            snapshot.forEach(child => {
+                                logs.push(child.val());
+                            });
+                            // 날짜순 정렬 (최신순)
+                            logs.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+                            
+                            logs.forEach(log => {
+                                const entry = document.createElement('div');
+                                entry.className = 'full-log-entry';
+                                let time = log.timestamp ? new Date(log.timestamp).toLocaleString() : '시간 없음';
+                                
+                                // 이벤트 내용을 예쁘게 표시
+                                let msg = "";
+                                if (log.event) msg = log.event;
+                                else if (log.message) msg = log.message;
+                                else msg = JSON.stringify(log).substring(0, 50);
+
+                                entry.innerHTML = `<strong>[${time}]</strong> ${msg}`;
+                                appLogContainer.appendChild(entry);
+                            });
+                        }
+                    });
+
+                    // --- 3. Doorlock Logs 가져오기 (doorlocks/{doorlockId}/logs) ---
+                    if (doorlockId) {
+                        const dlLogsRef = database.ref(`doorlocks/${doorlockId}/logs`);
+                        dlLogsRef.once('value').then(snapshot => {
+                            if (!snapshot.exists()) {
+                                doorLockLogContainer.innerHTML = '<div class="message-box" style="padding:10px; color:#888;">로그 없음</div>';
+                            } else {
+                                doorLockLogContainer.innerHTML = '';
+                                const logs = [];
+                                snapshot.forEach(child => {
+                                    logs.push(child.val());
+                                });
+                                logs.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+
+                                logs.forEach(log => {
+                                    const entry = document.createElement('div');
+                                    entry.className = 'full-log-entry';
+                                    let time = log.timestamp ? new Date(log.timestamp).toLocaleString() : '시간 없음';
+                                    
+                                    // 도어락 로그 내용 파싱
+                                    let content = "";
+                                    if(log.command) content += `[${log.command}] `;
+                                    if(log.user) content += `User: ${log.user} `;
+                                    if(log.method) content += `(${log.method})`;
+                                    if(!content) content = JSON.stringify(log);
+
+                                    entry.innerHTML = `<strong>[${time}]</strong> ${content}`;
+                                    doorLockLogContainer.appendChild(entry);
                                 });
                             }
                         });
-                        logs.sort((a, b) => {
-                            const tA = a.timestamp ? new Date(typeof a.timestamp === 'string' ? a.timestamp.replace(" ", "T") : a.timestamp).getTime() : 0;
-                            const tB = b.timestamp ? new Date(typeof b.timestamp === 'string' ? b.timestamp.replace(" ", "T") : b.timestamp).getTime() : 0;
-                            return tB - tA;
-                        });
-                        logs.forEach(log => {
-                            const entry = document.createElement('div');
-                            entry.className = 'full-log-entry';
-                            let time = 'N/A';
-                            if (log.timestamp) {
-                                if (typeof log.timestamp === 'number') {
-                                    time = new Date(log.timestamp).toLocaleString('ko-KR');
-                                } else {
-                                    time = log.timestamp;
-                                }
-                            }
-                            let msg = log.event;
-                            if (!msg) {
-                                if (log.new_auth) msg = `인증방식 변경: ${log.new_auth}`;
-                                else if (log.new_name) msg = `이름 변경: ${log.new_name}`;
-                                else if (log.new_pw) msg = `비밀번호 변경: ${log.new_pw}`;
-                                else msg = `<pre style="margin:0; white-space:pre-wrap; font-family:inherit; color:#555;">${JSON.stringify(log, null, 2)}</pre>`;
-                            }
-                            entry.innerHTML = `<strong>[${time}]</strong> ${msg}`;
-                            appLogContainer.appendChild(entry);
-                        });
+                    } else {
+                        doorLockLogContainer.innerHTML = '<div class="message-box" style="padding:10px;">연결된 도어락이 없습니다.</div>';
                     }
+
+                }).catch(err => {
+                    console.error("로그 로드 실패:", err);
+                    doorLockLogContainer.innerHTML = '로드 실패';
+                    appLogContainer.innerHTML = '로드 실패';
                 });
             }
 
