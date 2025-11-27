@@ -150,7 +150,7 @@
             function formatTimestamp(ts) {
                 if (!ts) return '시간 없음';
                 const date = new Date(ts);
-                if (isNaN(date.getTime())) return ts; // 날짜 변환 안되면 그냥 문자열 출력
+                if (isNaN(date.getTime())) return ts; 
                 return date.toLocaleString('ko-KR', {
                     month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
                 });
@@ -175,7 +175,7 @@
                     const user = snap.val();
                     if (!user || !user.my_doorlocks) throw new Error("연결된 도어락 없음");
                     
-                    // 도어락이 여러 개일 경우 첫 번째 것의 위치를 기준
+                    // 도어락이 여러 개일 경우 첫 번째 것의 위치를 기준 (지도 중심용)
                     const doorlockKeys = Object.keys(user.my_doorlocks);
                     const doorlockId = doorlockKeys[0]; 
                     
@@ -238,7 +238,7 @@
                                 // 로그 내용 분석
                                 if (log.event) title = log.event;
                                 else if (log.new_auth) { title = "인증 방식 변경"; detail = `값: ${log.new_auth}`; }
-                                else if (log.new_pw) { title = "비밀번호 변경"; detail = "********"; }
+                                else if (log.new_pw) { title = "비밀번호 변경"; detail = "패스워드가 변경됨"; }
                                 else if (log.detailSettings) {
                                     title = "설정 변경";
                                     detail = JSON.stringify(log.detailSettings).replace(/["{}]/g, "").replace(/,/g, ", ");
