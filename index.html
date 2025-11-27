@@ -150,7 +150,7 @@
             function formatTimestamp(ts) {
                 if (!ts) return '시간 없음';
                 const date = new Date(ts);
-                if (isNaN(date.getTime())) return ts; 
+                if (isNaN(date.getTime())) return ts; // 날짜 변환 안되면 그냥 문자열 출력
                 return date.toLocaleString('ko-KR', {
                     month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
                 });
@@ -174,69 +174,83 @@
                 database.ref('users/' + userId).once('value').then((snap) => {
                     const user = snap.val();
                     if (!user || !user.my_doorlocks) throw new Error("연결된 도어락 없음");
-                    const doorlockId = Object.keys(user.my_doorlocks)[0];
+                    
+                    // 도어락이 여러 개일 경우 첫 번째 것의 위치를 기준
+                    const doorlockKeys = Object.keys(user.my_doorlocks);
+                    const doorlockId = doorlockKeys[0]; 
+                    
                     return database.ref('doorlocks/' + doorlockId).once('value');
                 }).then((snap) => {
                     const dlData = snap.val();
-                    if (!dlData || !dlData.location) throw new Error("도어락 위치 정보 없음");
-                    DOORLOCK_LAT = parseFloat(dlData.location.latitude);
-                    DOORLOCK_LNG = parseFloat(dlData.location.longitude);
-                    
-                    if (map) {
-                        map.setCenter(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
-                        drawDoorlockZones();
+                    if (dlData && dlData.location) {
+                        DOORLOCK_LAT = parseFloat(dlData.location.latitude);
+                        DOORLOCK_LNG = parseFloat(dlData.location.longitude);
+                        
+                        if (map) {
+                            map.setCenter(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
+                            drawDoorlockZones();
+                        }
                     }
                     if (callback) callback();
                 }).catch((err) => {
                     console.error(err);
-                    if (callback) callback(); // 에러 나도 진행
+                    if (callback) callback(); 
                 });
             }
 
-            // --- Core Logic: Load Logs (DESIGN UPDATED) ---
+            // --- [최종 수정] 모든 로그 불러오기 (누락 없이) ---
             function loadAllLogs(userId) {
                 const dlContainer = document.querySelector('#doorLockLogs .log-entries');
                 const appContainer = document.querySelector('#appLogs .log-entries');
-                document.getElementById('logUserTitle').textContent = `${userId} 로그 기록`;
+                document.getElementById('logUserTitle').textContent = `${userId} 전체 로그 기록`;
                 
-                dlContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">로딩 중...</div>';
-                appContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">로딩 중...</div>';
+                dlContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">도어락 로그 로딩 중...</div>';
+                appContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">앱 로그 로딩 중...</div>';
 
                 database.ref('users/' + userId).once('value').then((userSnap) => {
                     const user = userSnap.val();
-                    const doorlockId = (user && user.my_doorlocks) ? Object.keys(user.my_doorlocks)[0] : null;
-
-                    // 1. App Logs
+                    
+                    // ---------------------------------------------
+                    // 1. APP LOGS (users/{id}/app_logs)
+                    // ---------------------------------------------
                     database.ref(`users/${userId}/app_logs`).once('value').then(snap => {
                         if (!snap.exists()) {
-                            appContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">기록 없음</div>';
+                            appContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">앱 사용 기록이 없습니다.</div>';
                         } else {
                             appContainer.innerHTML = '';
                             const logs = [];
-                            snap.forEach(c => logs.push(c.val()));
-                            logs.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+                            snap.forEach(c => logs.push(c.val())); // 모든 자식 노드 가져오기
+                            
+                            // 정렬 (최신순)
+                            logs.sort((a, b) => {
+                                const ta = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+                                const tb = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+                                return tb - ta; 
+                            });
 
                             logs.forEach(log => {
                                 const div = document.createElement('div');
                                 div.className = 'log-card status-app';
-                                let title = log.event || "앱 활동";
+                                
+                                let title = "앱 활동";
                                 let detail = "";
 
-                                if (log.new_auth) { title = "인증 방식 변경"; detail = `새 방식: ${log.new_auth}`; }
-                                else if (log.new_pw) { title = "비밀번호 변경"; detail = "패스워드가 변경됨"; }
+                                // 로그 내용 분석
+                                if (log.event) title = log.event;
+                                else if (log.new_auth) { title = "인증 방식 변경"; detail = `값: ${log.new_auth}`; }
+                                else if (log.new_pw) { title = "비밀번호 변경"; detail = "********"; }
                                 else if (log.detailSettings) {
                                     title = "설정 변경";
-                                    const arr = [];
-                                    if(log.detailSettings.autoLockEnabled !== undefined) arr.push(`자동잠금: ${log.detailSettings.autoLockEnabled}`);
-                                    if(log.detailSettings.notifyOnLock !== undefined) arr.push(`알림: ${log.detailSettings.notifyOnLock}`);
-                                    detail = arr.join(', ');
+                                    detail = JSON.stringify(log.detailSettings).replace(/["{}]/g, "").replace(/,/g, ", ");
                                 } else {
-                                    detail = log.message || JSON.stringify(log).substring(0,60);
+                                    // 필드명이 불확실할 경우 전체 출력
+                                    title = "기타 이벤트";
+                                    detail = JSON.stringify(log).replace(/["{}]/g, ""); 
                                 }
 
                                 div.innerHTML = `
                                     <div class="log-header-row"><span>🕒 ${formatTimestamp(log.timestamp)}</span><span>📱 App</span></div>
-                                    <div class="log-body-row"><span style="font-weight:600;">${title}</span></div>
+                                    <div class="log-body-row"><span style="font-weight:600; color:#28a745;">${title}</span></div>
                                     ${detail ? `<div class="log-detail-box">${detail}</div>` : ''}
                                 `;
                                 appContainer.appendChild(div);
@@ -244,38 +258,62 @@
                         }
                     });
 
-                    // 2. Doorlock Logs
-                    if (doorlockId) {
-                        database.ref(`doorlocks/${doorlockId}/logs`).once('value').then(snap => {
-                            if (!snap.exists()) {
+                    // ---------------------------------------------
+                    // 2. DOORLOCK LOGS (모든 연결된 도어락 조회)
+                    // ---------------------------------------------
+                    let doorlockIds = [];
+                    if (user && user.my_doorlocks) {
+                        doorlockIds = Object.keys(user.my_doorlocks); // ['ID1', 'ID2'...]
+                    }
+
+                    if (doorlockIds.length === 0) {
+                        dlContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#dc3545;">연결된 도어락이 없습니다.</div>';
+                    } else {
+                        // 모든 도어락의 로그를 동시에 가져오기 (Promise.all)
+                        const promises = doorlockIds.map(id => database.ref(`doorlocks/${id}/logs`).once('value'));
+                        
+                        Promise.all(promises).then(snapshots => {
+                            let allLogs = [];
+                            
+                            snapshots.forEach(snap => {
+                                if (snap.exists()) {
+                                    snap.forEach(c => allLogs.push(c.val()));
+                                }
+                            });
+
+                            if (allLogs.length === 0) {
                                 dlContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">기록 없음</div>';
                             } else {
                                 dlContainer.innerHTML = '';
-                                const logs = [];
-                                snap.forEach(c => logs.push(c.val()));
-                                logs.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+                                
+                                // 통합 정렬
+                                allLogs.sort((a, b) => {
+                                    const ta = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+                                    const tb = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+                                    return tb - ta;
+                                });
 
-                                logs.forEach(log => {
+                                allLogs.forEach(log => {
                                     const div = document.createElement('div');
                                     
                                     // Data Parsing
                                     let who = log.user || log.userId || "알 수 없음";
                                     let methodRaw = log.method || "";
-                                    let methodDisp = "기타";
+                                    let methodDisp = methodRaw || "기타";
                                     let methodIcon = "🔑";
                                     
-                                    if(methodRaw.includes("PASSWORD")) { methodDisp="비밀번호"; methodIcon="🔢"; }
-                                    else if(methodRaw.includes("RF")) { methodDisp="카드키"; methodIcon="💳"; }
-                                    else if(methodRaw.includes("BLE")) { methodDisp="앱(블루투스)"; methodIcon="📱"; }
-                                    else if(methodRaw.includes("FINGER")) { methodDisp="지문"; methodIcon="👆"; }
+                                    if(methodRaw.toUpperCase().includes("PASSWORD") || methodRaw.toUpperCase().includes("PW")) { methodDisp="비밀번호"; methodIcon="🔢"; }
+                                    else if(methodRaw.toUpperCase().includes("RF") || methodRaw.toUpperCase().includes("CARD")) { methodDisp="카드키"; methodIcon="💳"; }
+                                    else if(methodRaw.toUpperCase().includes("BLE") || methodRaw.toUpperCase().includes("APP")) { methodDisp="앱(블루투스)"; methodIcon="📱"; }
+                                    else if(methodRaw.toUpperCase().includes("FINGER")) { methodDisp="지문"; methodIcon="👆"; }
 
-                                    let actionRaw = log.command || log.status || "";
+                                    let actionRaw = log.command || log.status || "알 수 없음";
                                     let actionDisp = actionRaw;
-                                    let statusClass = "";
-                                    let actionIcon = "";
+                                    let statusClass = ""; // CSS용 클래스
+                                    let actionIcon = "❓";
 
-                                    if(actionRaw.includes("UNLOCK")) { actionDisp="문 열림"; statusClass="status-open"; actionIcon="🔓"; }
-                                    else if(actionRaw.includes("LOCK")) { actionDisp="문 잠김"; statusClass="status-close"; actionIcon="🔒"; }
+                                    if(actionRaw.toUpperCase().includes("UNLOCK")) { actionDisp="문 열림"; statusClass="status-open"; actionIcon="🔓"; }
+                                    else if(actionRaw.toUpperCase().includes("LOCK")) { actionDisp="문 잠김"; statusClass="status-close"; actionIcon="🔒"; }
 
                                     div.className = `log-card ${statusClass}`;
                                     div.innerHTML = `
@@ -285,7 +323,7 @@
                                                 <span class="badge user">👤 ${who}</span>
                                                 <span class="badge method">${methodIcon} ${methodDisp}</span>
                                             </div>
-                                            <div class="status-text ${statusClass === 'status-open' ? 'text-blue' : 'text-red'}">
+                                            <div class="status-text ${statusClass === 'status-open' ? 'text-blue' : (statusClass === 'status-close' ? 'text-red' : '')}">
                                                 ${actionIcon} ${actionDisp}
                                             </div>
                                         </div>
@@ -294,8 +332,6 @@
                                 });
                             }
                         });
-                    } else {
-                        dlContainer.innerHTML = '<div style="padding:20px; text-align:center;">도어락 연결 안됨</div>';
                     }
                 });
             }
