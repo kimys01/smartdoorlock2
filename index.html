@@ -18,10 +18,14 @@
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    
+    <style>
+        .hidden { display: none !important; }
+    </style>
 </head>
 <body>
 
-    <div id="login-container">
+    <div id="login-container" class="hidden">
         <h2>SmartDoorLock</h2>
         <form id="login-form">
             <div class="input-group">
@@ -195,7 +199,7 @@
                 });
             }
 
-            // --- Load Logs Logic (수정됨: 다양한 키값 대응 및 디버깅 로그 추가) ---
+            // --- Load Logs Logic ---
             function loadAllLogs(userId) {
                 const dlContainer = document.querySelector('#doorLockLogs .log-entries');
                 const appContainer = document.querySelector('#appLogs .log-entries');
@@ -245,7 +249,7 @@
                         }
                     });
 
-                    // 2. DOORLOCK LOGS (핵심 수정 부분)
+                    // 2. DOORLOCK LOGS
                     let doorlockIds = [];
                     if (user && user.my_doorlocks) { doorlockIds = Object.keys(user.my_doorlocks); }
 
@@ -259,7 +263,6 @@
                                 if (snap.exists()) { 
                                     snap.forEach(c => { 
                                         const val = c.val();
-                                        // 디버깅: F12 콘솔에서 데이터 확인 가능
                                         console.log("도어락 로그 원본 데이터:", val); 
                                         allLogs.push(val); 
                                     }); 
@@ -271,7 +274,6 @@
                             } else {
                                 dlContainer.innerHTML = '';
                                 allLogs.sort((a, b) => {
-                                    // 다양한 시간 필드명 지원
                                     const timeAStr = a.timestamp || a.time || a.date || a.datetime || a.created_at || 0;
                                     const timeBStr = b.timestamp || b.time || b.date || b.datetime || b.created_at || 0;
                                     const timeA = new Date(timeAStr).getTime() || 0;
@@ -281,14 +283,8 @@
 
                                 allLogs.forEach(log => {
                                     const div = document.createElement('div');
-                                    
-                                    // 1. 사용자 식별
                                     let who = log.user || log.userId || log.id || log.who || log.name || "알 수 없음";
-                                    
-                                    // 2. 시간 식별
                                     let timeValue = log.timestamp || log.time || log.date || log.datetime || log.created_at;
-
-                                    // 3. 인증 방식 식별 (method, auth, type, category 등)
                                     let methodRawValue = log.method || log.auth || log.type || log.category || "unknown";
                                     let methodRaw = String(methodRawValue).toUpperCase(); 
                                     let methodDisp = methodRawValue; 
@@ -299,22 +295,18 @@
                                     else if (methodRaw.includes("APP") || methodRaw.includes("BLE") || methodRaw.includes("BLUE") || methodRaw.includes("PHONE")) { methodDisp = "앱(블루투스)"; methodIcon = "📱"; } 
                                     else if (methodRaw.includes("FINGER") || methodRaw.includes("BIO")) { methodDisp = "지문"; methodIcon = "👆"; }
 
-                                    // 4. 동작 상태 식별 (command, status, state, event, action 등)
                                     let actionRawValue = log.command || log.status || log.state || log.action || log.event || log.msg || "알 수 없음";
                                     let actionRaw = String(actionRawValue).toUpperCase(); 
                                     let actionDisp = actionRawValue; 
                                     let actionIcon = "❓";
                                     let statusColor = "#333"; let statusBg = "#fff";
 
-                                    // 열림 조건
                                     if (actionRaw.includes("UNLOCK") || actionRaw.includes("OPEN") || actionRaw === "1" || actionRaw === "TRUE" || actionRaw.includes("SUCCESS")) {
                                         actionDisp = "문 열림"; actionIcon = "🔓"; statusColor = "#007bff"; statusBg = "#e7f3ff";
                                     } 
-                                    // 잠김 조건
                                     else if (actionRaw.includes("LOCK") || actionRaw.includes("CLOSE") || actionRaw === "0" || actionRaw === "FALSE") {
                                         actionDisp = "문 잠김"; actionIcon = "🔒"; statusColor = "#dc3545"; statusBg = "#ffeef0";
                                     }
-                                    // 경고/실패 조건
                                     else if (actionRaw.includes("WARN") || actionRaw.includes("ALERT") || actionRaw.includes("FAIL")) {
                                         actionDisp = "경고/실패"; actionIcon = "🚨"; statusColor = "#ffc107"; statusBg = "#fff3cd";
                                     }
@@ -537,14 +529,13 @@
                 setupNav();
             }
 
-            // [기능 추가됨] 타이틀 클릭 로직이 포함된 네비게이션 설정 함수
             function setupNav() {
-                // 기존 로그아웃 모달 설정
+                // 로그아웃 버튼
                 document.getElementById('logoutBtn').onclick = () => document.getElementById('logout-confirm-modal').classList.remove('hidden');
                 document.getElementById('confirmLogoutBtn').onclick = () => { sessionStorage.clear(); location.reload(); };
                 document.getElementById('cancelLogoutBtn').onclick = () => document.getElementById('logout-confirm-modal').classList.add('hidden');
                 
-                // [추가된 부분] 헤더 타이틀 클릭 시 초기 화면으로 이동(새로고침)
+                // [기능 추가] 타이틀 클릭 시 초기 화면 이동
                 const headerTitle = document.getElementById('header-title');
                 if(headerTitle) {
                     headerTitle.style.cursor = 'pointer';
@@ -587,10 +578,12 @@
                 };
             }
 
-            // Auto Login Check
+            // [수정됨] Auto Login Check 로직
             if (sessionStorage.getItem('isAdmin')) {
+                // 로그인 되어 있으면 바로 메인 화면 보여줌 (로그인 창은 이미 hidden 상태라 안 보임)
                 showMain(sessionStorage.getItem('isAdmin') === 'true', sessionStorage.getItem('userId'));
             } else {
+                // 로그인 안 되어 있을 때만 로그인 창을 보이게 함
                 document.getElementById('login-container').classList.remove('hidden');
             }
         });
