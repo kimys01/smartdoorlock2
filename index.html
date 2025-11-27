@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <meta name="color-scheme" content="light only">
     <meta name="supported-color-schemes" content="light">
-
     <title>Smart Doorlock Capstone</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,6 +16,38 @@
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <style>
+        /* 최소한의 인라인 스타일: indexstyle.css가 없을 때 기본 레이아웃 유지용 */
+        body { font-family: 'Poppins', sans-serif; margin:0; padding:0; background:#f7f9fc; color:#222; }
+        #login-container { max-width:360px; margin:80px auto; background:#fff; padding:24px; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.08); }
+        #login-container h2 { margin:0 0 12px 0; text-align:center; }
+        .input-group { margin-bottom:12px; }
+        .input-group label { display:block; margin-bottom:6px; font-size:14px; color:#444; }
+        .input-group input { width:100%; padding:10px; border-radius:8px; border:1px solid #e0e0e0; }
+        button { cursor:pointer; }
+        #header { display:flex; justify-content:space-between; align-items:center; padding:12px 20px; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,0.05); }
+        #header h1 { margin:0; font-size:18px; }
+        .button-group button { margin-left:8px; padding:8px 12px; border-radius:8px; border:1px solid #ddd; background:#fff; }
+        .hidden { display:none; }
+        #main-content { display:flex; gap:16px; padding:16px; }
+        #sidebar { width:320px; background:#fff; padding:12px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.04); }
+        #mapArea { flex:1; background:#fff; padding:12px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.04); }
+        #map { width:100%; height:600px; border-radius:8px; }
+        .user { padding:8px 10px; border-radius:8px; margin-bottom:8px; background:#f8f9fb; cursor:pointer; }
+        .log-card { margin-bottom:10px; }
+        .log-tab-btn.active { background:#007bff; color:#fff; border-color:#007bff; }
+        .log-section { padding:12px; }
+        .active-tab-content { display:block; }
+        .log-section { display:none; }
+        .filter-btn.active { background:#007bff; color:#fff; border-color:#007bff; }
+        .fv-key { cursor:pointer; color:#0b5ed7; }
+        .fv-children { margin-left:6px; }
+        .fv-hidden { display:none; }
+        .grid-wrapper { overflow:auto; max-height:520px; }
+        table.styled-table { width:100%; border-collapse:collapse; }
+        table.styled-table th, table.styled-table td { padding:8px; border-bottom:1px solid #eee; text-align:left; vertical-align:top; }
+    </style>
 </head>
 <body>
 
@@ -49,7 +79,7 @@
     <div id="main-content" class="hidden">
         <div id="sidebar">
             <div id="userInfo" class="hidden">
-                <div class="info-header">
+                <div class="info-header" style="display:flex; justify-content:space-between; align-items:center;">
                     <h2>User Info</h2>
                     <button id="closeUserInfoBtn" title="닫기">✕</button>
                 </div>
@@ -66,14 +96,14 @@
     </div>
 
     <div id="log-content" class="hidden">
-        <div class="log-header">
+        <div class="log-header" style="padding:12px; background:#fff; border-bottom:1px solid #eee;">
             <h2 id="logUserTitle">전체 로그</h2>
         </div>
-        <div class="log-tab-buttons">
+        <div class="log-tab-buttons" style="padding:12px; background:#fff;">
             <button id="tab-doorlock" class="log-tab-btn active" onclick="switchLogTab('doorlock')">도어락 로그</button>
             <button id="tab-app" class="log-tab-btn" onclick="switchLogTab('app')">앱 로그</button>
         </div>
-        <div class="log-container">
+        <div class="log-container" style="padding:12px;">
             <div id="doorLockLogs" class="log-section active-tab-content">
                 <div class="log-entries"></div>
             </div>
@@ -84,10 +114,10 @@
     </div>
 
     <div id="db-content" class="hidden">
-        <div class="container">
+        <div class="container" style="padding:16px;">
             <h2>DataBase</h2>
-            <div class="search-container">
-                <input type="text" id="search-input" placeholder="검색할 사용자 ID 입력">
+            <div class="search-container" style="display:flex; gap:8px; margin-bottom:12px;">
+                <input type="text" id="search-input" placeholder="검색할 사용자 ID 입력" style="flex:1; padding:8px; border-radius:8px; border:1px solid #ddd;">
                 <button class="btn-search" onclick="searchUser()">검색</button>
                 <button class="btn-reset" onclick="loadAllDBData()">전체 목록</button>
             </div>
@@ -98,467 +128,15 @@
         </div>
     </div>
 
-    <div id="custom-modal" class="hidden">
-        <div class="modal-content">
+    <div id="custom-modal" class="hidden" style="position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4);">
+        <div class="modal-content" style="background:#fff; padding:20px; border-radius:12px; min-width:260px; text-align:center;">
             <p id="modal-message"></p>
-            <button onclick="document.getElementById('custom-modal').style.display='none';">확인</button>
+            <button onclick="document.getElementById('custom-modal').style.display='none';" style="margin-top:12px;">확인</button>
         </div>
     </div>
 
-    <div id="logout-confirm-modal" class="hidden">
-        <div class="modal-content">
+    <div id="logout-confirm-modal" class="hidden" style="position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4);">
+        <div class="modal-content" style="background:#fff; padding:20px; border-radius:12px; min-width:300px; text-align:center;">
             <p>로그아웃 하시겠습니까?</p>
             <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
                 <button id="confirmLogoutBtn" style="flex: 1;">확인</button>
-                <button id="cancelLogoutBtn" style="flex: 1; background-color: #aaa;">취소</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log("App initialized.");
-
-            // --- Global Variables ---
-            let DOORLOCK_LAT = 37.566826;   
-            let DOORLOCK_LNG = 126.9786567;
-            let MAX_DISTANCE_KM = 3.0;
-            let database, map, doorlockMarker, currentPolyline, selectedLogMarker, selectedUserId;
-            let markers = [], zoneCircles = [], currentUserLocationLogs = [];
-
-            const firebaseConfig = {
-                apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
-                authDomain: "smartdoorlock-b4636.web.app", 
-                databaseURL: "https://smartdoorlock-b4636-default-rtdb.firebaseio.com",
-                projectId: "smartdoorlock-b4636",
-                storageBucket: "smartdoorlock-b4636.firebasestorage.app",
-                messagingSenderId: "104489505270",
-                appId: "1:104489505270:web:eb385c8f9c5dfd512077d7",
-                measurementId: "G-4TH9MB9WPM"
-            };
-
-            try {
-                if (typeof firebase === 'undefined' || !firebase.initializeApp) throw new Error("Firebase Load Fail");
-                firebase.initializeApp(firebaseConfig);
-                database = firebase.database();
-            } catch (e) {
-                alert("Firebase 초기화 실패. 새로고침 하세요.");
-                return;
-            }
-
-            // --- Helper Functions ---
-            function formatTimestamp(ts) {
-                if (!ts) return '시간 없음';
-                const date = new Date(ts);
-                if (isNaN(date.getTime())) return ts; 
-                return date.toLocaleString('ko-KR', {
-                    year: 'numeric', month: '2-digit', day: '2-digit',
-                    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
-                });
-            }
-
-            function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-                const R = 6371; 
-                const dLat = (lat2-lat1) * (Math.PI/180);
-                const dLon = (lon2-lon1) * (Math.PI/180); 
-                const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180)) * Math.cos(lat2*(Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
-                return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-            }
-
-            function customAlert(msg) {
-                document.getElementById('modal-message').textContent = msg;
-                document.getElementById('custom-modal').style.display = 'flex';
-            }
-
-            // --- Core Logic ---
-            function loadUserDoorlockAndInit(userId, callback) {
-                database.ref('users/' + userId).once('value').then((snap) => {
-                    const user = snap.val();
-                    if (!user || !user.my_doorlocks) throw new Error("연결된 도어락 없음");
-                    const doorlockKeys = Object.keys(user.my_doorlocks);
-                    const doorlockId = doorlockKeys[0]; 
-                    return database.ref('doorlocks/' + doorlockId).once('value');
-                }).then((snap) => {
-                    const dlData = snap.val();
-                    if (dlData && dlData.location) {
-                        DOORLOCK_LAT = parseFloat(dlData.location.latitude);
-                        DOORLOCK_LNG = parseFloat(dlData.location.longitude);
-                        if (map) {
-                            map.setCenter(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
-                            drawDoorlockZones();
-                        }
-                    }
-                    if (callback) callback();
-                }).catch((err) => {
-                    console.error(err);
-                    if (callback) callback(); 
-                });
-            }
-
-            // --- Load Logs Logic ---
-            function loadAllLogs(userId) {
-                const dlContainer = document.querySelector('#doorLockLogs .log-entries');
-                const appContainer = document.querySelector('#appLogs .log-entries');
-                document.getElementById('logUserTitle').textContent = `${userId} 전체 로그 기록`;
-                
-                dlContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">도어락 로그 로딩 중...</div>';
-                appContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">앱 로그 로딩 중...</div>';
-
-                database.ref('users/' + userId).once('value').then((userSnap) => {
-                    const user = userSnap.val();
-                    
-                    // 1. APP LOGS
-                    database.ref(`users/${userId}/app_logs`).once('value').then(snap => {
-                        if (!snap.exists()) {
-                            appContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">앱 사용 기록이 없습니다.</div>';
-                        } else {
-                            appContainer.innerHTML = '';
-                            const logs = [];
-                            snap.forEach(childSnapshot => { logs.push(childSnapshot.val()); });
-                            logs.sort((a, b) => {
-                                const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-                                const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-                                return timeB - timeA; 
-                            });
-
-                            logs.forEach(log => {
-                                const div = document.createElement('div');
-                                div.className = 'log-card status-app'; 
-                                let title = "앱 활동"; let detail = "";
-                                if (log.message) title = log.message; 
-                                else if (log.event) title = log.event;
-                                else if (log.new_auth) { title = "인증 방식 변경"; detail = `값: ${log.new_auth}`; }
-                                else if (log.detailSettings) { title = "설정 변경"; detail = JSON.stringify(log.detailSettings).replace(/["{}]/g, "").replace(/,/g, ", "); } 
-                                else { detail = JSON.stringify(log).replace(/["{}]/g, ""); }
-
-                                div.style.backgroundColor = "#fff"; div.style.marginBottom = "10px";
-                                div.style.padding = "10px"; div.style.borderRadius = "8px";
-                                div.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)"; div.style.borderLeft = "5px solid #28a745"; 
-
-                                div.innerHTML = `
-                                    <div class="log-header-row"><span>🕒 ${formatTimestamp(log.timestamp)}</span><span>📱 App</span></div>
-                                    <div class="log-body-row"><span style="font-weight:600; color:#333; font-size:15px;">${title}</span></div>
-                                    ${detail ? `<div class="log-detail-box">${detail}</div>` : ''}
-                                `;
-                                appContainer.appendChild(div);
-                            });
-                        }
-                    });
-
-                    // 2. DOORLOCK LOGS
-                    let doorlockIds = [];
-                    if (user && user.my_doorlocks) { doorlockIds = Object.keys(user.my_doorlocks); }
-
-                    if (doorlockIds.length === 0) {
-                        dlContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#dc3545;">연결된 도어락이 없습니다.</div>';
-                    } else {
-                        const promises = doorlockIds.map(id => database.ref(`doorlocks/${id}/logs`).once('value'));
-                        Promise.all(promises).then(snapshots => {
-                            let allLogs = [];
-                            snapshots.forEach(snap => { if (snap.exists()) { snap.forEach(c => allLogs.push(c.val())); } });
-
-                            if (allLogs.length === 0) {
-                                dlContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">기록 없음</div>';
-                            } else {
-                                dlContainer.innerHTML = '';
-                                allLogs.sort((a, b) => {
-                                    const timeAStr = a.timestamp || a.time || a.date || a.datetime || 0;
-                                    const timeBStr = b.timestamp || b.time || b.date || b.datetime || 0;
-                                    const timeA = new Date(timeAStr).getTime();
-                                    const timeB = new Date(timeBStr).getTime();
-                                    return timeB - timeA;
-                                });
-
-                                allLogs.forEach(log => {
-                                    const div = document.createElement('div');
-                                    let who = log.user || log.userId || log.id || "알 수 없음";
-                                    let timeValue = log.timestamp || log.time || log.date || log.datetime;
-                                    let methodRaw = String(log.method || "unknown").toUpperCase(); 
-                                    let methodDisp = log.method || "기타"; let methodIcon = "🔑";
-
-                                    if (methodRaw.includes("PW") || methodRaw.includes("PASS")) { methodDisp = "비밀번호"; methodIcon = "🔢"; } 
-                                    else if (methodRaw.includes("RF") || methodRaw.includes("CARD") || methodRaw.includes("TAG")) { methodDisp = "카드키"; methodIcon = "💳"; } 
-                                    else if (methodRaw.includes("APP") || methodRaw.includes("BLE") || methodRaw.includes("BLUE") || methodRaw.includes("PHONE")) { methodDisp = "앱(블루투스)"; methodIcon = "📱"; } 
-                                    else if (methodRaw.includes("FINGER") || methodRaw.includes("BIO")) { methodDisp = "지문"; methodIcon = "👆"; }
-
-                                    let actionRawValue = log.command || log.status || log.state || log.action || log.msg || "알 수 없음";
-                                    let actionRaw = String(actionRawValue).toUpperCase(); 
-                                    let actionDisp = actionRawValue; let actionIcon = "❓";
-                                    let statusColor = "#333"; let statusBg = "#fff";
-
-                                    if (actionRaw.includes("UNLOCK") || actionRaw.includes("OPEN") || actionRaw === "1" || actionRaw === "TRUE" || actionRaw.includes("SUCCESS")) {
-                                        actionDisp = "문 열림"; actionIcon = "🔓"; statusColor = "#007bff"; statusBg = "#e7f3ff";
-                                    } 
-                                    else if (actionRaw.includes("LOCK") || actionRaw.includes("CLOSE") || actionRaw === "0" || actionRaw === "FALSE") {
-                                        actionDisp = "문 잠김"; actionIcon = "🔒"; statusColor = "#dc3545"; statusBg = "#ffeef0";
-                                    }
-
-                                    div.style.backgroundColor = "#fff"; div.style.marginBottom = "12px";
-                                    div.style.padding = "12px 16px"; div.style.borderRadius = "12px";
-                                    div.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
-                                    div.style.borderLeft = `5px solid ${statusColor}`;
-
-                                    div.innerHTML = `
-                                        <div style="font-size: 12px; color: #888; margin-bottom: 8px; border-bottom: 1px solid #f0f0f0; padding-bottom: 5px;">
-                                            🕒 ${formatTimestamp(timeValue)}
-                                        </div>
-                                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                                            <div style="display: flex; gap: 8px; align-items: center;">
-                                                <span style="background: #f5f5f5; padding: 4px 10px; border-radius: 20px; font-size: 13px; font-weight: 600; color: #444;">👤 ${who}</span>
-                                                <span style="background: #f0f7ff; padding: 4px 10px; border-radius: 20px; font-size: 13px; font-weight: 600; color: #0056b3;">${methodIcon} ${methodDisp}</span>
-                                            </div>
-                                            <div style="background: ${statusBg}; padding: 5px 12px; border-radius: 8px; font-weight: bold; font-size: 14px; color: ${statusColor}; display: flex; align-items: center; gap: 5px;">
-                                                ${actionIcon} ${actionDisp}
-                                            </div>
-                                        </div>
-                                    `;
-                                    dlContainer.appendChild(div);
-                                });
-                            }
-                        });
-                    }
-                });
-            }
-
-            // --- UI Logic ---
-            window.switchLogTab = function(tabName) {
-                document.querySelectorAll('.log-tab-btn').forEach(b => b.classList.remove('active'));
-                document.getElementById('tab-' + tabName).classList.add('active');
-                document.querySelectorAll('.log-section').forEach(s => s.classList.remove('active-tab-content'));
-                if(tabName === 'doorlock') document.getElementById('doorLockLogs').classList.add('active-tab-content');
-                else document.getElementById('appLogs').classList.add('active-tab-content');
-            }
-
-            // --- Map Logic ---
-            function initMap() {
-                const container = document.getElementById('map');
-                map = new kakao.maps.Map(container, { center: new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG), level: 7 });
-                drawDoorlockZones();
-                if (sessionStorage.getItem('isAdmin') === 'true') loadUserList();
-            }
-
-            function drawDoorlockZones() {
-                if (!map) return;
-                if (doorlockMarker) doorlockMarker.setMap(null);
-                zoneCircles.forEach(c => c.setMap(null)); zoneCircles = [];
-                const pos = new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG);
-                doorlockMarker = new kakao.maps.Marker({ position: pos, map: map, title: "도어락" });
-                [1000, 2000, 3000].forEach((r, i) => {
-                    const color = i===0?'#FF0000':(i===1?'#FFA500':'#008000');
-                    const circle = new kakao.maps.Circle({ center: pos, radius: r, strokeWeight: 1, strokeColor: color, strokeStyle: 'dashed', fillColor: color, fillOpacity: 0.1 });
-                    circle.setMap(map); zoneCircles.push(circle);
-                });
-            }
-
-            function selectUser(userId) {
-                if (sessionStorage.getItem('isAdmin') === 'true') clearMapAndInfo();
-                selectedUserId = userId;
-                document.getElementById('logBtn').disabled = false;
-                document.getElementById('userInfo').classList.remove('hidden');
-                document.getElementById('infoArea').innerHTML = `
-                    <div style="margin-bottom:10px;"><strong>ID:</strong> ${userId}</div>
-                    <div class="filter-group">
-                        <button id="btnAll" class="filter-btn active">전체</button>
-                        <button id="btnRange" class="filter-btn">범위 내</button>
-                    </div>
-                    <div class="log-list" id="miniLogList">로딩 중...</div>
-                `;
-                document.getElementById('btnAll').onclick = () => { 
-                    document.getElementById('btnAll').classList.add('active');
-                    document.getElementById('btnRange').classList.remove('active');
-                    renderLocationLogs(false); 
-                };
-                document.getElementById('btnRange').onclick = () => { 
-                    document.getElementById('btnRange').classList.add('active');
-                    document.getElementById('btnAll').classList.remove('active');
-                    renderLocationLogs(true); 
-                };
-                database.ref(`users/${userId}/location_logs`).once('value').then(snap => {
-                    currentUserLocationLogs = [];
-                    if(snap.exists()) {
-                        snap.forEach(c => { if(c.val().latitude) currentUserLocationLogs.push(c.val()); });
-                        currentUserLocationLogs.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
-                    }
-                    renderLocationLogs(false);
-                });
-            }
-
-            function renderLocationLogs(filter) {
-                const listDiv = document.getElementById('miniLogList');
-                listDiv.innerHTML = '';
-                markers.forEach(m => { if(m.customOverlay) m.customOverlay.setMap(null); m.setMap(null); }); markers = [];
-                if(currentPolyline) currentPolyline.setMap(null);
-                if(currentUserLocationLogs.length === 0) { listDiv.innerHTML = '기록 없음'; return; }
-                let path = [];
-                const bounds = new kakao.maps.LatLngBounds();
-                bounds.extend(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
-                currentUserLocationLogs.forEach(pos => {
-                    const lat = parseFloat(pos.latitude); const lng = parseFloat(pos.longitude);
-                    const dist = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
-                    if(filter && dist > MAX_DISTANCE_KM) return;
-                    const div = document.createElement('div');
-                    div.className = 'log-entry';
-                    div.innerHTML = `${formatTimestamp(pos.timestamp)} <br> 거리: <strong>${dist.toFixed(2)}km</strong>`;
-                    div.onclick = () => { map.setCenter(new kakao.maps.LatLng(lat, lng)); map.setLevel(4); };
-                    listDiv.appendChild(div);
-                    if(path.length < 50) { 
-                        const p = new kakao.maps.LatLng(lat, lng); path.push(p); bounds.extend(p);
-                        const dot = document.createElement('div');
-                        dot.style.width='8px'; dot.style.height='8px'; dot.style.background='blue'; dot.style.borderRadius='50%';
-                        const m = new kakao.maps.CustomOverlay({ position: p, content: dot, yAnchor: 0.5 });
-                        m.setMap(map); markers.push(m);
-                    }
-                });
-                if(path.length > 0) {
-                    currentPolyline = new kakao.maps.Polyline({ path: path, strokeWeight: 3, strokeColor: '#0000FF', strokeOpacity: 0.6 });
-                    currentPolyline.setMap(map); map.setBounds(bounds);
-                }
-            }
-
-            function clearMapAndInfo() { markers.forEach(m => m.setMap(null)); markers = []; if(currentPolyline) currentPolyline.setMap(null); }
-
-            // --- Admin & Navigation ---
-            function loadUserList() {
-                const list = document.getElementById('userList');
-                database.ref('users').once('value').then(snap => {
-                    list.innerHTML = '<h2>User List</h2>';
-                    snap.forEach(c => {
-                        const div = document.createElement('div');
-                        div.className = 'user'; div.textContent = c.key;
-                        div.onclick = () => loadUserDoorlockAndInit(c.key, () => selectUser(c.key));
-                        list.appendChild(div);
-                    });
-                });
-            }
-
-            window.loadAllDBData = function() {
-                const area = document.getElementById('result-area');
-                area.innerHTML = '로딩 중...';
-                database.ref('users').once('value').then(snap => {
-                    if(!snap.exists()) { area.innerHTML = '데이터 없음'; return; }
-                    renderGrid(snap.val());
-                });
-            }
-            
-            function renderGrid(data) {
-                let html = '<div class="grid-wrapper"><table class="styled-table"><thead><tr><th>ID</th><th>Data</th></tr></thead><tbody>';
-                for(const [k, v] of Object.entries(data)) {
-                    html += `<tr><td style="font-weight:bold; vertical-align:top;">${k}</td><td><div class="firebase-view">${createTreeView(v, 0)}</div></td></tr>`;
-                }
-                html += '</tbody></table></div>';
-                document.getElementById('result-area').innerHTML = html;
-            }
-
-            function createTreeView(data, depth) {
-                let html = '';
-                const indent = '<span style="display:inline-block; width:' + (depth * 15) + 'px;"></span>';
-                if (typeof data === 'object' && data !== null) {
-                    for (const [k, v] of Object.entries(data)) {
-                        if (typeof v === 'object' && v !== null) {
-                            html += `<div class="fv-item">${indent}<span class="fv-key" onclick="this.nextElementSibling.classList.toggle('fv-hidden')">▼ ${k}</span><div class="fv-children">${createTreeView(v, depth + 1)}</div></div>`;
-                        } else {
-                            html += `<div class="fv-item">${indent}<span class="fv-key">${k}:</span> <span class="fv-string">${v}</span></div>`;
-                        }
-                    }
-                } else {
-                    html += `<div class="fv-item">${indent}${data}</div>`;
-                }
-                return html;
-            }
-
-            // --- Event Listeners ---
-            document.getElementById('login-form').onsubmit = (e) => {
-                e.preventDefault();
-                const id = document.getElementById('username').value;
-                const pw = document.getElementById('password').value;
-                
-                database.ref('admin_pass').once('value').then(snap => {
-                    let isAdmin = false;
-                    snap.forEach(c => { if(c.val().adminId===id && c.val().password===pw) isAdmin=true; });
-                    if(isAdmin) {
-                        sessionStorage.setItem('isAdmin', 'true');
-                        showMain(true, id);
-                        return;
-                    }
-                    database.ref('users/' + id).once('value').then(usnap => {
-                        if(usnap.exists() && usnap.val().password === pw) {
-                            sessionStorage.setItem('isAdmin', 'false');
-                            sessionStorage.setItem('userId', id);
-                            showMain(false, id);
-                        } else {
-                            customAlert("로그인 실패");
-                        }
-                    });
-                });
-            };
-
-            function showMain(isAdmin, uid) {
-                document.getElementById('login-container').classList.add('hidden'); // 로그인 숨김
-                document.getElementById('header').classList.remove('hidden'); // 헤더 보임
-                document.getElementById('main-content').classList.remove('hidden'); // 메인 보임
-                if(isAdmin) {
-                    document.getElementById('userList').classList.remove('hidden');
-                    document.getElementById('userInfo').classList.add('hidden');
-                    if(window.kakao) kakao.maps.load(initMap);
-                } else {
-                    document.getElementById('userList').classList.add('hidden');
-                    document.getElementById('userInfo').classList.remove('hidden');
-                    if(window.kakao) kakao.maps.load(() => {
-                        initMap();
-                        loadUserDoorlockAndInit(uid, () => selectUser(uid));
-                    });
-                }
-                setupNav();
-            }
-
-            function setupNav() {
-                document.getElementById('logoutBtn').onclick = () => document.getElementById('logout-confirm-modal').classList.remove('hidden');
-                document.getElementById('confirmLogoutBtn').onclick = () => { sessionStorage.clear(); location.reload(); };
-                document.getElementById('cancelLogoutBtn').onclick = () => document.getElementById('logout-confirm-modal').classList.add('hidden');
-                
-                document.getElementById('logBtn').onclick = () => {
-                    document.getElementById('main-content').classList.add('hidden');
-                    document.getElementById('db-content').classList.add('hidden');
-                    document.getElementById('log-content').classList.remove('hidden');
-                    document.getElementById('mapBtn').disabled = false;
-                    document.getElementById('logBtn').disabled = true;
-                    document.getElementById('newBtn').disabled = false;
-                    if(selectedUserId) loadAllLogs(selectedUserId);
-                };
-                
-                document.getElementById('mapBtn').onclick = () => {
-                    document.getElementById('log-content').classList.add('hidden');
-                    document.getElementById('db-content').classList.add('hidden');
-                    document.getElementById('main-content').classList.remove('hidden');
-                    document.getElementById('mapBtn').disabled = true;
-                    document.getElementById('logBtn').disabled = false;
-                    document.getElementById('newBtn').disabled = false;
-                    if(map) map.relayout();
-                };
-
-                document.getElementById('newBtn').onclick = () => {
-                    document.getElementById('main-content').classList.add('hidden');
-                    document.getElementById('log-content').classList.add('hidden');
-                    document.getElementById('db-content').classList.remove('hidden');
-                    document.getElementById('mapBtn').disabled = false;
-                    document.getElementById('logBtn').disabled = false;
-                    document.getElementById('newBtn').disabled = true;
-                    loadAllDBData();
-                };
-                
-                document.getElementById('closeUserInfoBtn').onclick = () => {
-                    document.getElementById('userInfo').classList.add('hidden');
-                    clearMapAndInfo();
-                };
-            }
-
-            // Auto Login Check
-            if (sessionStorage.getItem('isAdmin')) {
-                showMain(sessionStorage.getItem('isAdmin') === 'true', sessionStorage.getItem('userId'));
-            } else {
-                document.getElementById('login-container').classList.remove('hidden');
-            }
-        });
-    </script>
-</body>
-</html>
