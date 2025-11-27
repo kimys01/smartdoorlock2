@@ -195,7 +195,7 @@
                 });
             }
 
-            // --- Load Logs Logic ---
+            // --- Load Logs Logic (수정됨: 다양한 키값 대응 및 디버깅 로그 추가) ---
             function loadAllLogs(userId) {
                 const dlContainer = document.querySelector('#doorLockLogs .log-entries');
                 const appContainer = document.querySelector('#appLogs .log-entries');
@@ -245,7 +245,7 @@
                         }
                     });
 
-                    // 2. DOORLOCK LOGS
+                    // 2. DOORLOCK LOGS (핵심 수정 부분)
                     let doorlockIds = [];
                     if (user && user.my_doorlocks) { doorlockIds = Object.keys(user.my_doorlocks); }
 
@@ -255,42 +255,68 @@
                         const promises = doorlockIds.map(id => database.ref(`doorlocks/${id}/logs`).once('value'));
                         Promise.all(promises).then(snapshots => {
                             let allLogs = [];
-                            snapshots.forEach(snap => { if (snap.exists()) { snap.forEach(c => allLogs.push(c.val())); } });
+                            snapshots.forEach(snap => { 
+                                if (snap.exists()) { 
+                                    snap.forEach(c => { 
+                                        const val = c.val();
+                                        // 디버깅: F12 콘솔에서 데이터 확인 가능
+                                        console.log("도어락 로그 원본 데이터:", val); 
+                                        allLogs.push(val); 
+                                    }); 
+                                } 
+                            });
 
                             if (allLogs.length === 0) {
                                 dlContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">기록 없음</div>';
                             } else {
                                 dlContainer.innerHTML = '';
                                 allLogs.sort((a, b) => {
-                                    const timeAStr = a.timestamp || a.time || a.date || a.datetime || 0;
-                                    const timeBStr = b.timestamp || b.time || b.date || b.datetime || 0;
-                                    const timeA = new Date(timeAStr).getTime();
-                                    const timeB = new Date(timeBStr).getTime();
+                                    // 다양한 시간 필드명 지원
+                                    const timeAStr = a.timestamp || a.time || a.date || a.datetime || a.created_at || 0;
+                                    const timeBStr = b.timestamp || b.time || b.date || b.datetime || b.created_at || 0;
+                                    const timeA = new Date(timeAStr).getTime() || 0;
+                                    const timeB = new Date(timeBStr).getTime() || 0;
                                     return timeB - timeA;
                                 });
 
                                 allLogs.forEach(log => {
                                     const div = document.createElement('div');
-                                    let who = log.user || log.userId || log.id || "알 수 없음";
-                                    let timeValue = log.timestamp || log.time || log.date || log.datetime;
-                                    let methodRaw = String(log.method || "unknown").toUpperCase(); 
-                                    let methodDisp = log.method || "기타"; let methodIcon = "🔑";
+                                    
+                                    // 1. 사용자 식별
+                                    let who = log.user || log.userId || log.id || log.who || log.name || "알 수 없음";
+                                    
+                                    // 2. 시간 식별
+                                    let timeValue = log.timestamp || log.time || log.date || log.datetime || log.created_at;
+
+                                    // 3. 인증 방식 식별 (method, auth, type, category 등)
+                                    let methodRawValue = log.method || log.auth || log.type || log.category || "unknown";
+                                    let methodRaw = String(methodRawValue).toUpperCase(); 
+                                    let methodDisp = methodRawValue; 
+                                    let methodIcon = "🔑"; 
 
                                     if (methodRaw.includes("PW") || methodRaw.includes("PASS")) { methodDisp = "비밀번호"; methodIcon = "🔢"; } 
                                     else if (methodRaw.includes("RF") || methodRaw.includes("CARD") || methodRaw.includes("TAG")) { methodDisp = "카드키"; methodIcon = "💳"; } 
                                     else if (methodRaw.includes("APP") || methodRaw.includes("BLE") || methodRaw.includes("BLUE") || methodRaw.includes("PHONE")) { methodDisp = "앱(블루투스)"; methodIcon = "📱"; } 
                                     else if (methodRaw.includes("FINGER") || methodRaw.includes("BIO")) { methodDisp = "지문"; methodIcon = "👆"; }
 
-                                    let actionRawValue = log.command || log.status || log.state || log.action || log.msg || "알 수 없음";
+                                    // 4. 동작 상태 식별 (command, status, state, event, action 등)
+                                    let actionRawValue = log.command || log.status || log.state || log.action || log.event || log.msg || "알 수 없음";
                                     let actionRaw = String(actionRawValue).toUpperCase(); 
-                                    let actionDisp = actionRawValue; let actionIcon = "❓";
+                                    let actionDisp = actionRawValue; 
+                                    let actionIcon = "❓";
                                     let statusColor = "#333"; let statusBg = "#fff";
 
+                                    // 열림 조건
                                     if (actionRaw.includes("UNLOCK") || actionRaw.includes("OPEN") || actionRaw === "1" || actionRaw === "TRUE" || actionRaw.includes("SUCCESS")) {
                                         actionDisp = "문 열림"; actionIcon = "🔓"; statusColor = "#007bff"; statusBg = "#e7f3ff";
                                     } 
+                                    // 잠김 조건
                                     else if (actionRaw.includes("LOCK") || actionRaw.includes("CLOSE") || actionRaw === "0" || actionRaw === "FALSE") {
                                         actionDisp = "문 잠김"; actionIcon = "🔒"; statusColor = "#dc3545"; statusBg = "#ffeef0";
+                                    }
+                                    // 경고/실패 조건
+                                    else if (actionRaw.includes("WARN") || actionRaw.includes("ALERT") || actionRaw.includes("FAIL")) {
+                                        actionDisp = "경고/실패"; actionIcon = "🚨"; statusColor = "#ffc107"; statusBg = "#fff3cd";
                                     }
 
                                     div.style.backgroundColor = "#fff"; div.style.marginBottom = "12px";
