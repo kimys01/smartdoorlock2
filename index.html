@@ -173,28 +173,31 @@
                 return;
             }
 
-            // --- [지도 초기화 및 도어락 좌표 로드] ---
+            // [헬퍼 함수] 타임스탬프 포맷팅
+            function formatTimestamp(ts) {
+                if (!ts) return '<span style="color:#aaa;">시간 없음</span>';
+                const date = new Date(ts);
+                if (isNaN(date.getTime())) return `<span>${ts}</span>`;
+                return date.toLocaleString('ko-KR', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+                });
+            }
+
             function loadUserDoorlockAndInit(userId, callback) {
                 console.log(`[${userId}] 도어락 정보 조회...`);
-                
                 database.ref('users/' + userId).once('value').then((snap) => {
                     const user = snap.val();
-                    if (!user || !user.my_doorlocks) {
-                        throw new Error("연결된 도어락(my_doorlocks)이 없습니다.");
-                    }
+                    if (!user || !user.my_doorlocks) throw new Error("연결된 도어락(my_doorlocks)이 없습니다.");
                     
                     const doorlockKeys = Object.keys(user.my_doorlocks);
                     if (doorlockKeys.length === 0) throw new Error("도어락 목록이 비어있습니다.");
 
-                    const doorlockId = doorlockKeys[0]; // 첫 번째 도어락 ID 사용
-                    console.log(`Target Doorlock ID: ${doorlockId}`);
-
+                    const doorlockId = doorlockKeys[0]; 
                     return database.ref('doorlocks/' + doorlockId).once('value');
                 }).then((snap) => {
                     const dlData = snap.val();
-                    if (!dlData || !dlData.location) {
-                        throw new Error("도어락 위치 정보(location)가 없습니다.");
-                    }
+                    if (!dlData || !dlData.location) throw new Error("도어락 위치 정보(location)가 없습니다.");
                     const location = dlData.location;
                     if (location.latitude) DOORLOCK_LAT = parseFloat(location.latitude);
                     if (location.longitude) DOORLOCK_LNG = parseFloat(location.longitude);
@@ -268,7 +271,6 @@
                 loginContainer.classList.add('hidden');
                 header.classList.remove('hidden');
                 body.style.overflow = 'auto'; 
-                
                 mainContent.classList.remove('hidden');
                 logContent.classList.add('hidden');
                 dbContent.classList.add('hidden');
@@ -286,7 +288,6 @@
                     if (userListDiv) userListDiv.classList.remove('hidden');
                     if (newBtn) newBtn.classList.remove('hidden');
                     if (userInfoDiv) userInfoDiv.classList.add('hidden');
-                    
                     if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
                         kakao.maps.load(initMap); 
                     }
@@ -295,7 +296,6 @@
                     if (newBtn) newBtn.classList.add('hidden');
                     if (userInfoDiv) userInfoDiv.classList.remove('hidden');
                     selectedUserId = loggedInUserId;
-
                     if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
                         kakao.maps.load(() => {
                             initMap(); 
@@ -316,16 +316,13 @@
                 });
                 map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
                 map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
-
                 drawDoorlockZones();
-
                 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
                 if (isAdmin) loadUserList(); 
             }
 
             function drawDoorlockZones() {
                 if (!map) return;
-                
                 if (doorlockMarker) doorlockMarker.setMap(null);
                 zoneCircles.forEach(c => c.setMap(null));
                 zoneCircles = [];
@@ -344,16 +341,11 @@
                 });
                 
                 const radii = [
-                    { r: 1000, color: '#FF0000' }, 
-                    { r: 2000, color: '#FFA500' }, 
-                    { r: 3000, color: '#008000' }  
+                    { r: 1000, color: '#FF0000' }, { r: 2000, color: '#FFA500' }, { r: 3000, color: '#008000' }  
                 ];
                 radii.forEach(zone => {
                     const circle = new kakao.maps.Circle({
-                        center : doorlockPosition,
-                        radius: zone.r,
-                        strokeWeight: 1, strokeColor: zone.color, strokeOpacity: 0.8, strokeStyle: 'dashed', 
-                        fillColor: zone.color, fillOpacity: 0.1 
+                        center : doorlockPosition, radius: zone.r, strokeWeight: 1, strokeColor: zone.color, strokeOpacity: 0.8, strokeStyle: 'dashed', fillColor: zone.color, fillOpacity: 0.1 
                     });
                     circle.setMap(map);
                     zoneCircles.push(circle);
@@ -366,7 +358,6 @@
                 const h2 = userListDiv.querySelector('h2');
                 database.ref('users').once('value').then((snapshot) => {
                     userListDiv.querySelectorAll('.user').forEach(el => el.remove());
-                    
                     snapshot.forEach((childSnapshot) => {
                         const userId = childSnapshot.key;
                         const userElement = document.createElement('div');
@@ -418,12 +409,8 @@
                 const position = new kakao.maps.LatLng(lat, lng);
                 map.setCenter(position); 
                 map.setLevel(5, {animate: true});
-                
                 const dist = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
-                const overlayContent = `<div class="custom-overlay-info">
-                                        <strong>선택된 위치</strong><br>
-                                        거리: <span style="color:blue; font-weight:bold;">${dist.toFixed(2)}km</span>
-                                       </div>`;
+                const overlayContent = `<div class="custom-overlay-info"><strong>선택된 위치</strong><br>거리: <span style="color:blue; font-weight:bold;">${dist.toFixed(2)}km</span></div>`;
                 const infoOverlay = new kakao.maps.CustomOverlay({
                     content: overlayContent, position: position, xAnchor: 0.5, yAnchor: 2.5, zIndex: 3
                 });
@@ -460,7 +447,6 @@
                         <div class="log-list">Loading...</div>
                     `;
                     userInfoDiv.classList.remove('hidden');
-                    
                     document.getElementById('showAllBtn').onclick = function() {
                         this.classList.add('active');
                         document.getElementById('showRangeBtn').classList.remove('active');
@@ -516,9 +502,7 @@
 
                 let path = [];
                 const bounds = new kakao.maps.LatLngBounds();
-                
                 bounds.extend(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
-                
                 let mapCount = 0;
                 const listFragment = document.createDocumentFragment();
                 
@@ -527,7 +511,6 @@
                     const lat = parseFloat(pos.latitude || pos.lat);
                     const lng = parseFloat(pos.longitude || pos.lon);
                     const alt = pos.altitude !== undefined ? parseFloat(pos.altitude) : (pos.alt !== undefined ? parseFloat(pos.alt) : null);
-                    
                     const distKm = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
                     
                     if (filterRange && distKm > MAX_DISTANCE_KM) return; 
@@ -539,14 +522,13 @@
                     const logEntry = document.createElement('div');
                     logEntry.className = 'log-entry';
                     if (rowStyle) logEntry.style = rowStyle; 
-                    const timeStr = pos.timestamp ? new Date(pos.timestamp).toLocaleString('ko-KR') : '시간 없음';
                     
+                    const timeStr = formatTimestamp(pos.timestamp);
                     let entryContent = `<small>${timeStr}</small><br>`;
                     entryContent += `거리: <strong>${distKm.toFixed(2)}km</strong><br>`;
                     entryContent += `위도: ${lat.toFixed(6)} / 경도: ${lng.toFixed(6)}`;
                     if (alt !== null && !isNaN(alt)) entryContent += `<br>고도: ${alt.toFixed(2)}m`;
                     logEntry.innerHTML = entryContent;
-                    
                     logEntry.addEventListener('click', () => showLocationOnMap(lat, lng));
                     listFragment.appendChild(logEntry);
                     
@@ -554,18 +536,15 @@
                         const latlng = new kakao.maps.LatLng(lat, lng);
                         path.push(latlng); 
                         bounds.extend(latlng);
-                        
                         const dotContent = `<div class="custom-overlay-info">${distKm.toFixed(2)}km 지점</div>`;
                         const infoOverlay = new kakao.maps.CustomOverlay({
                             content: dotContent, position: latlng, yAnchor: 2.5, zIndex: 3
                         });
-                        
                         const dotImg = document.createElement('img');
                         dotImg.src = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png';
                         dotImg.className = 'custom-marker-dot';
                         dotImg.addEventListener('mouseover', () => infoOverlay.setMap(map));
                         dotImg.addEventListener('mouseout', () => infoOverlay.setMap(null));
-                        
                         const overlay = new kakao.maps.CustomOverlay({
                             position: latlng, content: dotImg, xAnchor: 0.5, yAnchor: 0.5
                         });
@@ -575,9 +554,7 @@
                         mapCount++;
                     }
                 });
-                
                 logListDiv.appendChild(listFragment);
-                
                 if (filterRange && path.length > 0) {
                     currentPolyline = new kakao.maps.Polyline({
                         path: path, strokeWeight: 4, strokeColor: '#CC00CC', strokeOpacity: 0.8, strokeStyle: 'solid', map: map
@@ -588,7 +565,7 @@
                 }
             }
 
-            // --- [핵심 수정] 로그 전체 불러오기 (도어락 + 앱 로그) ---
+            // --- [수정됨] 로그 전체 불러오기 (시간, 누가, 무엇으로, 행동) ---
             function loadAllLogs(userId) {
                 const doorLockLogContainer = document.querySelector('#doorLockLogs .log-entries');
                 const appLogContainer = document.querySelector('#appLogs .log-entries');
@@ -604,11 +581,10 @@
                     let doorlockId = null;
 
                     if (user && user.my_doorlocks) {
-                        // my_doorlocks: { "id": true, ... } 형태
                         doorlockId = Object.keys(user.my_doorlocks)[0];
                     }
 
-                    // --- 2. App Logs 가져오기 (users/{userId}/app_logs) ---
+                    // 2. App Logs 가져오기
                     const appLogsRef = database.ref(`users/${userId}/app_logs`);
                     appLogsRef.once('value').then(snapshot => {
                         if (!snapshot.exists()) {
@@ -616,30 +592,22 @@
                         } else {
                             appLogContainer.innerHTML = '';
                             const logs = [];
-                            snapshot.forEach(child => {
-                                logs.push(child.val());
-                            });
-                            // 날짜순 정렬 (최신순)
+                            snapshot.forEach(child => logs.push(child.val()));
                             logs.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
                             
                             logs.forEach(log => {
                                 const entry = document.createElement('div');
                                 entry.className = 'full-log-entry';
-                                let time = log.timestamp ? new Date(log.timestamp).toLocaleString() : '시간 없음';
+                                let timeStr = formatTimestamp(log.timestamp);
                                 
-                                // 이벤트 내용을 예쁘게 표시
-                                let msg = "";
-                                if (log.event) msg = log.event;
-                                else if (log.message) msg = log.message;
-                                else msg = JSON.stringify(log).substring(0, 50);
-
-                                entry.innerHTML = `<strong>[${time}]</strong> ${msg}`;
+                                let msg = log.event || log.message || JSON.stringify(log).substring(0, 50);
+                                entry.innerHTML = `<strong>[${timeStr}]</strong> ${msg}`;
                                 appLogContainer.appendChild(entry);
                             });
                         }
                     });
 
-                    // --- 3. Doorlock Logs 가져오기 (doorlocks/{doorlockId}/logs) ---
+                    // 3. Doorlock Logs 가져오기 (커스텀 포맷 적용)
                     if (doorlockId) {
                         const dlLogsRef = database.ref(`doorlocks/${doorlockId}/logs`);
                         dlLogsRef.once('value').then(snapshot => {
@@ -648,24 +616,47 @@
                             } else {
                                 doorLockLogContainer.innerHTML = '';
                                 const logs = [];
-                                snapshot.forEach(child => {
-                                    logs.push(child.val());
-                                });
+                                snapshot.forEach(child => logs.push(child.val()));
                                 logs.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
 
                                 logs.forEach(log => {
                                     const entry = document.createElement('div');
                                     entry.className = 'full-log-entry';
-                                    let time = log.timestamp ? new Date(log.timestamp).toLocaleString() : '시간 없음';
                                     
-                                    // 도어락 로그 내용 파싱
-                                    let content = "";
-                                    if(log.command) content += `[${log.command}] `;
-                                    if(log.user) content += `User: ${log.user} `;
-                                    if(log.method) content += `(${log.method})`;
-                                    if(!content) content = JSON.stringify(log);
+                                    // 1) 시간
+                                    let timeStr = formatTimestamp(log.timestamp);
+                                    
+                                    // 2) 누가
+                                    let who = log.user || log.userId || "알 수 없음";
 
-                                    entry.innerHTML = `<strong>[${time}]</strong> ${content}`;
+                                    // 3) 무엇으로 (한글 변환)
+                                    let method = log.method || "";
+                                    let methodDisplay = method;
+                                    if (method === "PASSWORD" || method === "pw") methodDisplay = "비밀번호";
+                                    else if (method === "RF" || method === "card") methodDisplay = "카드키";
+                                    else if (method === "BLE" || method === "app") methodDisplay = "앱(블루투스)";
+                                    else if (method === "FINGER") methodDisplay = "지문";
+
+                                    // 4) 행동 (개방/잠금)
+                                    let action = log.command || log.status || "";
+                                    let actionDisplay = action;
+                                    let actionStyle = "";
+
+                                    if (action === "UNLOCK") {
+                                        actionDisplay = "개방";
+                                        actionStyle = "color: #007bff;"; // 파란색
+                                    } else if (action === "LOCK") {
+                                        actionDisplay = "잠금";
+                                        actionStyle = "color: #dc3545;"; // 빨간색
+                                    }
+
+                                    // 출력 포맷: [시간] 누가 - 무엇으로 - 행동
+                                    entry.innerHTML = `
+                                        <span style="color:#666; font-size:0.9em;">[${timeStr}]</span>
+                                        <strong>${who}</strong>님이
+                                        <span>${methodDisplay}</span>(으)로
+                                        <strong style="${actionStyle}">${actionDisplay}</strong>
+                                    `;
                                     doorLockLogContainer.appendChild(entry);
                                 });
                             }
