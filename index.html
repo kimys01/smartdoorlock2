@@ -459,67 +459,121 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        function loadAllLogs(userId) {
-            const dlEntries = document.getElementById('doorLockEntries');
-            const appEntries = document.getElementById('appLogEntries');
-            
-            document.getElementById('logUserTitle').textContent = `${userId} 전체 로그`;
-            dlEntries.innerHTML = '<div style="padding:20px;text-align:center;color:#888;">로딩 중...</div>';
-            appEntries.innerHTML = '<div style="padding:20px;text-align:center;color:#888;">로딩 중...</div>';
-
-            // 1. 도어락 로그
-            database.ref('doorlock_logs/' + userId).once('value').then(snap => {
-                dlEntries.innerHTML = '';
-                if (!snap.exists()) { dlEntries.innerHTML = '<div style="padding:20px;text-align:center;">기록 없음</div>'; return; }
-                const logs = [];
-                snap.forEach(c => logs.push(c.val()));
-                logs.sort((a, b) => new Date(String(b.timestamp).replace(" ", "T")).getTime() - new Date(String(a.timestamp).replace(" ", "T")).getTime());
+        // [수정됨] 도어락/앱 로그 불러오기 함수
+            function loadAllLogs(userId) {
+                const doorDiv = document.querySelector('#doorLockLogs .log-entries');
+                const appDiv = document.querySelector('#appLogs .log-entries');
+                document.getElementById('logUserTitle').textContent = `${userId} 전체 로그`;
                 
-                logs.forEach(log => {
-                    const div = document.createElement('div');
-                    div.className = 'log-card status-open';
-                    let t = log.timestamp ? String(log.timestamp) : '-';
-                    div.innerHTML = `
-                        <div class="log-header-row"><span>🕒 ${t}</span><span>Device</span></div>
-                        <div class="log-body-row">
-                            <span>${log.method || '-'}</span>
-                            <span class="status-text text-blue">${log.status || '-'}</span>
-                        </div>`;
-                    dlEntries.appendChild(div);
-                });
-            });
+                // 로딩 표시
+                doorDiv.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">로딩 중...</div>';
+                appDiv.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">로딩 중...</div>';
 
-            // 2. 앱 로그
-            database.ref('users/' + userId + '/app_logs').once('value').then(snap => {
-                appEntries.innerHTML = '';
-                if (!snap.exists()) { appEntries.innerHTML = '<div style="padding:20px;text-align:center;">기록 없음</div>'; return; }
-                const logs = [];
-                snap.forEach(cat => {
-                    const val = cat.val();
-                    if(typeof val === 'object' && val !== null) {
-                        Object.keys(val).forEach(key => {
-                            const d = val[key];
-                            if(d && typeof d === 'object') logs.push({...d, _type: key});
-                        });
+                // ----------------------------------------
+                // 1. 도어락 로그 (수정된 부분)
+                // ----------------------------------------
+                // 기존의 잘못된 검색 조건(.startAt 등)을 제거하고 경로만 입력했습니다.
+                database.ref('doorlock_logs/' + userId).once('value').then(snap => {
+                    doorDiv.innerHTML = '';
+                    if(!snap.exists()) { 
+                        doorDiv.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">기록 없음</div>'; 
+                        return; 
                     }
-                });
-                logs.sort((a, b) => new Date(String(b.timestamp).replace(" ", "T")).getTime() - new Date(String(a.timestamp).replace(" ", "T")).getTime());
+                    
+                    const logs = [];
+                    snap.forEach(c => logs.push(c.val()));
+                    
+                    // 최신순 정렬 (문자열/숫자 타임스탬프 모두 호환)
+                    logs.sort((a, b) => {
+                        const timeA = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
+                        const timeB = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
+                        return timeB - timeA;
+                    });
 
-                logs.forEach(log => {
-                    const div = document.createElement('div');
-                    div.className = 'log-card status-app';
-                    let t = log.timestamp ? String(log.timestamp) : '-';
-                    let title = log.new_auth ? "인증변경" : (log.event || "이벤트");
-                    let detail = log.new_auth || log.new_name || "";
-                    div.innerHTML = `
-                        <div class="log-header-row"><span>🕒 ${t}</span><span>App</span></div>
-                        <div class="log-body-row"><span style="font-weight:bold;">${title}</span></div>
-                        ${detail ? `<div class="log-detail-box">${detail}</div>` : ''}
-                    `;
-                    appEntries.appendChild(div);
+                    logs.forEach(log => {
+                        const div = document.createElement('div');
+                        div.className = 'full-log-entry'; // CSS 클래스 유지
+                        
+                        let t = '시간없음';
+                        if (log.timestamp) t = String(log.timestamp).replace("T", " ");
+                        
+                        // 상태에 따른 아이콘/색상
+                        let statusIcon = "🔒";
+                        let statusStyle = "color:#333";
+                        if(String(log.status).includes("열림") || String(log.status).includes("해제")) {
+                            statusIcon = "🔓";
+                            statusStyle = "color:blue";
+                        }
+
+                        div.innerHTML = `
+                            <div style="font-size:12px; color:#666;">[${t}]</div>
+                            <div>
+                                <strong>방식:</strong> ${log.method || '-'}<br>
+                                <span style="${statusStyle}">${statusIcon} ${log.status || '-'}</span>
+                            </div>
+                        `;
+                        doorDiv.appendChild(div);
+                    });
                 });
-            });
-        }
+
+                // ----------------------------------------
+                // 2. 앱 로그 (모든 구조 호환되도록 개선)
+                // ----------------------------------------
+                database.ref('users/' + userId + '/app_logs').once('value').then(snap => {
+                    appDiv.innerHTML = '';
+                    if(!snap.exists()) { 
+                        appDiv.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">기록 없음</div>'; 
+                        return; 
+                    }
+                    
+                    const logs = [];
+                    // 복잡한 구조(change->auth 등)를 자동으로 찾아서 목록으로 만듦
+                    snap.forEach(categorySnap => {
+                        const catData = categorySnap.val();
+                        if (typeof catData === 'object' && catData !== null) {
+                            Object.keys(catData).forEach(key => {
+                                const detail = catData[key];
+                                if(typeof detail === 'object' && detail !== null) {
+                                    // 화면 표시용 정보 추가
+                                    logs.push({ ...detail, _cat: categorySnap.key, _type: key });
+                                }
+                            });
+                        }
+                    });
+
+                    logs.sort((a, b) => {
+                        const timeA = new Date(String(a.timestamp).replace(" ", "T")).getTime() || 0;
+                        const timeB = new Date(String(b.timestamp).replace(" ", "T")).getTime() || 0;
+                        return timeB - timeA;
+                    });
+
+                    if(logs.length === 0) {
+                        appDiv.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">표시할 데이터 없음</div>';
+                        return;
+                    }
+                    
+                    logs.forEach(log => {
+                        const div = document.createElement('div');
+                        div.className = 'full-log-entry';
+                        
+                        let t = log.timestamp ? String(log.timestamp).replace("T", " ") : '-';
+                        let msg = "";
+
+                        // 로그 내용 자동 판별
+                        if(log.new_auth) msg = `인증변경: <span style="color:#d63384">${log.new_auth}</span>`;
+                        else if(log.new_name) msg = `이름변경: <span style="color:#d63384">${log.new_name}</span>`;
+                        else if(log.new_pw) msg = `비밀번호 변경`;
+                        else if(log.event) msg = `이벤트: ${log.event}`;
+                        else msg = JSON.stringify(log).replace(/["{}]/g, "");
+
+                        div.innerHTML = `
+                            <div style="font-size:12px; color:#28a745;">[${t}] (${log._cat})</div>
+                            <div>${msg}</div>
+                        `;
+                        appDiv.appendChild(div);
+                    });
+                });
+            }
 
         // --- DB 조회 ---
         window.loadAllDbData = function() {
@@ -613,3 +667,4 @@
     </script>
 </body>
 </html>
+
