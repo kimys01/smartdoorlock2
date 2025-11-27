@@ -57,7 +57,7 @@
             </div>
             <div id="userList">
                 <h2>User List</h2>
-                </div>
+            </div>
         </div>
         
         <div id="mapArea">
@@ -126,7 +126,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             console.log("App initialized.");
 
-            // DOM 요소 참조
             const loginContainer = document.getElementById('login-container');
             const mainContent = document.getElementById('main-content');
             const logContent = document.getElementById('log-content');
@@ -136,7 +135,7 @@
             const body = document.querySelector('body');
             const closeUserInfoButton = document.getElementById('closeUserInfoBtn');
 
-            // 도어락 좌표 및 거리 변수 (DB에서 로드하여 덮어씀)
+            // 초기값 (DB 로드 실패 시 사용)
             let DOORLOCK_LAT = 37.566826;   
             let DOORLOCK_LNG = 126.9786567;
             let MAX_DISTANCE_KM = 3.0;
@@ -165,7 +164,7 @@
             // --- Firebase 초기화 ---
             try {
                 if (typeof firebase === 'undefined' || !firebase.initializeApp) {
-                      throw new Error("Firebase SDK 로드 실패. 스크립트 연결 확인 필요.");
+                      throw new Error("Firebase SDK 로드 실패.");
                 }
                 firebase.initializeApp(firebaseConfig);
                 database = firebase.database();
@@ -176,38 +175,48 @@
                 return;
             }
 
-            // --- [핵심 로직] 사용자 도어락 ID 조회 및 지도 중심 설정 ---
+            // --- [핵심 수정 부분] DB 구조에 맞게 도어락 정보 가져오기 ---
             function loadUserDoorlockAndInit(userId, callback) {
                 console.log(`[${userId}] 사용자의 도어락 정보를 조회합니다...`);
                 
-                // 1. Users 테이블에서 doorlock_id 찾기
+                // 1. Users 테이블에서 my_doorlocks 확인
                 database.ref('users/' + userId).once('value').then((snap) => {
                     const user = snap.val();
-                    if (!user || !user.doorlock_id) {
-                        throw new Error("이 사용자는 연결된 도어락 ID가 없습니다.");
+                    
+                    // 스크린샷 1번: my_doorlocks 객체 확인
+                    if (!user || !user.my_doorlocks) {
+                        throw new Error("이 사용자는 연결된 도어락(my_doorlocks)이 없습니다.");
                     }
-                    const doorlockId = user.doorlock_id;
-                    console.log(`연결된 도어락 ID: ${doorlockId}`);
+                    
+                    // my_doorlocks: { "도어락ID": true } 형태이므로 키(ID)들을 배열로 가져옴
+                    const doorlockKeys = Object.keys(user.my_doorlocks);
+                    if (doorlockKeys.length === 0) {
+                        throw new Error("my_doorlocks 목록이 비어있습니다.");
+                    }
 
-                    // 2. Doorlocks 테이블에서 실제 좌표 찾기
+                    // 첫 번째 도어락 ID를 사용 (여러 개일 경우 첫 번째 것 기준)
+                    const doorlockId = doorlockKeys[0];
+                    console.log(`연결된 도어락 ID 찾음: ${doorlockId}`);
+
+                    // 2. Doorlocks 테이블에서 실제 좌표 확인
                     return database.ref('doorlocks/' + doorlockId).once('value');
                 }).then((snap) => {
                     const dlData = snap.val();
-                    if (!dlData || !dlData.latitude || !dlData.longitude) {
-                        throw new Error("해당 도어락의 위치 데이터가 없습니다.");
+                    
+                    // 스크린샷 2번: location 객체 안에 latitude, longitude가 있음
+                    if (!dlData || !dlData.location) {
+                        throw new Error("해당 도어락의 위치 정보(location)가 없습니다.");
                     }
 
-                    // 3. 전역 변수 업데이트
-                    DOORLOCK_LAT = parseFloat(dlData.latitude);
-                    DOORLOCK_LNG = parseFloat(dlData.longitude);
-                    // 도어락별 설정이 있다면 갱신
-                    if (dlData.max_distance_km) {
-                        MAX_DISTANCE_KM = parseFloat(dlData.max_distance_km);
-                    }
+                    const location = dlData.location;
+
+                    // 3. 전역 변수 업데이트 (location 내부 좌표 사용)
+                    if (location.latitude) DOORLOCK_LAT = parseFloat(location.latitude);
+                    if (location.longitude) DOORLOCK_LNG = parseFloat(location.longitude);
                     
                     console.log(`도어락 위치 갱신: ${DOORLOCK_LAT}, ${DOORLOCK_LNG}`);
 
-                    // 4. 지도 갱신 (지도가 생성된 상태라면)
+                    // 4. 지도 갱신
                     if (map) {
                         const moveLatLon = new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG);
                         map.setCenter(moveLatLon);
@@ -223,7 +232,6 @@
                 });
             }
 
-            // 탭 전환 (모바일용)
             window.switchLogTab = function(tabName) {
                 const buttons = document.querySelectorAll('.log-tab-btn');
                 buttons.forEach(btn => btn.classList.remove('active'));
@@ -239,22 +247,14 @@
                 }
             }
 
-            // 모바일에서 트리 아이템 터치 시 버튼 표시용 타이머
             window.toggleMobileButtons = function(element, event) {
-                // 버튼이나 화살표 클릭 시에는 동작 안 함
                 if (event.target.tagName === 'BUTTON' || event.target.classList.contains('fv-arrow')) {
                     return;
                 }
-                
-                // 기존 타이머 제거
                 if (element.dataset.timerId) {
                     clearTimeout(element.dataset.timerId);
                 }
-                
-                // 클래스 추가 (CSS에서 .mobile-active .btn-... { opacity: 1 } 처리됨)
                 element.classList.add('mobile-active');
-                
-                // 1분 뒤 자동 해제
                 const timerId = setTimeout(() => {
                     element.classList.remove('mobile-active');
                     delete element.dataset.timerId;
@@ -262,7 +262,6 @@
                 element.dataset.timerId = timerId;
             }
 
-            // 거리 계산 (Haversine Formula)
             function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
                 function deg2rad(deg) { return deg * (Math.PI/180); }
                 var R = 6371; 
@@ -285,12 +284,9 @@
                 }
             }
 
-            // 메인 화면 표시 (로그인 성공 시)
             function showMainContent(isAdmin, loggedInUserId) {
                 loginContainer.classList.add('hidden');
                 header.classList.remove('hidden');
-                
-                // CSS에서 body 스크롤 제어를 하지만 JS에서도 보조
                 body.style.overflow = 'auto'; 
                 
                 mainContent.classList.remove('hidden');
@@ -307,7 +303,6 @@
                 if (logBtn) logBtn.disabled = true; 
 
                 if (isAdmin) {
-                    // 관리자: 유저 리스트 표시
                     if (userListDiv) userListDiv.classList.remove('hidden');
                     if (newBtn) newBtn.classList.remove('hidden');
                     if (userInfoDiv) userInfoDiv.classList.add('hidden');
@@ -316,7 +311,6 @@
                         kakao.maps.load(initMap); 
                     }
                 } else {
-                    // 일반 유저: 본인 정보만 표시
                     if (userListDiv) userListDiv.classList.add('hidden');
                     if (newBtn) newBtn.classList.add('hidden');
                     if (userInfoDiv) userInfoDiv.classList.remove('hidden');
@@ -324,8 +318,7 @@
 
                     if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
                         kakao.maps.load(() => {
-                            initMap(); // 지도 먼저 로드
-                            // 도어락 정보 갱신 후 -> 본인 로그 로드
+                            initMap(); 
                             loadUserDoorlockAndInit(loggedInUserId, () => {
                                 selectUser(loggedInUserId);
                             });
@@ -357,7 +350,6 @@
             function drawDoorlockZones() {
                 if (!map) return;
                 
-                // 기존 마커 초기화
                 if (doorlockMarker) doorlockMarker.setMap(null);
                 zoneCircles.forEach(c => c.setMap(null));
                 zoneCircles = [];
@@ -397,7 +389,6 @@
                 const userListDiv = document.getElementById('userList');
                 const h2 = userListDiv.querySelector('h2');
                 database.ref('users').once('value').then((snapshot) => {
-                    // 기존 목록 초기화
                     userListDiv.querySelectorAll('.user').forEach(el => el.remove());
                     
                     snapshot.forEach((childSnapshot) => {
@@ -405,7 +396,6 @@
                         const userElement = document.createElement('div');
                         userElement.className = 'user';
                         userElement.textContent = userId;
-                        // 클릭 시 도어락 정보 갱신 -> 로그 표시
                         userElement.addEventListener('click', () => {
                             loadUserDoorlockAndInit(userId, () => {
                                 selectUser(userId);
@@ -443,7 +433,6 @@
 
             function closeUserInfo() { clearMapAndInfo(); }
 
-            // 지도 마커 클릭 시 정보창 표시
             function showLocationOnMap(lat, lng) {
                 if (!map) return;
                 if (selectedLogMarker) {
@@ -508,7 +497,6 @@
                     };
                 }
                 
-                // 위치 로그 가져오기
                 database.ref('users/' + userId + '/location_logs').once('value').then((snapshot) => {
                     currentUserLocationLogs = [];
                     if (snapshot.exists()) {
@@ -524,7 +512,6 @@
                         if (!isList && val && (val.latitude !== undefined || val.lat !== undefined)) {
                             currentUserLocationLogs.push(val);
                         }
-                        // 최신순 정렬
                         currentUserLocationLogs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                     }
                     renderLocationLogs(false);
@@ -539,7 +526,6 @@
                 if (!logListDiv) return;
                 logListDiv.innerHTML = '';
                 
-                // 기존 마커 삭제
                 markers.forEach(m => {
                     if (m.customOverlay) m.customOverlay.setMap(null);
                     m.setMap(null);
@@ -555,7 +541,6 @@
                 let path = [];
                 const bounds = new kakao.maps.LatLngBounds();
                 
-                // 지도 범위에 도어락 위치 포함
                 bounds.extend(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
                 
                 let mapCount = 0;
@@ -589,7 +574,6 @@
                     logEntry.addEventListener('click', () => showLocationOnMap(lat, lng));
                     listFragment.appendChild(logEntry);
                     
-                    // 지도에 점 찍기 (최대 50개)
                     if (mapCount < 50) {
                         const latlng = new kakao.maps.LatLng(lat, lng);
                         path.push(latlng); 
@@ -618,7 +602,6 @@
                 
                 logListDiv.appendChild(listFragment);
                 
-                // 경로 그리기
                 if (filterRange && path.length > 0) {
                     currentPolyline = new kakao.maps.Polyline({
                         path: path, strokeWeight: 4, strokeColor: '#CC00CC', strokeOpacity: 0.8, strokeStyle: 'solid', map: map
@@ -638,7 +621,6 @@
                 doorLockLogContainer.innerHTML = '<em>로딩 중...</em>';
                 appLogContainer.innerHTML = '<em>로딩 중...</em>';
                 
-                // 도어락 로그
                 database.ref('doorlock_logs/' + userId).orderByKey().once('value').then((snapshot) => {
                     doorLockLogContainer.innerHTML = '';
                     if (!snapshot.exists()) {
@@ -678,7 +660,6 @@
                     }
                 });
                 
-                // 앱 로그
                 database.ref('users/' + userId + '/app_logs').once('value').then((snapshot) => {
                     appLogContainer.innerHTML = '';
                     if (!snapshot.exists()) {
@@ -723,7 +704,6 @@
                 });
             }
 
-            // DB 전체 로드
             window.loadAllDBData = function() {
                 const resultArea = document.getElementById('result-area');
                 const title = document.getElementById('result-title');
@@ -742,7 +722,6 @@
                 });
             }
 
-            // DB 검색
             window.searchUser = function() {
                 const input = document.getElementById('search-input');
                 const resultArea = document.getElementById('result-area');
@@ -766,7 +745,6 @@
                 });
             }
 
-            // DB 그리드 렌더링
             function renderGrid(data) {
                 const resultArea = document.getElementById('result-area');
                 let tableHtml = `
@@ -800,7 +778,6 @@
                 resultArea.innerHTML = tableHtml;
             }
 
-            // 파이어베이스 트리 뷰 생성 (재귀)
             function createFirebaseView(data, depth, currentPath) {
                 let html = '';
                 const indent = '<span class="fv-indent"></span>'.repeat(depth);
@@ -872,7 +849,6 @@
                 return val;
             }
 
-            // 수정 기능
             window.enableEdit = function(btn, path, currentVal) {
                 const container = btn.parentElement; 
                 const valueSpan = container.querySelector('.fv-value');
@@ -915,7 +891,6 @@
 
             window.saveEdit = function(path, newVal) {
                 let finalVal = newVal;
-                // boolean 및 number 타입 변환 시도
                 if (newVal === 'true') finalVal = true;
                 else if (newVal === 'false') finalVal = false;
                 else if (!isNaN(Number(newVal)) && newVal.trim() !== '') finalVal = Number(newVal);
@@ -929,7 +904,6 @@
                     .catch(err => alert('수정 실패: ' + err.message));
             }
 
-            // 삭제 기능
             window.deleteData = function(path) {
                 if (confirm('정말 삭제하시겠습니까?\n경로: ' + path)) {
                     database.ref(path).remove()
@@ -942,7 +916,6 @@
                 }
             }
 
-            // 로그인 처리
             function handleLoginSubmit(e) {
                 e.preventDefault();
                 const usernameInput = document.getElementById('username')?.value.trim();
@@ -969,7 +942,6 @@
                                 adminFound = true;
                             }
                         });
-                        // List가 아닌 단일 객체 구조일 경우 대비
                         if (!adminFound && data.adminId === usernameInput && data.password === passwordInput) {
                             adminFound = true;
                         }
@@ -984,7 +956,6 @@
                         return { type: 'admin_success' };
                     }
                     
-                    // 관리자 아니면 일반 유저 검색
                     return database.ref('users').once('value');
                 })
                 .then((result) => {
