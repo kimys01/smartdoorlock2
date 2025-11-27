@@ -306,97 +306,67 @@
                                     return tb - ta;
                                 });
 
+                                // [수정된 부분: 데이터 호환성 강화 로직 적용]
                                 allLogs.forEach(log => {
-    const div = document.createElement('div');
-    
-    // [수정 1] 데이터가 없어도 안전하게 처리하고, 숫자가 들어와도 문자열로 변환
-    let who = log.user || log.userId || "알 수 없음";
-    
-    // String(...)으로 감싸서 숫자가 들어와도 에러 방지
-    let methodRaw = String(log.method || ""); 
-    let methodDisp = methodRaw || "기타";
-    let methodIcon = "🔑";
-    
-    // toUpperCase() 사용 시 안전해짐
-    if(methodRaw.toUpperCase().includes("PASSWORD") || methodRaw.toUpperCase().includes("PW")) { methodDisp="비밀번호"; methodIcon="🔢"; }
-    else if(methodRaw.toUpperCase().includes("RF") || methodRaw.toUpperCase().includes("CARD")) { methodDisp="카드키"; methodIcon="💳"; }
-    else if(methodRaw.toUpperCase().includes("BLE") || methodRaw.toUpperCase().includes("APP")) { methodDisp="앱(블루투스)"; methodIcon="📱"; }
-    else if(methodRaw.toUpperCase().includes("FINGER")) { methodDisp="지문"; methodIcon="👆"; }
+                                    // 1. [디버깅용] F12 콘솔창에서 실제 들어오는 데이터 모양 확인
+                                    console.log("LOG DATA CHECK:", log);
 
-    // [수정 2] command나 status가 숫자로 들어올 경우를 대비해 String() 처리
-    let actionRaw = String(log.command || log.status || "알 수 없음");
-    let actionDisp = actionRaw;
-    let statusClass = ""; 
-    let actionIcon = "❓";
+                                    const div = document.createElement('div');
+                                    
+                                    // 2. 사용자 ID 확인
+                                    let who = log.user || log.userId || log.id || "알 수 없음";
+                                    
+                                    // 3. 인증 방식(Method) 확인 (안전한 String 변환)
+                                    let methodRaw = String(log.method || "unknown").toUpperCase(); 
+                                    let methodDisp = log.method || "기타"; 
+                                    let methodIcon = "🔑";
 
-    // OPEN, CLOSE, 1, 0 등 다양한 케이스 대응 가능하도록 수정
-    if(actionRaw.toUpperCase().includes("UNLOCK") || actionRaw.includes("OPEN")) { 
-        actionDisp="문 열림"; statusClass="status-open"; actionIcon="🔓"; 
-    }
-    else if(actionRaw.toUpperCase().includes("LOCK") || actionRaw.includes("CLOSE")) { 
-        actionDisp="문 잠김"; statusClass="status-close"; actionIcon="🔒"; 
-    }
+                                    if (methodRaw.includes("PW") || methodRaw.includes("PASS")) {
+                                        methodDisp = "비밀번호"; methodIcon = "🔢";
+                                    } else if (methodRaw.includes("RF") || methodRaw.includes("CARD") || methodRaw.includes("TAG")) {
+                                        methodDisp = "카드키"; methodIcon = "💳";
+                                    } else if (methodRaw.includes("APP") || methodRaw.includes("BLE") || methodRaw.includes("BLUE") || methodRaw.includes("PHONE")) {
+                                        methodDisp = "앱(블루투스)"; methodIcon = "📱";
+                                    } else if (methodRaw.includes("FINGER") || methodRaw.includes("BIO")) {
+                                        methodDisp = "지문"; methodIcon = "👆";
+                                    }
 
-    div.className = `log-card ${statusClass}`;
-    div.innerHTML = `
-        <div class="log-header-row"><span>🕒 ${formatTimestamp(log.timestamp)}</span></div>
-        <div class="log-body-row">
-            <div style="display:flex;align-items:center;">
-                <span class="badge user">👤 ${who}</span>
-                <span class="badge method">${methodIcon} ${methodDisp}</span>
-            </div>
-            <div class="status-text ${statusClass === 'status-open' ? 'text-blue' : (statusClass === 'status-close' ? 'text-red' : '')}">
-                ${actionIcon} ${actionDisp}
-            </div>
-        </div>
-    `;
-    dlContainer.appendChild(div);
-});allLogs.forEach(log => {
-    const div = document.createElement('div');
-    
-    // [수정 1] 데이터가 없어도 안전하게 처리하고, 숫자가 들어와도 문자열로 변환
-    let who = log.user || log.userId || "알 수 없음";
-    
-    // String(...)으로 감싸서 숫자가 들어와도 에러 방지
-    let methodRaw = String(log.method || ""); 
-    let methodDisp = methodRaw || "기타";
-    let methodIcon = "🔑";
-    
-    // toUpperCase() 사용 시 안전해짐
-    if(methodRaw.toUpperCase().includes("PASSWORD") || methodRaw.toUpperCase().includes("PW")) { methodDisp="비밀번호"; methodIcon="🔢"; }
-    else if(methodRaw.toUpperCase().includes("RF") || methodRaw.toUpperCase().includes("CARD")) { methodDisp="카드키"; methodIcon="💳"; }
-    else if(methodRaw.toUpperCase().includes("BLE") || methodRaw.toUpperCase().includes("APP")) { methodDisp="앱(블루투스)"; methodIcon="📱"; }
-    else if(methodRaw.toUpperCase().includes("FINGER")) { methodDisp="지문"; methodIcon="👆"; }
+                                    // 4. 상태/동작(Action) 확인 (다양한 키 이름 체크)
+                                    let actionRawValue = log.command || log.status || log.state || log.action || log.msg || "알 수 없음";
+                                    let actionRaw = String(actionRawValue).toUpperCase(); 
+                                    
+                                    let actionDisp = actionRawValue; 
+                                    let statusClass = "";            
+                                    let actionIcon = "❓";
 
-    // [수정 2] command나 status가 숫자로 들어올 경우를 대비해 String() 처리
-    let actionRaw = String(log.command || log.status || "알 수 없음");
-    let actionDisp = actionRaw;
-    let statusClass = ""; 
-    let actionIcon = "❓";
+                                    // 조건문 확장: UNLOCK, OPEN, 1, TRUE, SUCCESS 등 모두 허용
+                                    if (actionRaw.includes("UNLOCK") || actionRaw.includes("OPEN") || actionRaw === "1" || actionRaw === "TRUE" || actionRaw.includes("SUCCESS")) {
+                                        actionDisp = "문 열림";
+                                        statusClass = "status-open"; 
+                                        actionIcon = "🔓";
+                                    } 
+                                    // 조건문 확장: LOCK, CLOSE, 0, FALSE, FAIL 등 모두 허용
+                                    else if (actionRaw.includes("LOCK") || actionRaw.includes("CLOSE") || actionRaw === "0" || actionRaw === "FALSE") {
+                                        actionDisp = "문 잠김";
+                                        statusClass = "status-close"; 
+                                        actionIcon = "🔒";
+                                    }
 
-    // OPEN, CLOSE, 1, 0 등 다양한 케이스 대응 가능하도록 수정
-    if(actionRaw.toUpperCase().includes("UNLOCK") || actionRaw.includes("OPEN")) { 
-        actionDisp="문 열림"; statusClass="status-open"; actionIcon="🔓"; 
-    }
-    else if(actionRaw.toUpperCase().includes("LOCK") || actionRaw.includes("CLOSE")) { 
-        actionDisp="문 잠김"; statusClass="status-close"; actionIcon="🔒"; 
-    }
-
-    div.className = `log-card ${statusClass}`;
-    div.innerHTML = `
-        <div class="log-header-row"><span>🕒 ${formatTimestamp(log.timestamp)}</span></div>
-        <div class="log-body-row">
-            <div style="display:flex;align-items:center;">
-                <span class="badge user">👤 ${who}</span>
-                <span class="badge method">${methodIcon} ${methodDisp}</span>
-            </div>
-            <div class="status-text ${statusClass === 'status-open' ? 'text-blue' : (statusClass === 'status-close' ? 'text-red' : '')}">
-                ${actionIcon} ${actionDisp}
-            </div>
-        </div>
-    `;
-    dlContainer.appendChild(div);
-});
+                                    div.className = `log-card ${statusClass}`;
+                                    div.innerHTML = `
+                                        <div class="log-header-row"><span>🕒 ${formatTimestamp(log.timestamp)}</span></div>
+                                        <div class="log-body-row">
+                                            <div style="display:flex;align-items:center;">
+                                                <span class="badge user">👤 ${who}</span>
+                                                <span class="badge method">${methodIcon} ${methodDisp}</span>
+                                            </div>
+                                            <div class="status-text ${statusClass === 'status-open' ? 'text-blue' : (statusClass === 'status-close' ? 'text-red' : '')}">
+                                                ${actionIcon} ${actionDisp}
+                                            </div>
+                                        </div>
+                                    `;
+                                    dlContainer.appendChild(div);
+                                });
                             }
                         });
                     }
@@ -675,4 +645,3 @@
     </script>
 </body>
 </html>
-
