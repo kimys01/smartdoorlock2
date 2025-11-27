@@ -1,125 +1,4 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <meta name="color-scheme" content="light only">
-    <meta name="supported-color-schemes" content="light">
-
-    <title>Smart Doorlock Capstone</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-
-    <link rel="stylesheet" href="indexstyle.css">
-
-    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-</head>
-<body>
-
-    <div id="login-container">
-        <h2>SmartDoorLock</h2>
-        <form id="login-form">
-            <div class="input-group">
-                <label for="username">아이디</label>
-                <input type="text" id="username" placeholder="아이디를 입력하세요" required>
-            </div>
-            <div class="input-group">
-                <label for="password">비밀번호</label>
-                <input type="password" id="password" placeholder="비밀번호를 입력하세요" required>
-            </div>
-            <button type="submit">로그인</button>
-        </form>
-    </div>
-
-    <div id="header" class="hidden">
-        <h1 id="header-title" style="cursor: pointer;">Smart Doorlock</h1> 
-        <div class="button-group">
-            <button id="mapBtn" disabled>지도</button>
-            <button id="logBtn" disabled>로그 보기</button>
-            <button id="newBtn">DB 조회</button>
-            <button id="logoutBtn">로그아웃</button>
-        </div>
-    </div>
-
-    <div id="main-content" class="hidden">
-        <div id="sidebar">
-            <div id="userInfo" class="hidden">
-                <div class="info-header">
-                    <h2>User Info</h2>
-                    <button id="closeUserInfoBtn">X</button>
-                </div>
-                <div id="infoArea">사용자를 선택해주세요.</div>
-            </div>
-            <div id="userList">
-                <h2>User List</h2>
-            </div>
-        </div>
-        <div id="mapArea">
-            <h2>Map</h2>
-            <div id="map"></div> 
-        </div>
-    </div>
-
-    <div id="log-content" class="hidden">
-        <div class="log-header">
-            <h2 id="logUserTitle">전체 로그</h2>
-        </div>
-
-        <div class="log-tab-buttons">
-            <button id="tab-doorlock" class="log-tab-btn active" onclick="switchLogTab('doorlock')">도어락 로그</button>
-            <button id="tab-app" class="log-tab-btn" onclick="switchLogTab('app')">앱 로그</button>
-        </div>
-
-        <div class="log-container">
-            <div id="doorLockLogs" class="log-section active-tab-content">
-                <h3>DoorLock Logs</h3>
-                <div class="log-entries"></div>
-            </div>
-            <div id="appLogs" class="log-section">
-                <h3>App Logs</h3>
-                <div class="log-entries"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="db-content" class="hidden">
-        <div class="container">
-            <h2>DataBase</h2>
-            <div class="search-container">
-                <input type="text" id="search-input" placeholder="검색할 사용자 ID를 입력하세요 (예: 123456)">
-                <button class="btn-search" onclick="searchUser()">검색</button>
-                <button class="btn-reset" onclick="loadAllDBData()" style="margin-left:5px;">전체 목록</button>
-            </div>
-            <h3 id="result-title">User List:</h3>
-            <div id="result-area">
-                <div class="message-box">데이터를 불러오는 중입니다...</div>
-            </div>
-        </div>
-    </div>
-
-    <div id="custom-modal" class="hidden">
-        <div class="modal-content">
-            <p id="modal-message"></p>
-            <button onclick="document.getElementById('custom-modal').style.display='none';">확인</button>
-        </div>
-    </div>
-
-    <div id="logout-confirm-modal" class="hidden">
-        <div class="modal-content">
-            <p>로그아웃 하시겠습니까?</p>
-            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
-                <button id="confirmLogoutBtn" style="flex: 1;">확인</button>
-                <button id="cancelLogoutBtn" style="flex: 1; background-color: #aaa;">취소</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
+<script>
         document.addEventListener('DOMContentLoaded', () => {
             console.log("App initialized.");
 
@@ -132,9 +11,14 @@
             const body = document.querySelector('body');
             const closeUserInfoButton = document.getElementById('closeUserInfoBtn');
 
-            const DOORLOCK_LAT = 37.566826; 
-            const DOORLOCK_LNG = 126.9786567;
-            const MAX_DISTANCE_KM = 3.0;
+            // [수정됨] 하드코딩된 값을 변수로 변경하고 기본값(Fallback) 설정
+            // const DOORLOCK_LAT = 37.566826; 
+            // const DOORLOCK_LNG = 126.9786567;
+            // const MAX_DISTANCE_KM = 3.0;
+            
+            let DOORLOCK_LAT = 37.566826;   // DB 로드 실패 시 사용할 기본값 (서울시청)
+            let DOORLOCK_LNG = 126.9786567;
+            let MAX_DISTANCE_KM = 3.0;
 
             const firebaseConfig = {
                 apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
@@ -169,6 +53,28 @@
                 return;
             }
 
+            // [추가됨] 시스템 설정을 DB에서 불러오는 함수
+            function loadSystemSettings() {
+                return new Promise((resolve) => {
+                    // DB 경로 'system_settings'에서 좌표와 거리 설정을 가져온다고 가정
+                    database.ref('system_settings').once('value').then((snapshot) => {
+                        if (snapshot.exists()) {
+                            const val = snapshot.val();
+                            if (val.latitude) DOORLOCK_LAT = parseFloat(val.latitude);
+                            if (val.longitude) DOORLOCK_LNG = parseFloat(val.longitude);
+                            if (val.max_distance_km) MAX_DISTANCE_KM = parseFloat(val.max_distance_km);
+                            console.log(`설정 로드 완료: Lat=${DOORLOCK_LAT}, Lng=${DOORLOCK_LNG}, Dist=${MAX_DISTANCE_KM}km`);
+                        } else {
+                            console.log("DB에 설정값이 없어 기본값을 사용합니다.");
+                        }
+                        resolve();
+                    }).catch((err) => {
+                        console.error("설정 로드 실패:", err);
+                        resolve(); // 실패해도 기본값으로 진행하기 위해 resolve 호출
+                    });
+                });
+            }
+
             window.switchLogTab = function(tabName) {
                 const buttons = document.querySelectorAll('.log-tab-btn');
                 buttons.forEach(btn => btn.classList.remove('active'));
@@ -184,7 +90,6 @@
                 }
             }
 
-            // 모바일 터치 시 버튼 표시 (1분 타이머)
             window.toggleMobileButtons = function(element, event) {
                 if (event.target.tagName === 'BUTTON' || event.target.classList.contains('fv-arrow')) {
                     return;
@@ -222,6 +127,7 @@
                 }
             }
 
+            // [수정됨] 설정을 먼저 로드한 후 지도를 초기화하도록 변경
             function showMainContent(isAdmin, loggedInUserId) {
                 loginContainer.classList.add('hidden');
                 header.classList.remove('hidden');
@@ -240,26 +146,29 @@
                 if (mapBtn) mapBtn.disabled = true; 
                 if (logBtn) logBtn.disabled = true; 
 
-                if (isAdmin) {
-                    if (userListDiv) userListDiv.classList.remove('hidden');
-                    if (newBtn) newBtn.classList.remove('hidden');
-                    if (userInfoDiv) userInfoDiv.classList.add('hidden');
-                    if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
-                          kakao.maps.load(initMap); 
+                // DB에서 좌표 설정을 먼저 가져옵니다.
+                loadSystemSettings().then(() => {
+                    if (isAdmin) {
+                        if (userListDiv) userListDiv.classList.remove('hidden');
+                        if (newBtn) newBtn.classList.remove('hidden');
+                        if (userInfoDiv) userInfoDiv.classList.add('hidden');
+                        if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
+                                kakao.maps.load(initMap); 
+                        }
+                    } else {
+                        if (userListDiv) userListDiv.classList.add('hidden');
+                        if (newBtn) newBtn.classList.add('hidden');
+                        if (userInfoDiv) userInfoDiv.classList.remove('hidden');
+                        selectedUserId = loggedInUserId;
+                        if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
+                                kakao.maps.load(() => {
+                                initMap(); 
+                                selectUser(loggedInUserId);
+                                });
+                        }
                     }
-                } else {
-                    if (userListDiv) userListDiv.classList.add('hidden');
-                    if (newBtn) newBtn.classList.add('hidden');
-                    if (userInfoDiv) userInfoDiv.classList.remove('hidden');
-                    selectedUserId = loggedInUserId;
-                    if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
-                          kakao.maps.load(() => {
-                            initMap(); 
-                            selectUser(loggedInUserId);
-                          });
-                    }
-                }
-                setupMainUIEventListeners();
+                    setupMainUIEventListeners();
+                });
             }
 
             function initMap() {
@@ -268,6 +177,7 @@
                     return;
                 }
                 const container = document.getElementById('map');
+                // [수정] 전역 변수 DOORLOCK_LAT, DOORLOCK_LNG 사용
                 map = new kakao.maps.Map(container, {
                     center: new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG),
                     level: 7 
@@ -282,6 +192,7 @@
             }
 
             function drawDoorlockZones() {
+                // [수정] 전역 변수 사용
                 const doorlockPosition = new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG);
                 const markerImage = new kakao.maps.MarkerImage(
                     'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
@@ -293,6 +204,9 @@
                     map: map,
                     title: "우리집 도어락"
                 });
+                
+                // 원의 크기도 MAX_DISTANCE_KM에 비례하게 하려면 아래를 수정할 수 있습니다.
+                // 현재는 고정값(1km, 2km, 3km) 유지하되, 필요시 MAX_DISTANCE_KM * 1000 등으로 변경 가능
                 const radii = [
                     { r: 1000, color: '#FF0000' }, 
                     { r: 2000, color: '#FFA500' }, 
@@ -362,6 +276,7 @@
                 const position = new kakao.maps.LatLng(lat, lng);
                 map.setCenter(position); 
                 map.setLevel(5, {animate: true});
+                // [수정] 전역 변수 사용
                 const dist = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
                 const overlayContent = `<div class="custom-overlay-info">
                                         <strong>선택된 위치</strong><br>
@@ -393,11 +308,12 @@
                 const infoArea = document.getElementById('infoArea');
                 const userInfoDiv = document.getElementById('userInfo');
                 if (infoArea && userInfoDiv) {
+                    // [수정] 범위 내(3km) -> 범위 내(MAX_DISTANCE_KM)로 텍스트 변경
                     infoArea.innerHTML = `
                         <div style="margin-bottom:10px; flex-shrink:0;"><strong>ID:</strong> ${userId}</div>
                         <div class="filter-group" style="flex-shrink:0;">
                             <button id="showAllBtn" class="filter-btn active">전체 기록</button>
-                            <button id="showRangeBtn" class="filter-btn">범위 내(3km)</button>
+                            <button id="showRangeBtn" class="filter-btn">범위 내(${MAX_DISTANCE_KM}km)</button>
                         </div>
                         <div class="log-list">Loading...</div>
                     `;
@@ -453,6 +369,7 @@
                 }
                 let path = [];
                 const bounds = new kakao.maps.LatLngBounds();
+                // [수정] 전역 변수 사용
                 bounds.extend(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
                 let mapCount = 0;
                 const listFragment = document.createDocumentFragment();
@@ -461,8 +378,11 @@
                     const lat = parseFloat(pos.latitude || pos.lat);
                     const lng = parseFloat(pos.longitude || pos.lon);
                     const alt = pos.altitude !== undefined ? parseFloat(pos.altitude) : (pos.alt !== undefined ? parseFloat(pos.alt) : null);
+                    // [수정] 전역 변수 사용
                     const distKm = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
+                    
                     if (filterRange && distKm > MAX_DISTANCE_KM) return; 
+                    
                     let rowStyle = '';
                     if (distKm <= 1.0) rowStyle = 'background-color: #ffeaea;'; 
                     else if (distKm <= 2.0) rowStyle = 'background-color: #fff8e1;'; 
@@ -511,6 +431,7 @@
             }
 
             function loadAllLogs(userId) {
+                // (기존 코드와 동일)
                 const doorLockLogContainer = document.querySelector('#doorLockLogs .log-entries');
                 const appLogContainer = document.querySelector('#appLogs .log-entries');
                 const logUserTitle = document.getElementById('logUserTitle');
@@ -600,6 +521,7 @@
             }
 
             window.loadAllDBData = function() {
+                // (기존 코드와 동일)
                 const resultArea = document.getElementById('result-area');
                 const title = document.getElementById('result-title');
                 title.textContent = "User List:";
@@ -617,6 +539,7 @@
             }
 
             window.searchUser = function() {
+                // (기존 코드와 동일)
                 const input = document.getElementById('search-input');
                 const resultArea = document.getElementById('result-area');
                 const title = document.getElementById('result-title');
@@ -638,6 +561,7 @@
             }
 
             function renderGrid(data) {
+                // (기존 코드와 동일)
                 const resultArea = document.getElementById('result-area');
                 let tableHtml = `
                     <div class="grid-wrapper">
@@ -672,6 +596,7 @@
 
             // 항목 터치 시 버튼 토글 기능 연결
             function createFirebaseView(data, depth, currentPath) {
+                // (기존 코드와 동일)
                 let html = '';
                 const indent = '<span class="fv-indent"></span>'.repeat(depth);
 
@@ -719,6 +644,7 @@
             }
 
             window.toggleNode = function(element) {
+                // (기존 코드와 동일)
                 const childrenDiv = element.parentNode.querySelector('.fv-children');
                 const arrowSpan = element.querySelector('.fv-arrow');
                 if (childrenDiv) {
@@ -735,6 +661,7 @@
             }
 
             function formatValue(val) {
+                // (기존 코드와 동일)
                 if (typeof val === 'string') return `<span class="fv-string">"${val}"</span>`;
                 if (typeof val === 'number') return `<span class="fv-number">${val}</span>`;
                 if (typeof val === 'boolean') return `<span class="fv-boolean">${val}</span>`;
@@ -743,7 +670,8 @@
             }
 
             window.enableEdit = function(btn, path, currentVal) {
-                const container = btn.parentElement; // fv-item-content or fv-item
+                // (기존 코드와 동일)
+                const container = btn.parentElement; 
                 const valueSpan = container.querySelector('.fv-value');
                 
                 if (container.querySelector('.edit-input')) return;
@@ -751,7 +679,6 @@
                 valueSpan.style.display = 'none';
                 btn.style.display = 'none';
                 
-                // 다른 버튼들도 숨김
                 const deleteBtn = container.querySelector('.btn-delete-mini');
                 if(deleteBtn) deleteBtn.style.display = 'none';
 
@@ -784,6 +711,7 @@
             }
 
             window.saveEdit = function(path, newVal) {
+                // (기존 코드와 동일)
                 let finalVal = newVal;
                 if (newVal === 'true') finalVal = true;
                 else if (newVal === 'false') finalVal = false;
@@ -799,6 +727,7 @@
             }
 
             window.deleteData = function(path) {
+                // (기존 코드와 동일)
                 if (confirm('정말 삭제하시겠습니까?\n경로: ' + path)) {
                     database.ref(path).remove()
                         .then(() => {
@@ -810,8 +739,8 @@
                 }
             }
 
-            // [수정된 로그인 처리 로직]
             function handleLoginSubmit(e) {
+                // (기존 코드와 동일)
                 e.preventDefault();
                 const usernameInput = document.getElementById('username')?.value.trim();
                 const passwordInput = document.getElementById('password')?.value.trim();
@@ -827,11 +756,9 @@
 
                 console.log("로그인 시도:", usernameInput);
 
-                // 1. 관리자 체크
                 database.ref('admin_pass').once('value').then((snap) => {
                     let adminFound = false;
                     if (snap.exists()) {
-                        // 관리자 데이터가 Object인지 List인지 확인하며 체크
                         const data = snap.val();
                         snap.forEach(c => {
                             const d = c.val();
@@ -839,7 +766,6 @@
                                 adminFound = true;
                             }
                         });
-                        // List가 아니라 단일 객체일 경우에 대한 대비
                         if (!adminFound && data.adminId === usernameInput && data.password === passwordInput) {
                             adminFound = true;
                         }
@@ -851,35 +777,30 @@
                         sessionStorage.setItem('isAdmin', 'true');
                         sessionStorage.setItem('userId', usernameInput);
                         showMainContent(true, usernameInput);
-                        // 관리자로 로그인되면 여기서 체인을 끊기 위해 특정 객체 반환
                         return { type: 'admin_success' };
                     }
                     
-                    // 관리자가 아니면 users 테이블 조회
                     return database.ref('users').once('value');
                 })
                 .then((result) => {
-                    // 이미 관리자로 로그인 성공했으면 종료
                     if (result && result.type === 'admin_success') return;
 
-                    const userSnap = result; // users 스냅샷
+                    const userSnap = result; 
                     let userFound = false;
                     let foundUserId = null;
 
                     if (userSnap && userSnap.exists()) {
                         userSnap.forEach(c => {
-                            const key = c.key; // 사용자의 고유키 (예: user1, 123456 등)
+                            const key = c.key; 
                             const d = c.val();
 
-                            // [체크 1] 입력한 ID가 DB의 Key와 같고 비밀번호가 일치하는 경우
                             if (key === usernameInput && d.password === passwordInput) {
                                 userFound = true;
                                 foundUserId = key;
                             }
-                            // [체크 2] 입력한 ID가 DB 내부의 'username' 필드와 일치하는 경우
                             else if (d.username === usernameInput && d.password === passwordInput) {
                                 userFound = true;
-                                foundUserId = key; // 실제 DB Key를 세션에 저장
+                                foundUserId = key; 
                             }
                         });
                     }
@@ -969,5 +890,3 @@
             }
         });
     </script>
-</body>
-</html>
