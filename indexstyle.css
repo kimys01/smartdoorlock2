@@ -8,9 +8,9 @@
 
 body { 
     height: 100vh; 
-    /* 배경색 그라데이션 설정 */
+    /* 배경색 그라데이션 강제 적용 (!important) */
     background: linear-gradient(135deg, #71b7e6, #9b59b6) !important;
-    background-color: #71b7e6 !important; /* 그라데이션 로드 실패 시 대비 */
+    background-color: #71b7e6 !important; /* 오류 대비용 단색 */
     background-attachment: fixed;
     padding-top: 70px; 
     overflow: hidden; 
@@ -60,20 +60,22 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 #userList { flex-grow: 1; overflow-y: auto; }
 #userInfo { max-height: 60vh; display: flex; flex-direction: column; }
 
-/* --- [수정된 부분] User Info 헤더 정렬 --- */
+/* [중요 수정] User Info 헤더 정렬 (Flexbox) */
 .info-header {
-    display: flex;                  /* 가로 배치 활성화 */
-    justify-content: space-between; /* 텍스트는 왼쪽, 버튼은 오른쪽 끝으로 */
+    display: flex;                  /* 가로 배치 */
+    justify-content: space-between; /* 양 끝 정렬 */
     align-items: center;            /* 수직 중앙 정렬 */
     margin-bottom: 10px;            
     padding-bottom: 10px;           
     border-bottom: 1px solid #eee;  
 }
+/* 제목 높이 맞춤 */
 .info-header h2 {
-    margin: 0;                      /* 기본 여백 제거 */
+    margin: 0;                      
     font-size: 18px;
     font-weight: 600;
 }
+/* 닫기 버튼 스타일 */
 #closeUserInfoBtn {
     background: transparent;
     border: none;
@@ -85,7 +87,6 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
     transition: color 0.2s;
 }
 #closeUserInfoBtn:hover { color: #333; }
-/* ------------------------------------- */
 
 #infoArea { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 #mapArea { flex-grow: 1; background: #fff; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; }
