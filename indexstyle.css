@@ -1,7 +1,7 @@
 @charset "UTF-8";
 
 /* =========================================
-   1. 기본 설정 (Global Reset & Body)ㅣㅐㅎ
+   1. 기본 설정 (Global Reset & Body)
    ========================================= */
 :root { color-scheme: light !important; }
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; color: #333; }
@@ -83,7 +83,7 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
     display: flex;                  
     align-items: center;            /* 수직 중앙 정렬 */
     margin-bottom: 10px;            
-    padding-bottom: 10px;           
+    padding-bottom: 10px;            
     border-bottom: 1px solid #eee;
     gap: 10px;                      /* 텍스트와 버튼 사이 간격 10px */
 }
@@ -176,7 +176,6 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 /* =========================================
    6. DB 조회 화면 (DB Content)
    ========================================= */
-/* 기존 #db-content 블록의 background 라인만 교체 */
 #db-content {
     width: 100%;
     height: calc(100vh - 70px);
@@ -186,7 +185,7 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
     position: fixed;
     top: 70px;
     left: 0;
-    z-index: 3000; /* 기존 값 유지 또는 약간 상향 */
+    z-index: 3000;
     background: linear-gradient(135deg, #71b7e6, #9b59b6);
     pointer-events: auto;
     transform: none;
@@ -222,13 +221,49 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 .btn-delete-mini:hover { color: #dc3545; transform: scale(1.2); }
 
 /* =========================================
-   7. 모달 & 유틸
+   7. 모달 & 유틸 & 반응형
    ========================================= */
 #custom-modal, #logout-confirm-modal {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5);
     display: flex; justify-content: center; align-items: center; z-index: 3000;
 }
 .modal-content { background: #fff; padding: 30px; border-radius: 10px; text-align: center; min-width: 300px; }
+
+/* ----------------------------------------------------
+   [추가됨] 로그아웃 모달 버튼 스타일
+   ---------------------------------------------------- */
+#logout-confirm-modal button {
+    border: none !important;       /* 투박한 기본 테두리 제거 */
+    outline: none;                 
+    padding: 10px 0;               
+    border-radius: 8px;            /* 둥근 모서리 */
+    font-size: 16px;               
+    font-weight: 500;              
+    color: white;                  
+    cursor: pointer;               
+    transition: 0.2s;              
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+}
+
+/* 확인 버튼 - 그라데이션 적용 */
+#confirmLogoutBtn {
+    background: linear-gradient(135deg, #71b7e6, #9b59b6);
+}
+
+/* 취소 버튼 - 회색 적용 */
+#cancelLogoutBtn {
+    background: #6c757d !important; 
+}
+
+/* 버튼 마우스 호버 효과 */
+#logout-confirm-modal button:hover {
+    transform: translateY(-2px);   
+    opacity: 0.9;                  
+}
+#logout-confirm-modal button:active {
+    transform: translateY(0);      
+}
+
 
 /* 모바일 반응형 */
 @media (max-width: 768px) {
