@@ -13,7 +13,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="indexstyle.css?v=final">
+    <link rel="stylesheet" href="indexstyle.css?v=3.0">
 
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -231,7 +231,6 @@
                                 else if (log.detailSettings) { title = "설정 변경"; detail = JSON.stringify(log.detailSettings).replace(/["{}]/g, "").replace(/,/g, ", "); } 
                                 else { detail = JSON.stringify(log).replace(/["{}]/g, ""); }
 
-                                // 인라인 스타일 적용 (CSS 파일 미적용 대비)
                                 div.style.backgroundColor = "#fff"; div.style.marginBottom = "10px";
                                 div.style.padding = "10px"; div.style.borderRadius = "8px";
                                 div.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)"; div.style.borderLeft = "5px solid #28a745"; 
@@ -494,11 +493,9 @@
             };
 
             function showMain(isAdmin, uid) {
-                // [수정] 클래스 제어를 통해 로그인창 숨기고 메인 화면 보이기
-                document.getElementById('login-container').classList.add('hidden'); 
-                document.getElementById('header').classList.remove('hidden'); 
-                document.getElementById('main-content').classList.remove('hidden'); 
-                
+                document.getElementById('login-container').classList.add('hidden'); // 로그인 숨김
+                document.getElementById('header').classList.remove('hidden'); // 헤더 보임
+                document.getElementById('main-content').classList.remove('hidden'); // 메인 보임
                 if(isAdmin) {
                     document.getElementById('userList').classList.remove('hidden');
                     document.getElementById('userInfo').classList.add('hidden');
