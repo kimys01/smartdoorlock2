@@ -149,10 +149,8 @@
             // --- Helper Functions ---
             function formatTimestamp(ts) {
                 if (!ts) return '시간 없음';
-                // DB에 이미 "YYYY-MM-DD HH:mm:ss" 문자열로 저장된 경우 그대로 반환하거나 Date 변환 시도
                 const date = new Date(ts);
                 if (isNaN(date.getTime())) return ts; 
-                
                 return date.toLocaleString('ko-KR', {
                     year: 'numeric', month: '2-digit', day: '2-digit',
                     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
@@ -200,7 +198,7 @@
                 });
             }
 
-            // --- [최종 수정] 모든 로그 불러오기 (반복문 강화) ---
+            // --- [최종 수정] 로그 전체 불러오기 ---
             function loadAllLogs(userId) {
                 const dlContainer = document.querySelector('#doorLockLogs .log-entries');
                 const appContainer = document.querySelector('#appLogs .log-entries');
@@ -213,7 +211,7 @@
                     const user = userSnap.val();
                     
                     // ---------------------------------------------
-                    // 1. APP LOGS (app_logs 하위 모든 항목 가져오기)
+                    // 1. APP LOGS
                     // ---------------------------------------------
                     database.ref(`users/${userId}/app_logs`).once('value').then(snap => {
                         if (!snap.exists()) {
@@ -221,50 +219,29 @@
                         } else {
                             appContainer.innerHTML = '';
                             const logs = [];
-                            
-                            // [중요] forEach로 모든 자식 노드를 배열에 담음
-                            snap.forEach(childSnapshot => {
-                                const logData = childSnapshot.val();
-                                // 키 값도 필요하면 childSnapshot.key 사용
-                                logs.push(logData); 
-                            });
-                            
-                            // 날짜 정렬 (내림차순: 최신이 위로)
+                            snap.forEach(c => logs.push(c.val())); 
                             logs.sort((a, b) => {
-                                const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-                                const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-                                return timeB - timeA; 
+                                const ta = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+                                const tb = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+                                return tb - ta; 
                             });
 
                             logs.forEach(log => {
                                 const div = document.createElement('div');
                                 div.className = 'log-card status-app'; 
                                 
-                                // DB 사진 구조: message, timestamp
                                 let title = "앱 활동";
                                 let detail = "";
 
-                                if (log.message) {
-                                    title = log.message; 
-                                } else if (log.event) {
-                                    title = log.event;
-                                } else if (log.new_auth) {
-                                    title = "인증 방식 변경"; detail = `값: ${log.new_auth}`;
-                                } else if (log.detailSettings) {
-                                    title = "설정 변경";
-                                    detail = JSON.stringify(log.detailSettings).replace(/["{}]/g, "").replace(/,/g, ", ");
-                                } else {
-                                    detail = JSON.stringify(log).replace(/["{}]/g, ""); 
-                                }
+                                if (log.message) { title = log.message; } 
+                                else if (log.event) { title = log.event; } 
+                                else if (log.new_auth) { title = "인증 방식 변경"; detail = `값: ${log.new_auth}`; } 
+                                else if (log.detailSettings) { title = "설정 변경"; detail = JSON.stringify(log.detailSettings).replace(/["{}]/g, "").replace(/,/g, ", "); } 
+                                else { detail = JSON.stringify(log).replace(/["{}]/g, ""); }
 
                                 div.innerHTML = `
-                                    <div class="log-header-row">
-                                        <span>🕒 ${formatTimestamp(log.timestamp)}</span>
-                                        <span>📱 App</span>
-                                    </div>
-                                    <div class="log-body-row">
-                                        <span style="font-weight:600; color:#333; font-size:15px;">${title}</span>
-                                    </div>
+                                    <div class="log-header-row"><span>🕒 ${formatTimestamp(log.timestamp)}</span><span>📱 App</span></div>
+                                    <div class="log-body-row"><span style="font-weight:600; color:#333; font-size:15px;">${title}</span></div>
                                     ${detail ? `<div class="log-detail-box">${detail}</div>` : ''}
                                 `;
                                 appContainer.appendChild(div);
@@ -273,7 +250,7 @@
                     });
 
                     // ---------------------------------------------
-                    // 2. DOORLOCK LOGS (모든 도어락 로그 통합)
+                    // 2. DOORLOCK LOGS (모든 내용 표시)
                     // ---------------------------------------------
                     let doorlockIds = [];
                     if (user && user.my_doorlocks) {
@@ -283,12 +260,10 @@
                     if (doorlockIds.length === 0) {
                         dlContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#dc3545;">연결된 도어락이 없습니다.</div>';
                     } else {
-                        // 여러 도어락의 로그를 병렬로 가져옴
                         const promises = doorlockIds.map(id => database.ref(`doorlocks/${id}/logs`).once('value'));
                         
                         Promise.all(promises).then(snapshots => {
                             let allLogs = [];
-                            
                             snapshots.forEach(snap => {
                                 if (snap.exists()) {
                                     snap.forEach(c => allLogs.push(c.val()));
@@ -309,36 +284,53 @@
                                 allLogs.forEach(log => {
                                     const div = document.createElement('div');
                                     
-                                    let who = log.user || log.userId || "알 수 없음";
+                                    // 1. 기본 정보 파싱
+                                    let who = log.user || log.userId || "-";
                                     let methodRaw = log.method || "";
-                                    let methodDisp = methodRaw || "기타";
+                                    let methodDisp = methodRaw || "-";
                                     let methodIcon = "🔑";
                                     
                                     if(methodRaw.toUpperCase().includes("PASSWORD") || methodRaw.toUpperCase().includes("PW")) { methodDisp="비밀번호"; methodIcon="🔢"; }
-                                    else if(methodRaw.toUpperCase().includes("RF") || methodRaw.toUpperCase().includes("CARD")) { methodDisp="카드키"; methodIcon="💳"; }
-                                    else if(methodRaw.toUpperCase().includes("BLE") || methodRaw.toUpperCase().includes("APP")) { methodDisp="앱(블루투스)"; methodIcon="📱"; }
+                                    else if(methodRaw.toUpperCase().includes("RF")) { methodDisp="카드키"; methodIcon="💳"; }
+                                    else if(methodRaw.toUpperCase().includes("BLE") || methodRaw.toUpperCase().includes("APP")) { methodDisp="앱"; methodIcon="📱"; }
                                     else if(methodRaw.toUpperCase().includes("FINGER")) { methodDisp="지문"; methodIcon="👆"; }
 
-                                    let actionRaw = log.command || log.status || "알 수 없음";
-                                    let actionDisp = actionRaw;
+                                    // 2. 행동/메시지 파싱
+                                    // command, status, message 중 하나라도 있으면 그것을 메인 타이틀로
+                                    let mainActionRaw = log.command || log.status || log.message || "이벤트 발생";
+                                    let actionDisp = mainActionRaw;
                                     let statusClass = ""; 
-                                    let actionIcon = "❓";
+                                    let actionIcon = "🔔";
 
-                                    if(actionRaw.toUpperCase().includes("UNLOCK")) { actionDisp="문 열림"; statusClass="status-open"; actionIcon="🔓"; }
-                                    else if(actionRaw.toUpperCase().includes("LOCK")) { actionDisp="문 잠김"; statusClass="status-close"; actionIcon="🔒"; }
+                                    if(mainActionRaw.toUpperCase().includes("UNLOCK")) { actionDisp="문 열림"; statusClass="status-open"; actionIcon="🔓"; }
+                                    else if(mainActionRaw.toUpperCase().includes("LOCK")) { actionDisp="문 잠김"; statusClass="status-close"; actionIcon="🔒"; }
+
+                                    // 3. 나머지 데이터 (Detail)
+                                    // 이미 표시한 필드 외에 다른 정보가 있다면 하단에 출력
+                                    let extraInfo = { ...log };
+                                    delete extraInfo.timestamp;
+                                    delete extraInfo.command;
+                                    delete extraInfo.status;
+                                    delete extraInfo.message;
+                                    delete extraInfo.user;
+                                    delete extraInfo.userId;
+                                    delete extraInfo.method;
+
+                                    let detailStr = Object.keys(extraInfo).length > 0 ? JSON.stringify(extraInfo).replace(/["{}]/g, "").replace(/,/g, ", ") : "";
 
                                     div.className = `log-card ${statusClass}`;
                                     div.innerHTML = `
                                         <div class="log-header-row"><span>🕒 ${formatTimestamp(log.timestamp)}</span></div>
                                         <div class="log-body-row">
-                                            <div style="display:flex;align-items:center;">
-                                                <span class="badge user">👤 ${who}</span>
-                                                <span class="badge method">${methodIcon} ${methodDisp}</span>
+                                            <div style="display:flex;align-items:center; gap:5px;">
+                                                ${who !== '-' ? `<span class="badge user">👤 ${who}</span>` : ''}
+                                                ${methodDisp !== '-' ? `<span class="badge method">${methodIcon} ${methodDisp}</span>` : ''}
                                             </div>
                                             <div class="status-text ${statusClass === 'status-open' ? 'text-blue' : (statusClass === 'status-close' ? 'text-red' : '')}">
                                                 ${actionIcon} ${actionDisp}
                                             </div>
                                         </div>
+                                        ${detailStr ? `<div class="log-detail-box" style="font-size:11px; color:#777;">${detailStr}</div>` : ''}
                                     `;
                                     dlContainer.appendChild(div);
                                 });
