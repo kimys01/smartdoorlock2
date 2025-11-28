@@ -263,7 +263,6 @@
                                 if (snap.exists()) { 
                                     snap.forEach(c => { 
                                         const val = c.val();
-                                        console.log("도어락 로그 원본 데이터:", val); 
                                         allLogs.push(val); 
                                     }); 
                                 } 
@@ -449,6 +448,45 @@
                 });
             }
 
+            // --- [FIX] 검색 기능 추가 ---
+            window.searchUser = function() {
+                const input = document.getElementById('search-input');
+                const keyword = input.value.trim();
+                const area = document.getElementById('result-area');
+
+                if (!keyword) {
+                    customAlert("검색할 사용자 ID를 입력해주세요.");
+                    return;
+                }
+
+                area.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">검색 중...</div>';
+
+                database.ref('users/' + keyword).once('value').then(snap => {
+                    if (snap.exists()) {
+                        const searchResult = {};
+                        searchResult[keyword] = snap.val();
+                        renderGrid(searchResult);
+                    } else {
+                        area.innerHTML = `<div style="padding:20px; text-align:center; color:#dc3545;">
+                            '<strong>${keyword}</strong>' ID를 가진 사용자가 없습니다.
+                        </div>`;
+                    }
+                }).catch(err => {
+                    console.error("검색 오류:", err);
+                    area.innerHTML = '<div style="padding:20px; text-align:center;">검색 중 오류가 발생했습니다.</div>';
+                });
+            };
+
+            // [추가됨] 엔터키 이벤트 리스너
+            const searchInputObj = document.getElementById('search-input');
+            if(searchInputObj) {
+                searchInputObj.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        window.searchUser();
+                    }
+                });
+            }
+
             window.loadAllDBData = function() {
                 const area = document.getElementById('result-area');
                 area.innerHTML = '로딩 중...';
@@ -578,12 +616,10 @@
                 };
             }
 
-            // [수정됨] Auto Login Check 로직
+            // Auto Login Check
             if (sessionStorage.getItem('isAdmin')) {
-                // 로그인 되어 있으면 바로 메인 화면 보여줌 (로그인 창은 이미 hidden 상태라 안 보임)
                 showMain(sessionStorage.getItem('isAdmin') === 'true', sessionStorage.getItem('userId'));
             } else {
-                // 로그인 안 되어 있을 때만 로그인 창을 보이게 함
                 document.getElementById('login-container').classList.remove('hidden');
             }
         });
