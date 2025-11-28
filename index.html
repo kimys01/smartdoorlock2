@@ -448,29 +448,47 @@
                 });
             }
 
-            // --- [FIX] 검색 기능 추가 ---
+            // [수정됨] 부분 일치(Contains) 검색 기능
             window.searchUser = function() {
                 const input = document.getElementById('search-input');
-                const keyword = input.value.trim();
+                const keyword = input.value.trim(); // 공백 제거
                 const area = document.getElementById('result-area');
 
                 if (!keyword) {
-                    customAlert("검색할 사용자 ID를 입력해주세요.");
+                    customAlert("검색어를 입력해주세요.");
                     return;
                 }
 
                 area.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">검색 중...</div>';
 
-                database.ref('users/' + keyword).once('value').then(snap => {
-                    if (snap.exists()) {
-                        const searchResult = {};
-                        searchResult[keyword] = snap.val();
+                // 1. 전체 사용자 목록을 가져옵니다.
+                database.ref('users').once('value').then(snap => {
+                    if (!snap.exists()) {
+                        area.innerHTML = '<div style="padding:20px; text-align:center;">데이터가 없습니다.</div>';
+                        return;
+                    }
+
+                    const allUsers = snap.val();
+                    const searchResult = {};
+                    let count = 0;
+
+                    // 2. 자바스크립트에서 ID에 검색어가 포함(includes)되어 있는지 확인합니다.
+                    for (const [userId, userData] of Object.entries(allUsers)) {
+                        if (userId.toLowerCase().includes(keyword.toLowerCase())) { // 대소문자 구분 없이 검색
+                            searchResult[userId] = userData;
+                            count++;
+                        }
+                    }
+
+                    // 3. 결과 출력
+                    if (count > 0) {
                         renderGrid(searchResult);
                     } else {
                         area.innerHTML = `<div style="padding:20px; text-align:center; color:#dc3545;">
-                            '<strong>${keyword}</strong>' ID를 가진 사용자가 없습니다.
+                            '<strong>${keyword}</strong>' 가 포함된 ID를 찾을 수 없습니다.
                         </div>`;
                     }
+
                 }).catch(err => {
                     console.error("검색 오류:", err);
                     area.innerHTML = '<div style="padding:20px; text-align:center;">검색 중 오류가 발생했습니다.</div>';
@@ -626,3 +644,4 @@
     </script>
 </body>
 </html>
+
