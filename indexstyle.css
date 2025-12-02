@@ -71,12 +71,46 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 /* =========================================
    4. 메인 화면 (Main Content)
    ========================================= */
-#main-content { display: flex; padding: 10px; gap: 20px; width: 100%; height: calc(100vh - 70px); }
-#sidebar { width: 250px; min-width: 200px; display: flex; flex-direction: column; gap: 15px; }
+#main-content { 
+    display: flex; 
+    padding: 10px; 
+    gap: 20px; 
+    width: 100%; 
+    height: calc(100vh - 70px); /* 화면 전체 높이에서 헤더 뺌 */
+    align-items: stretch; /* 자식 요소들이 높이를 꽉 채우도록 강제 */
+}
 
-#userList, #userInfo { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-#userList { flex-grow: 1; overflow-y: auto; }
-#userInfo { max-height: 60vh; display: flex; flex-direction: column; }
+#sidebar { 
+    width: 300px; /* [수정] 너비를 조금 넓혀 정보 보기가 편하게 함 */
+    min-width: 250px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 15px; 
+    height: 100%; /* [수정] 사이드바 자체도 부모 높이만큼 꽉 채움 */
+}
+
+#userList, #userInfo { 
+    background: #fff; 
+    padding: 15px; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+}
+
+#userList { 
+    flex-grow: 1; 
+    overflow-y: auto; 
+    height: 100%; 
+}
+
+/* [수정됨] User Info 높이 설정 (Map과 동일하게) */
+#userInfo { 
+    /* max-height: 60vh;  <-- [삭제] 높이 제한 제거 */
+    flex: 1;              /* [추가] 남은 공간 모두 차지 */
+    height: 100%;         /* [추가] 부모 높이 100% */
+    display: flex; 
+    flex-direction: column; 
+    overflow: hidden;     /* 내부 스크롤은 infoArea에서 처리 */
+}
 
 /* [수정됨] User Info 헤더 정렬 (텍스트 옆에 버튼 배치) */
 .info-header {
@@ -86,6 +120,7 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
     padding-bottom: 10px;           
     border-bottom: 1px solid #eee;
     gap: 10px;                      /* 텍스트와 버튼 사이 간격 10px */
+    flex-shrink: 0;                 /* 헤더 크기 고정 */
 }
 .info-header h2 { margin: 0; font-size: 18px; font-weight: 600; flex-grow: 1; } /* 텍스트가 공간 차지 */
 #closeUserInfoBtn {
@@ -93,8 +128,22 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 }
 #closeUserInfoBtn:hover { color: #333; }
 
-#infoArea { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
-#mapArea { flex-grow: 1; background: #fff; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; }
+#infoArea { 
+    flex: 1; 
+    overflow-y: auto; /* 내용이 많으면 여기서 스크롤 발생 */
+    display: flex; 
+    flex-direction: column; 
+}
+
+#mapArea { 
+    flex-grow: 1; 
+    background: #fff; 
+    padding: 15px; 
+    border-radius: 8px; 
+    display: flex; 
+    flex-direction: column; 
+    height: 100%; /* 높이 꽉 채움 */
+}
 #map { width: 100%; flex-grow: 1; border-radius: 4px; }
 
 /* 리스트 공통 스타일 */
@@ -105,7 +154,7 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 .log-entry:hover { background: #f8f9fa; }
 
 /* 필터 버튼 */
-.filter-group { display: flex; gap: 5px; margin-bottom: 10px; }
+.filter-group { display: flex; gap: 5px; margin-bottom: 10px; flex-shrink: 0; }
 .filter-btn { flex: 1; padding: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 4px; }
 .filter-btn.active { background: #e2e8f0; font-weight: bold; border-color: #adb5bd; }
 
@@ -254,77 +303,4 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 
 /* 펼쳐질 때 애니메이션 */
 @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* -------------------------------------------
-   Firebase Tree View (JSON 형태 뷰)
-   ------------------------------------------- */
-.fv-item { margin: 2px 0; }
-.fv-key { color: #000080; font-weight: bold; cursor: pointer; margin-right: 5px; }
-.fv-string { color: #a31515; } .fv-number { color: #098658; } .fv-boolean { color: #0000ff; }
-.fv-children { margin-left: 20px; border-left: 1px solid #eee; padding-left: 5px; display: block; }
-.fv-hidden { display: none; }
-.btn-edit-mini, .btn-delete-mini {
-    border: none; background: none; cursor: pointer; font-size: 16px; color: #adb5bd; margin-left: 5px;
-    opacity: 0; visibility: hidden; transition: 0.2s;
-}
-.fv-item:hover > .fv-item-content .btn-edit-mini,
-.fv-item:hover > .fv-item-content .btn-delete-mini,
-.mobile-active .btn-edit-mini, .mobile-active .btn-delete-mini {
-    opacity: 1; visibility: visible;
-}
-.btn-edit-mini:hover { color: #007bff; transform: scale(1.2); }
-.btn-delete-mini:hover { color: #dc3545; transform: scale(1.2); }
-
-/* =========================================
-   7. 모달 & 유틸 & 반응형
-   ========================================= */
-#custom-modal, #logout-confirm-modal {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5);
-    display: flex; justify-content: center; align-items: center; z-index: 3000;
-}
-.modal-content { background: #fff; padding: 30px; border-radius: 10px; text-align: center; min-width: 300px; }
-
-/* 로그아웃 모달 버튼 스타일 */
-#logout-confirm-modal button {
-    border: none !important;
-    outline: none;                  
-    padding: 10px 0;                
-    border-radius: 8px;            
-    font-size: 16px;                
-    font-weight: 500;              
-    color: white;                  
-    cursor: pointer;                
-    transition: 0.2s;              
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-}
-
-/* 확인 버튼 - 그라데이션 적용 */
-#confirmLogoutBtn {
-    background: linear-gradient(135deg, #71b7e6, #9b59b6);
-}
-
-/* 취소 버튼 - 회색 적용 */
-#cancelLogoutBtn {
-    background: #6c757d !important; 
-}
-
-/* 버튼 마우스 호버 효과 */
-#logout-confirm-modal button:hover {
-    transform: translateY(-2px);   
-    opacity: 0.9;                  
-}
-#logout-confirm-modal button:active {
-    transform: translateY(0);      
-}
-
-/* 모바일 반응형 */
-@media (max-width: 768px) {
-    #header { flex-direction: column; height: auto; padding: 10px; }
-    body { padding-top: 110px; }
-    #main-content { flex-direction: column; height: auto; }
-    #sidebar, #mapArea { width: 100%; height: 400px; }
-    #log-content, #db-content { top: 110px; height: calc(100vh - 110px); }
-}
+    from {
