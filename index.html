@@ -529,7 +529,7 @@
                 resultArea.innerHTML = html;
             }
 
-            // [추가됨] 아코디언 토글 기능 (자동 닫기)
+            // [오류 수정됨] 아코디언 토글 기능 (자동 닫기) - 괄호 빠짐 수정
             window.toggleAccordion = function(header) {
                 const currentBody = header.nextElementSibling;
                 const isHidden = currentBody.classList.contains('hidden');
@@ -539,7 +539,7 @@
                 const allBodies = document.querySelectorAll('.user-accordion-body');
                 
                 allHeaders.forEach(h => h.classList.remove('active-header'));
-                allBodies.forEach(b => b.classList.add('hidden');
+                allBodies.forEach(b => b.classList.add('hidden')); // 여기에 닫는 괄호 ')' 가 추가되었습니다.
 
                 // 선택한 아이템 열기
                 if (isHidden) {
@@ -591,9 +591,6 @@
                 });
             };
 
-            // --------------------------------------------------------------------------------
-            // [수정된 부분] 닫기 버튼 로직이 적용된 showMain 함수
-            // --------------------------------------------------------------------------------
             function showMain(isAdmin, uid) {
                 document.getElementById('login-container').classList.add('hidden'); // 로그인 숨김
                 document.getElementById('header').classList.remove('hidden'); // 헤더 보임
@@ -631,7 +628,7 @@
                 document.getElementById('confirmLogoutBtn').onclick = () => { sessionStorage.clear(); location.reload(); };
                 document.getElementById('cancelLogoutBtn').onclick = () => document.getElementById('logout-confirm-modal').classList.add('hidden');
                 
-                // [기능 추가] 타이틀 클릭 시 초기 화면 이동
+                // 타이틀 클릭 시 초기 화면 이동
                 const headerTitle = document.getElementById('header-title');
                 if(headerTitle) {
                     headerTitle.style.cursor = 'pointer';
@@ -678,6 +675,7 @@
             if (sessionStorage.getItem('isAdmin')) {
                 showMain(sessionStorage.getItem('isAdmin') === 'true', sessionStorage.getItem('userId'));
             } else {
+                // 스크립트 오류가 없어야 이 코드가 실행되어 로그인창이 보입니다.
                 document.getElementById('login-container').classList.remove('hidden');
             }
         });
