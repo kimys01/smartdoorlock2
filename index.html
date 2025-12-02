@@ -18,10 +18,6 @@
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    
-    <style>
-        .hidden { display: none !important; }
-    </style>
 </head>
 <body>
 
@@ -448,10 +444,10 @@
                 });
             }
 
-            // [수정됨] 부분 일치(Contains) 검색 기능
+            // [수정됨] 부분 일치(Contains) 검색 + 아코디언 뷰
             window.searchUser = function() {
                 const input = document.getElementById('search-input');
-                const keyword = input.value.trim(); // 공백 제거
+                const keyword = input.value.trim();
                 const area = document.getElementById('result-area');
 
                 if (!keyword) {
@@ -461,7 +457,6 @@
 
                 area.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">검색 중...</div>';
 
-                // 1. 전체 사용자 목록을 가져옵니다.
                 database.ref('users').once('value').then(snap => {
                     if (!snap.exists()) {
                         area.innerHTML = '<div style="padding:20px; text-align:center;">데이터가 없습니다.</div>';
@@ -472,15 +467,14 @@
                     const searchResult = {};
                     let count = 0;
 
-                    // 2. 자바스크립트에서 ID에 검색어가 포함(includes)되어 있는지 확인합니다.
+                    // 검색 로직 (포함 문자열 검색)
                     for (const [userId, userData] of Object.entries(allUsers)) {
-                        if (userId.toLowerCase().includes(keyword.toLowerCase())) { // 대소문자 구분 없이 검색
+                        if (userId.toLowerCase().includes(keyword.toLowerCase())) {
                             searchResult[userId] = userData;
                             count++;
                         }
                     }
 
-                    // 3. 결과 출력
                     if (count > 0) {
                         renderGrid(searchResult);
                     } else {
@@ -495,7 +489,6 @@
                 });
             };
 
-            // [추가됨] 엔터키 이벤트 리스너
             const searchInputObj = document.getElementById('search-input');
             if(searchInputObj) {
                 searchInputObj.addEventListener('keypress', (e) => {
@@ -514,14 +507,46 @@
                 });
             }
             
+            // [수정됨] 아코디언 형태로 렌더링
             function renderGrid(data) {
-                let html = '<div class="grid-wrapper"><table class="styled-table"><thead><tr><th>ID</th><th>Data</th></tr></thead><tbody>';
-                for(const [k, v] of Object.entries(data)) {
-                    html += `<tr><td style="font-weight:bold; vertical-align:top;">${k}</td><td><div class="firebase-view">${createTreeView(v, 0)}</div></td></tr>`;
+                const resultArea = document.getElementById('result-area');
+                let html = '<div class="accordion-container">';
+                
+                for(const [userId, userData] of Object.entries(data)) {
+                    html += `
+                        <div class="user-accordion-item">
+                            <div class="user-accordion-header" onclick="toggleAccordion(this)">
+                                <span>👤 <strong>${userId}</strong></span>
+                                <span class="icon-arrow">▼</span>
+                            </div>
+                            <div class="user-accordion-body hidden">
+                                <div class="firebase-view">${createTreeView(userData, 0)}</div>
+                            </div>
+                        </div>
+                    `;
                 }
-                html += '</tbody></table></div>';
-                document.getElementById('result-area').innerHTML = html;
+                html += '</div>';
+                resultArea.innerHTML = html;
             }
+
+            // [추가됨] 아코디언 토글 기능 (자동 닫기)
+            window.toggleAccordion = function(header) {
+                const currentBody = header.nextElementSibling;
+                const isHidden = currentBody.classList.contains('hidden');
+
+                // 모든 아이템 닫기
+                const allHeaders = document.querySelectorAll('.user-accordion-header');
+                const allBodies = document.querySelectorAll('.user-accordion-body');
+                
+                allHeaders.forEach(h => h.classList.remove('active-header'));
+                allBodies.forEach(b => b.classList.add('hidden'));
+
+                // 선택한 아이템 열기
+                if (isHidden) {
+                    header.classList.add('active-header');
+                    currentBody.classList.remove('hidden');
+                }
+            };
 
             function createTreeView(data, depth) {
                 let html = '';
@@ -644,4 +669,3 @@
     </script>
 </body>
 </html>
-
