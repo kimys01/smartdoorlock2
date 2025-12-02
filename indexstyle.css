@@ -1,51 +1,44 @@
 @charset "UTF-8";
 
 /* =========================================
-   0. CSS 변수 설정 (유지보수 및 계산 용이성)
+   0. CSS 변수 설정
    ========================================= */
 :root {
     color-scheme: light !important;
     --main-gradient: linear-gradient(135deg, #71b7e6, #9b59b6);
-    --header-height: 70px;         /* PC 기준 헤더 높이 */
-    --mobile-header-height: 110px; /* 모바일 기준 헤더 높이 */
+    --header-height: 70px;
+    --mobile-header-height: 110px;
 }
 
 /* =========================================
    1. 기본 설정 (Global Reset & Body)
    ========================================= */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Poppins', sans-serif;
-    color: #333;
+    margin: 0; padding: 0; box-sizing: border-box;
+    font-family: 'Poppins', sans-serif; color: #333;
 }
 
 body {
     width: 100%;
-    /* 모바일 브라우저 주소창 대응 (100vh 대신 100dvh 사용) */
     height: 100vh;
-    height: 100dvh;
-
+    height: 100dvh; /* 모바일 대응 */
     background-color: #71b7e6 !important;
     background-image: var(--main-gradient) !important;
-    
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-
     padding-top: var(--header-height);
-    overflow: hidden; /* 메인 스크롤 방지 */
+    overflow: hidden;
 }
 
-/* 화면 숨김 유틸리티 */
+/* 유틸리티: 화면 숨김 */
 .hidden {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
 }
 
-/* 스크롤바 커스텀 */
+/* 스크롤바 디자인 */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: #bbb; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #999; }
@@ -55,28 +48,19 @@ body {
    2. 상단 헤더 (Header)
    ========================================= */
 #header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: var(--header-height);
-    padding: 0 30px;
+    position: fixed; top: 0; left: 0; width: 100%;
+    height: var(--header-height); padding: 0 30px;
     background-color: #fff !important;
     box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    display: flex; justify-content: space-between; align-items: center;
     z-index: 1000;
 }
-
 #header h1 {
     font-size: 24px; margin: 0; cursor: pointer; font-weight: 600;
     background: var(--main-gradient); -webkit-background-clip: text; color: transparent;
     white-space: nowrap;
 }
-
 #header .button-group { display: flex; }
-
 #header button {
     padding: 10px 20px; border: none; background: #f8f9fa; cursor: pointer;
     transition: 0.3s; font-size: 14px; white-space: nowrap;
@@ -85,7 +69,7 @@ body {
 #header button:disabled { color: #aaa; cursor: not-allowed; }
 
 /* =========================================
-   3. 로그인 화면 (Login Container)
+   3. 로그인 화면
    ========================================= */
 #login-container {
     width: 90%; max-width: 400px; background: #fff; padding: 40px; border-radius: 10px;
@@ -102,52 +86,61 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 }
 
 /* =========================================
-   4. 메인 화면 (Main Content) - [수정됨]
+   4. 메인 화면 (Main Content) - [핵심 수정 구간]
    ========================================= */
 #main-content {
     display: flex;
     padding: 10px;
     gap: 20px;
     width: 100%;
-    /* 헤더 제외 나머지 높이 전체 사용 */
     height: calc(100vh - var(--header-height));
     height: calc(100dvh - var(--header-height));
     align-items: stretch; /* 자식 요소 높이 강제 일치 */
 }
 
+/* 사이드바 설정 */
 #sidebar {
-    width: 300px; /* 사이드바 너비 */
+    width: 300px;
     min-width: 250px;
     display: flex;
     flex-direction: column; /* 세로 배치 */
     gap: 15px;
-    height: 100%; /* 부모 높이 100% 채움 */
+    height: 100%; /* 부모 높이 100% 사용 */
 }
 
-/* 사이드바 내부 박스들 (User List, User Info) */
-#userList, #userInfo {
+/* User List (관리자용) */
+#userList {
     background: #fff;
     padding: 15px;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    
+    /* 중요: 리스트는 필요한 만큼만 공간 차지하거나 최대 50%까지만 커짐 */
+    flex: 0 1 auto; 
+    max-height: 50%; 
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
 }
+/* 자바스크립트로 .hidden 클래스가 붙으면 display: none이 되어 사라짐 -> 공간 0이 됨 */
 
-#userList {
-    /* 목록 영역: 전체 높이의 약 40% 정도 차지 (필요시 flex 값 조절) */
-    flex: 0.7; 
-    overflow-y: auto;
-    min-height: 150px;
-}
-
-/* [핵심 수정] User Info가 남은 공간을 끝까지 채우도록 설정 */
+/* User Info (사용자 정보) - [여기가 핵심] */
 #userInfo {
-    /* 기존 max-height 삭제됨 */
-    flex: 1;          /* 남은 공간 모두 차지 */
-    height: 100%;     /* 부모 내에서 꽉 차게 */
-    min-height: 0;    /* Flexbox 스크롤 버그 방지 */
-    overflow: hidden; /* 내부 스크롤은 #infoArea에서 처리 */
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+
+    /* [중요] flex: 1 설정으로 남은 공간을 무조건 꽉 채움 */
+    /* 관리자 모드: UserList 제외한 나머지 공간 채움 */
+    /* 사용자 모드: UserList가 없으므로 전체 공간(100%) 채움 */
+    flex: 1; 
+    
+    height: auto; 
+    min-height: 0; /* 내부 스크롤 버그 방지 */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 /* User Info 헤더 */
@@ -164,23 +157,23 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 /* User Info 내용 스크롤 영역 */
 #infoArea {
     flex: 1;          /* 남은 공간 차지 */
-    overflow-y: auto; /* 내용 넘치면 스크롤 */
+    overflow-y: auto; /* 내용이 많을 때만 스크롤 */
     display: flex; flex-direction: column;
 }
 
 /* 맵 영역 */
 #mapArea {
-    flex-grow: 1; /* 가로 공간 차지 */
+    flex-grow: 1;
     background: #fff;
     padding: 15px;
     border-radius: 8px;
     display: flex;
     flex-direction: column;
-    height: 100%; /* 세로 공간 100% 차지 */
+    height: 100%;
 }
 #map { width: 100%; flex-grow: 1; border-radius: 4px; }
 
-/* 리스트 아이템 스타일 */
+/* 리스트 스타일 */
 .user { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; }
 .user:hover { background: #f0f0f0; }
 .log-list { overflow-y: auto; flex: 1; min-height: 0; }
@@ -193,9 +186,9 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 .filter-btn.active { background: #e2e8f0; font-weight: bold; border-color: #adb5bd; }
 
 /* =========================================
-   5. 로그 상세 화면 (Log Content)
+   5. 로그 & DB 화면 (나머지는 동일)
    ========================================= */
-#log-content {
+#log-content, #db-content {
     width: 100%;
     height: calc(100vh - var(--header-height));
     height: calc(100dvh - var(--header-height));
@@ -207,42 +200,22 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
     pointer-events: auto; isolation: isolate;
 }
 
-.log-header {
-    background: #fff; padding: 15px; border-radius: 8px; flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-
-.log-tab-buttons {
-    display: flex; width: 100%; background: #fff; border-radius: 8px; overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05); flex-shrink: 0;
-}
-.log-tab-btn {
-    flex: 1; padding: 15px; border: none; background: transparent; font-size: 16px; font-weight: 500;
-    cursor: pointer; border-bottom: 3px solid transparent; transition: 0.3s;
-}
-.log-tab-btn.active {
-    color: #71b7e6; font-weight: bold; border-bottom: 3px solid #71b7e6; background: #f8f9fa;
-}
-
+/* 로그 탭/컨테이너 스타일 */
+.log-header { background: #fff; padding: 15px; border-radius: 8px; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.log-tab-buttons { display: flex; width: 100%; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); flex-shrink: 0; }
+.log-tab-btn { flex: 1; padding: 15px; border: none; background: transparent; font-size: 16px; font-weight: 500; cursor: pointer; border-bottom: 3px solid transparent; transition: 0.3s; }
+.log-tab-btn.active { color: #71b7e6; font-weight: bold; border-bottom: 3px solid #71b7e6; background: #f8f9fa; }
 .log-container { flex-grow: 1; position: relative; overflow: hidden; }
-.log-section {
-    display: none; flex-direction: column; height: 100%;
-    background: #f1f3f5; padding: 10px; border-radius: 8px;
-}
+.log-section { display: none; flex-direction: column; height: 100%; background: #f1f3f5; padding: 10px; border-radius: 8px; }
 .log-section.active-tab-content { display: flex; }
 .log-entries { flex-grow: 1; overflow-y: auto; padding-right: 5px; }
 
-/* 로그 카드 스타일 */
-.log-card {
-    background: white; border-radius: 8px; padding: 12px 15px; margin-bottom: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid #ccc;
-    display: flex; flex-direction: column; gap: 6px; transition: transform 0.2s;
-}
+/* 로그 카드 */
+.log-card { background: white; border-radius: 8px; padding: 12px 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid #ccc; display: flex; flex-direction: column; gap: 6px; transition: transform 0.2s; }
 .log-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
 .log-card.status-open { border-left-color: #007bff; }
 .log-card.status-close { border-left-color: #dc3545; }
 .log-card.status-app { border-left-color: #28a745; }
-
 .log-header-row { display: flex; justify-content: space-between; font-size: 12px; color: #888; }
 .log-body-row { display: flex; align-items: center; justify-content: space-between; font-size: 15px; }
 .badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; margin-right: 5px; }
@@ -253,33 +226,15 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 .text-red { color: #dc3545; }
 .log-detail-box { font-size: 13px; color: #555; background: #f8f9fa; padding: 8px; border-radius: 4px; margin-top: 5px; }
 
-/* =========================================
-   6. DB 조회 화면 (DB Content)
-   ========================================= */
-#db-content {
-    width: 100%;
-    height: calc(100vh - var(--header-height));
-    height: calc(100dvh - var(--header-height));
-    padding: 20px;
-    display: flex; flex-direction: column;
-    position: fixed; top: var(--header-height); left: 0;
-    z-index: 3000;
-    background: var(--main-gradient);
-    pointer-events: auto; isolation: isolate;
-}
-
-.container {
-    max-width: 1200px; width: 100%; margin: 0 auto; background: #fff; padding: 20px;
-    border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    display: flex; flex-direction: column; height: 100%;
-}
+/* DB 조회 화면 */
+.container { max-width: 1200px; width: 100%; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-direction: column; height: 100%; }
 .search-container { display: flex; gap: 10px; margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; flex-wrap: wrap; }
 .search-container input { flex: 1; min-width: 200px; }
 .btn-search { background: var(--main-gradient); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
 .btn-reset { background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
 #result-area { flex-grow: 1; overflow: auto; border: 1px solid #eee; padding: 10px; }
 
-/* 아코디언 & Tree View 스타일 */
+/* 아코디언 & Tree View */
 .user-accordion-item { border: 1px solid #ddd; margin-bottom: 8px; border-radius: 8px; overflow: hidden; background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 .user-accordion-header { background-color: #f8f9fa; padding: 15px; cursor: pointer; font-weight: 600; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s; }
 .user-accordion-header:hover { background-color: #e2e6ea; }
@@ -287,39 +242,20 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 .user-accordion-body { padding: 15px; background-color: #fff; overflow-x: auto; animation: slideDown 0.3s ease-out; }
 .icon-arrow { transition: transform 0.3s; font-size: 12px; }
 .active-header .icon-arrow { transform: rotate(180deg); }
-
 .fv-item { margin: 2px 0; }
 .fv-key { color: #000080; font-weight: bold; cursor: pointer; margin-right: 5px; }
 .fv-string { color: #a31515; } .fv-number { color: #098658; } .fv-boolean { color: #0000ff; }
 .fv-children { margin-left: 20px; border-left: 1px solid #eee; padding-left: 5px; display: block; }
 .fv-hidden { display: none; }
-
-.btn-edit-mini, .btn-delete-mini {
-    border: none; background: none; cursor: pointer; font-size: 16px; color: #adb5bd; margin-left: 5px;
-    opacity: 0; visibility: hidden; transition: 0.2s;
-}
-.fv-item:hover > .fv-item-content .btn-edit-mini,
-.fv-item:hover > .fv-item-content .btn-delete-mini,
-.mobile-active .btn-edit-mini, .mobile-active .btn-delete-mini {
-    opacity: 1; visibility: visible;
-}
+.btn-edit-mini, .btn-delete-mini { border: none; background: none; cursor: pointer; font-size: 16px; color: #adb5bd; margin-left: 5px; opacity: 0; visibility: hidden; transition: 0.2s; }
+.fv-item:hover > .fv-item-content .btn-edit-mini, .fv-item:hover > .fv-item-content .btn-delete-mini, .mobile-active .btn-edit-mini, .mobile-active .btn-delete-mini { opacity: 1; visibility: visible; }
 .btn-edit-mini:hover { color: #007bff; transform: scale(1.2); }
 .btn-delete-mini:hover { color: #dc3545; transform: scale(1.2); }
 
-/* =========================================
-   7. 모달 & 유틸 & 반응형
-   ========================================= */
-#custom-modal, #logout-confirm-modal {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 3000;
-}
+/* 모달 */
+#custom-modal, #logout-confirm-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 3000; }
 .modal-content { background: #fff; padding: 30px; border-radius: 10px; text-align: center; min-width: 300px; }
-
-#logout-confirm-modal button {
-    border: none !important; outline: none; padding: 10px 0; border-radius: 8px;
-    font-size: 16px; font-weight: 500; color: white; cursor: pointer; transition: 0.2s;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 45%; margin: 0 5px;
-}
+#logout-confirm-modal button { border: none !important; outline: none; padding: 10px 0; border-radius: 8px; font-size: 16px; font-weight: 500; color: white; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 45%; margin: 0 5px; }
 #confirmLogoutBtn { background: var(--main-gradient); }
 #cancelLogoutBtn { background: #6c757d !important; }
 #logout-confirm-modal button:hover { transform: translateY(-2px); opacity: 0.9; }
@@ -331,15 +267,10 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
     body { padding-top: var(--mobile-header-height); }
     #main-content { flex-direction: column; height: auto; }
     #sidebar, #mapArea { width: 100%; height: 400px; }
-    
-    #log-content, #db-content {
-        top: var(--mobile-header-height);
-        height: calc(100vh - var(--mobile-header-height));
-        height: calc(100dvh - var(--mobile-header-height));
-    }
+    #log-content, #db-content { top: var(--mobile-header-height); height: calc(100vh - var(--mobile-header-height)); height: calc(100dvh - var(--mobile-header-height)); }
 }
 
-/* 애니메이션 (이전에 끊겼던 부분 완성) */
+/* 애니메이션 */
 @keyframes slideDown {
     from { opacity: 0; transform: translateY(-10px); max-height: 0; }
     to { opacity: 1; transform: translateY(0); max-height: 1000px; }
