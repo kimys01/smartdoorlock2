@@ -83,7 +83,7 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
     display: flex;                  
     align-items: center;            /* 수직 중앙 정렬 */
     margin-bottom: 10px;            
-    padding-bottom: 10px;            
+    padding-bottom: 10px;           
     border-bottom: 1px solid #eee;
     gap: 10px;                      /* 텍스트와 버튼 사이 간격 10px */
 }
@@ -202,7 +202,65 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 .btn-reset { background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
 #result-area { flex-grow: 1; overflow: auto; border: 1px solid #eee; padding: 10px; }
 
-/* Firebase Tree View */
+/* -------------------------------------------
+   [추가됨] DB 조회 아코디언 리스트 스타일
+   ------------------------------------------- */
+.user-accordion-item {
+    border: 1px solid #ddd;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.user-accordion-header {
+    background-color: #f8f9fa;
+    padding: 15px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.user-accordion-header:hover {
+    background-color: #e2e6ea;
+}
+
+/* 활성화된(펼쳐진) 헤더 스타일 */
+.active-header {
+    background-color: #e7f3ff;
+    color: #0056b3;
+    border-bottom: 1px solid #dae0e5;
+}
+
+.user-accordion-body {
+    padding: 15px;
+    background-color: #fff;
+    overflow-x: auto; /* 내용이 길면 가로 스크롤 */
+    animation: slideDown 0.3s ease-out;
+}
+
+.icon-arrow {
+    transition: transform 0.3s;
+    font-size: 12px;
+}
+
+.active-header .icon-arrow {
+    transform: rotate(180deg);
+}
+
+/* 펼쳐질 때 애니메이션 */
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* -------------------------------------------
+   Firebase Tree View (JSON 형태 뷰)
+   ------------------------------------------- */
 .fv-item { margin: 2px 0; }
 .fv-key { color: #000080; font-weight: bold; cursor: pointer; margin-right: 5px; }
 .fv-string { color: #a31515; } .fv-number { color: #098658; } .fv-boolean { color: #0000ff; }
@@ -229,18 +287,16 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 }
 .modal-content { background: #fff; padding: 30px; border-radius: 10px; text-align: center; min-width: 300px; }
 
-/* ----------------------------------------------------
-   [추가됨] 로그아웃 모달 버튼 스타일
-   ---------------------------------------------------- */
+/* 로그아웃 모달 버튼 스타일 */
 #logout-confirm-modal button {
-    border: none !important;       /* 투박한 기본 테두리 제거 */
-    outline: none;                 
-    padding: 10px 0;               
-    border-radius: 8px;            /* 둥근 모서리 */
-    font-size: 16px;               
+    border: none !important;
+    outline: none;                  
+    padding: 10px 0;                
+    border-radius: 8px;            
+    font-size: 16px;                
     font-weight: 500;              
     color: white;                  
-    cursor: pointer;               
+    cursor: pointer;                
     transition: 0.2s;              
     box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
 }
@@ -263,7 +319,6 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 #logout-confirm-modal button:active {
     transform: translateY(0);      
 }
-
 
 /* 모바일 반응형 */
 @media (max-width: 768px) {
