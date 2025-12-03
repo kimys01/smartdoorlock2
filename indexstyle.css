@@ -1,37 +1,27 @@
 @charset "UTF-8";
 
-/* =========================================
-   1. 기본 설정 (Global Reset & Body)
-   ========================================= */
 :root { color-scheme: light !important; }
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; color: #333; }
 
 body { 
-    /* 1. 높이 설정 */
     width: 100%;
     height: 100vh; 
-
-    /* 2. 배경 설정 */
     background-color: #71b7e6 !important; 
     background-image: linear-gradient(135deg, #71b7e6, #9b59b6) !important;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-
     padding-top: 70px; 
     overflow: hidden; 
 }
 
-/* 화면 숨김 처리 유틸리티 */
 .hidden { 
     display: none !important; 
     visibility: hidden !important;
     opacity: 0 !important;
 }
 
-/* =========================================
-   2. 상단 헤더 (Header)
-   ========================================= */
+/* ===== Header ===== */
 #header {
     position: fixed; top: 0; left: 0; width: 100%; height: 70px; padding: 0 30px;
     background-color: #fff !important; box-shadow: 0 2px 4px rgba(0,0,0,0.08);
@@ -49,9 +39,7 @@ body {
 #header button:hover:not(:disabled) { background: linear-gradient(135deg, #71b7e6, #9b59b6); color: white; }
 #header button:disabled { color: #aaa; cursor: not-allowed; }
 
-/* =========================================
-   3. 로그인 화면 (Login Container)
-   ========================================= */
+/* ===== Login ===== */
 #login-container {
     width: 90%; max-width: 400px; background: #fff; padding: 40px; border-radius: 10px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.2); text-align: center; 
@@ -63,52 +51,49 @@ body {
 input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
 #login-container button { width: 100%; padding: 12px; background: linear-gradient(135deg, #71b7e6, #9b59b6); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 18px; }
 
-/* =========================================
-   4. 메인 화면 (Main Content)
-   ========================================= */
+/* ===== Main Content ===== */
 #main-content { 
     display: flex; 
     padding: 10px; 
     gap: 20px; 
     width: 100%; 
-    height: calc(100vh - 70px); /* 전체 높이에서 헤더 뺌 */
-    overflow: hidden; /* 메인 화면 밖으로 나가는 것 차단 */
+    height: calc(100vh - 70px);
+    overflow: hidden;
 }
 
+/* --- sidebar & user list / info --- */
 #sidebar { 
     width: 250px; 
     min-width: 200px; 
     display: flex; 
     flex-direction: column; 
     gap: 15px; 
-    height: 100%; /* 높이를 꽉 채움 */
-    min-height: 150px; /* [중요] 내부 스크롤을 위한 필수 설정 */
+    height: 100%;
+    min-height: 0;           /* 여기: 숫자만 있던 것 → 0 로 정리 */
 }
 
-/* 유저 리스트 (있을 경우) */
-#userList { 
-    flex-grow: 1; 
-    overflow-y: auto; 
-    background: #fff; 
-    padding: 15px; 
-    border-radius: 8px; 
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    min-height: 0;
-}
-
-/* [수정 포인트] User Info 영역 */
+/* User Info (위쪽 박스) */
 #userInfo { 
-    flex: 1;               /* 남은 공간 모두 차지 */
+    flex: 0 0 auto;          /* 내용만큼만 차지하도록 */
     display: flex; 
     flex-direction: column; 
     background: #fff; 
     padding: 15px; 
     border-radius: 8px; 
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    
-    /* [핵심 수정] 화면 밖으로 나가는 것 방지 & 스크롤 활성화 */
     overflow: hidden; 
     min-height: 0; 
+}
+
+/* User List (아래쪽 리스트, 노란 박스 있는 영역이면 여기) */
+#userList { 
+    flex: 1 1 auto;          /* 남은 공간 대부분 차지 */
+    min-height: 120px;       /* 최소 한 칸 보이게 확보 */
+    overflow-y: auto; 
+    background: #fff; 
+    padding: 15px; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 /* User Info 헤더 */
@@ -119,7 +104,7 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
     padding-bottom: 10px;            
     border-bottom: 1px solid #eee;
     gap: 10px;   
-    flex-shrink: 0; /* 헤더는 스크롤과 무관하게 고정 */
+    flex-shrink: 0;
 }
 .info-header h2 { 
     margin: 0; 
@@ -132,20 +117,32 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
     background: transparent; border: none; font-size: 18px; cursor: pointer; color: #888; padding: 5px; line-height: 1;
 }
 
-/* [핵심 수정] 내부 컨텐츠 영역 스크롤 설정 */
+/* User Info 내부 컨텐츠 */
 #infoArea { 
     flex: 1; 
     display: flex; 
     flex-direction: column; 
     overflow: hidden; 
-    min-height: 0; /* 자식이 스크롤 되도록 허용 */
+    min-height: 0;
 }
 
-/* 실제 로그 리스트가 스크롤 되는 부분 */
+/* 실제 스크롤 되는 로그 리스트 */
 .log-list { 
-    flex: 1;
-    overflow-y: auto; /* 여기에 스크롤바 생성 */
-    padding-right: 5px; /* 스크롤바와 내용 겹침 방지 */
+    flex: 1 1 auto;
+    min-height: 120px;       /* 한 줄 이상 보이게 */
+    max-height: 100%;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* 스크롤바 커스터마이즈 (너무 짧지 않게) */
+.log-list::-webkit-scrollbar {
+    width: 8px;
+}
+.log-list::-webkit-scrollbar-thumb {
+    background: #bbb;
+    border-radius: 4px;
+    min-height: 30px;
 }
 
 /* 맵 영역 */
@@ -161,7 +158,7 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 }
 #map { width: 100%; flex-grow: 1; border-radius: 4px; }
 
-/* 리스트 공통 스타일 */
+/* 리스트 공통 */
 .user { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; }
 .user:hover { background: #f0f0f0; }
 
@@ -173,9 +170,7 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 .filter-btn { flex: 1; padding: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 4px; }
 .filter-btn.active { background: #e2e8f0; font-weight: bold; border-color: #adb5bd; }
 
-/* =========================================
-   5. 로그 상세 화면 (Log Content)
-   ========================================= */
+/* ===== Log Content ===== */
 #log-content {
     width: 100%;
     height: calc(100vh - 70px);
@@ -237,9 +232,7 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 .text-red { color: #dc3545; }
 .log-detail-box { font-size: 13px; color: #555; background: #f8f9fa; padding: 8px; border-radius: 4px; margin-top: 5px; }
 
-/* =========================================
-   6. DB 조회 화면 (DB Content)
-   ========================================= */
+/* ===== DB Content ===== */
 #db-content {
     width: 100%;
     height: calc(100vh - 70px);
@@ -266,7 +259,7 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 .btn-reset { background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
 #result-area { flex-grow: 1; overflow: auto; border: 1px solid #eee; padding: 10px; }
 
-/* DB 조회 아코디언 리스트 스타일 */
+/* DB accordion */
 .user-accordion-item {
     border: 1px solid #ddd;
     margin-bottom: 8px;
@@ -336,16 +329,13 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
 .btn-edit-mini:hover { color: #007bff; transform: scale(1.2); }
 .btn-delete-mini:hover { color: #dc3545; transform: scale(1.2); }
 
-/* =========================================
-   7. 모달 & 유틸 & 반응형
-   ========================================= */
+/* ===== Modal ===== */
 #custom-modal, #logout-confirm-modal {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5);
     display: flex; justify-content: center; align-items: center; z-index: 3000;
 }
 .modal-content { background: #fff; padding: 30px; border-radius: 10px; text-align: center; min-width: 300px; }
 
-/* 로그아웃 모달 */
 #logout-confirm-modal button {
     border: none !important;
     outline: none;                      
@@ -375,7 +365,7 @@ input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; 
     transform: translateY(0);       
 }
 
-/* 모바일 반응형 */
+/* ===== Responsive ===== */
 @media (max-width: 768px) {
     #header { flex-direction: column; height: auto; padding: 10px; }
     body { padding-top: 110px; }
