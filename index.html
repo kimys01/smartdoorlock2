@@ -115,573 +115,606 @@
         </div>
     </div>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log("App initialized.");
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("App initialized.");
 
-        // --- Global Variables ---
-        let DOORLOCK_LAT = 37.566826;   
-        let DOORLOCK_LNG = 126.9786567;
-        let MAX_DISTANCE_KM = 3.0;
-        let database, map, doorlockMarker, currentPolyline, selectedLogMarker, selectedUserId;
-        let markers = [], zoneCircles = [], currentUserLocationLogs = [];
+    // --- Global Variables ---
+    let DOORLOCK_LAT = 37.566826;   
+    let DOORLOCK_LNG = 126.9786567;
+    let MAX_DISTANCE_KM = 3.0;
+    let database, map, doorlockMarker, currentPolyline, selectedLogMarker, selectedUserId;
+    let markers = [], zoneCircles = [], currentUserLocationLogs = [];
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
-            authDomain: "smartdoorlock-b4636.web.app", 
-            databaseURL: "https://smartdoorlock-b4636-default-rtdb.firebaseio.com",
-            projectId: "smartdoorlock-b4636",
-            storageBucket: "smartdoorlock-b4636.firebasestorage.app",
-            messagingSenderId: "104489505270",
-            appId: "1:104489505270:web:eb385c8f9c5dfd512077d7",
-            measurementId: "G-4TH9MB9WPM"
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
+        authDomain: "smartdoorlock-b4636.web.app", 
+        databaseURL: "https://smartdoorlock-b4636-default-rtdb.firebaseio.com",
+        projectId: "smartdoorlock-b4636",
+        storageBucket: "smartdoorlock-b4636.firebasestorage.app",
+        messagingSenderId: "104489505270",
+        appId: "1:104489505270:web:eb385c8f9c5dfd512077d7",
+        measurementId: "G-4TH9MB9WPM"
+    };
 
-        try {
-            if (typeof firebase === 'undefined' || !firebase.initializeApp) throw new Error("Firebase Load Fail");
-            firebase.initializeApp(firebaseConfig);
-            database = firebase.database();
-        } catch (e) {
-            alert("Firebase 초기화 실패. 새로고침 하세요.");
-            return;
-        }
+    try {
+        if (typeof firebase === 'undefined' || !firebase.initializeApp) throw new Error("Firebase Load Fail");
+        firebase.initializeApp(firebaseConfig);
+        database = firebase.database();
+    } catch (e) {
+        alert("Firebase 초기화 실패. 새로고침 하세요.");
+        return;
+    }
 
-        // --- Helper Functions ---
-        function formatTimestamp(ts) {
-            if (!ts) return '시간 없음';
-            const date = new Date(ts);
-            if (isNaN(date.getTime())) return ts; 
-            return date.toLocaleString('ko-KR', {
-                year: 'numeric', month: '2-digit', day: '2-digit',
-                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
-            });
-        }
+    // --- Helper Functions ---
+    function formatTimestamp(ts) {
+        if (!ts) return '시간 없음';
+        const date = new Date(ts);
+        if (isNaN(date.getTime())) return ts; 
+        return date.toLocaleString('ko-KR', {
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+        });
+    }
 
-        function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-            const R = 6371; 
-            const dLat = (lat2-lat1) * (Math.PI/180);
-            const dLon = (lon2-lon1) * (Math.PI/180); 
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180)) * Math.cos(lat2*(Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-        }
+    function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+        const R = 6371; 
+        const dLat = (lat2-lat1) * (Math.PI/180);
+        const dLon = (lon2-lon1) * (Math.PI/180); 
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1*(Math.PI/180)) * Math.cos(lat2*(Math.PI/180)) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2); 
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    }
 
-        function customAlert(msg) {
-            document.getElementById('modal-message').textContent = msg;
-            document.getElementById('custom-modal').style.display = 'flex';
-        }
+    function customAlert(msg) {
+        document.getElementById('modal-message').textContent = msg;
+        document.getElementById('custom-modal').style.display = 'flex';
+    }
 
-        // --- Core Logic ---
-        function loadUserDoorlockAndInit(userId, callback) {
-            database.ref('users/' + userId).once('value').then((snap) => {
-                const user = snap.val();
-                if (!user || !user.my_doorlocks) throw new Error("연결된 도어락 없음");
-                const doorlockKeys = Object.keys(user.my_doorlocks);
-                const doorlockId = doorlockKeys[0]; 
-                return database.ref('doorlocks/' + doorlockId).once('value');
-            }).then((snap) => {
-                const dlData = snap.val();
-                if (dlData && dlData.location) {
-                    DOORLOCK_LAT = parseFloat(dlData.location.latitude);
-                    DOORLOCK_LNG = parseFloat(dlData.location.longitude);
-                    if (map) {
-                        map.setCenter(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
-                        drawDoorlockZones();
-                    }
+    // --- Core Logic ---
+    function loadUserDoorlockAndInit(userId, callback) {
+        database.ref('users/' + userId).once('value').then((snap) => {
+            const user = snap.val();
+            if (!user || !user.my_doorlocks) throw new Error("연결된 도어락 없음");
+            const doorlockKeys = Object.keys(user.my_doorlocks);
+            const doorlockId = doorlockKeys[0]; 
+            return database.ref('doorlocks/' + doorlockId).once('value');
+        }).then((snap) => {
+            const dlData = snap.val();
+            if (dlData && dlData.location) {
+                DOORLOCK_LAT = parseFloat(dlData.location.latitude);
+                DOORLOCK_LNG = parseFloat(dlData.location.longitude);
+                if (map) {
+                    map.setCenter(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
+                    drawDoorlockZones();
                 }
-                if (callback) callback();
-            }).catch((err) => {
-                console.error(err);
-                if (callback) callback(); 
-            });
-        }
+            }
+            if (callback) callback();
+        }).catch((err) => {
+            console.error(err);
+            if (callback) callback(); 
+        });
+    }
 
-        // --- Load Logs Logic ---
-        function loadAllLogs(userId) {
-            const dlContainer = document.querySelector('#doorLockLogs .log-entries');
-            const appContainer = document.querySelector('#appLogs .log-entries');
+    // --- Load Logs Logic ---
+    function loadAllLogs(userId) {
+        const dlContainer = document.querySelector('#doorLockLogs .log-entries');
+        const appContainer = document.querySelector('#appLogs .log-entries');
+        
+        document.getElementById('logUserTitle').textContent = `${userId}의 로그 기록`;
+        
+        dlContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">도어락 로그 로딩 중...</div>';
+        appContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">앱 로그 로딩 중...</div>';
+
+        database.ref('users/' + userId).once('value').then((userSnap) => {
+            const user = userSnap.val();
             
-            // [수정됨] 텍스트 변경: "전체 로그 기록" -> "의 로그 기록"
-            document.getElementById('logUserTitle').textContent = `${userId}의 로그 기록`;
-            
-            dlContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">도어락 로그 로딩 중...</div>';
-            appContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">앱 로그 로딩 중...</div>';
-
-            database.ref('users/' + userId).once('value').then((userSnap) => {
-                const user = userSnap.val();
-                
-                // 1. APP LOGS
-                database.ref(`users/${userId}/app_logs`).once('value').then(snap => {
-                    if (!snap.exists()) {
-                        appContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">앱 사용 기록이 없습니다.</div>';
-                    } else {
-                        appContainer.innerHTML = '';
-                        const logs = [];
-                        snap.forEach(childSnapshot => { logs.push(childSnapshot.val()); });
-                        logs.sort((a, b) => {
-                            const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-                            const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-                            return timeB - timeA; 
-                        });
-
-                        logs.forEach(log => {
-                            const div = document.createElement('div');
-                            div.className = 'log-card status-app'; 
-                            let title = "앱 활동"; let detail = "";
-                            if (log.message) title = log.message; 
-                            else if (log.event) title = log.event;
-                            else if (log.new_auth) { title = "인증 방식 변경"; detail = `값: ${log.new_auth}`; }
-                            else if (log.detailSettings) { title = "설정 변경"; detail = JSON.stringify(log.detailSettings).replace(/["{}]/g, "").replace(/,/g, ", "); } 
-                            else { detail = JSON.stringify(log).replace(/["{}]/g, ""); }
-
-                            div.style.backgroundColor = "#fff"; div.style.marginBottom = "10px";
-                            div.style.padding = "10px"; div.style.borderRadius = "8px";
-                            div.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)"; div.style.borderLeft = "5px solid #28a745"; 
-
-                            div.innerHTML = `
-                                <div class="log-header-row"><span>🕒 ${formatTimestamp(log.timestamp)}</span><span>📱 App</span></div>
-                                <div class="log-body-row"><span style="font-weight:600; color:#333; font-size:15px;">${title}</span></div>
-                                ${detail ? `<div class="log-detail-box">${detail}</div>` : ''}
-                            `;
-                            appContainer.appendChild(div);
-                        });
-                    }
-                });
-
-                // 2. DOORLOCK LOGS
-                let doorlockIds = [];
-                if (user && user.my_doorlocks) { doorlockIds = Object.keys(user.my_doorlocks); }
-
-                if (doorlockIds.length === 0) {
-                    dlContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#dc3545;">연결된 도어락이 없습니다.</div>';
+            // 1. APP LOGS
+            database.ref(`users/${userId}/app_logs`).once('value').then(snap => {
+                if (!snap.exists()) {
+                    appContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">앱 사용 기록이 없습니다.</div>';
                 } else {
-                    const promises = doorlockIds.map(id => database.ref(`doorlocks/${id}/logs`).once('value'));
-                    Promise.all(promises).then(snapshots => {
-                        let allLogs = [];
-                        snapshots.forEach(snap => { 
-                            if (snap.exists()) { 
-                                snap.forEach(c => { 
-                                    const val = c.val();
-                                    allLogs.push(val); 
-                                }); 
-                            } 
-                        });
+                    appContainer.innerHTML = '';
+                    const logs = [];
+                    snap.forEach(childSnapshot => { logs.push(childSnapshot.val()); });
+                    logs.sort((a, b) => {
+                        const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+                        const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+                        return timeB - timeA; 
+                    });
 
-                        if (allLogs.length === 0) {
-                            dlContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">기록 없음</div>';
-                        } else {
-                            dlContainer.innerHTML = '';
-                            allLogs.sort((a, b) => {
-                                const timeAStr = a.timestamp || a.time || a.date || a.datetime || a.created_at || 0;
-                                const timeBStr = b.timestamp || b.time || b.date || b.datetime || b.created_at || 0;
-                                const timeA = new Date(timeAStr).getTime() || 0;
-                                const timeB = new Date(timeBStr).getTime() || 0;
-                                return timeB - timeA;
-                            });
+                    logs.forEach(log => {
+                        const div = document.createElement('div');
+                        div.className = 'log-card status-app'; 
+                        let title = "앱 활동"; let detail = "";
+                        if (log.message) title = log.message; 
+                        else if (log.event) title = log.event;
+                        else if (log.new_auth) { title = "인증 방식 변경"; detail = `값: ${log.new_auth}`; }
+                        else if (log.detailSettings) { title = "설정 변경"; detail = JSON.stringify(log.detailSettings).replace(/["{}]/g, "").replace(/,/g, ", "); } 
+                        else { detail = JSON.stringify(log).replace(/["{}]/g, ""); }
 
-                            allLogs.forEach(log => {
-                                const div = document.createElement('div');
-                                let who = log.user || log.userId || log.id || log.who || log.name || "알 수 없음";
-                                let timeValue = log.timestamp || log.time || log.date || log.datetime || log.created_at;
-                                let methodRawValue = log.method || log.auth || log.type || log.category || "unknown";
-                                let methodRaw = String(methodRawValue).toUpperCase(); 
-                                let methodDisp = methodRawValue; 
-                                let methodIcon = "🔑"; 
+                        div.style.backgroundColor = "#fff"; div.style.marginBottom = "10px";
+                        div.style.padding = "10px"; div.style.borderRadius = "8px";
+                        div.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)"; div.style.borderLeft = "5px solid #28a745"; 
 
-                                if (methodRaw.includes("PW") || methodRaw.includes("PASS")) { methodDisp = "비밀번호"; methodIcon = "🔢"; } 
-                                else if (methodRaw.includes("RF") || methodRaw.includes("CARD") || methodRaw.includes("TAG")) { methodDisp = "카드키"; methodIcon = "💳"; } 
-                                else if (methodRaw.includes("APP") || methodRaw.includes("BLE") || methodRaw.includes("BLUE") || methodRaw.includes("PHONE")) { methodDisp = "앱(블루투스)"; methodIcon = "📱"; } 
-                                else if (methodRaw.includes("FINGER") || methodRaw.includes("BIO")) { methodDisp = "지문"; methodIcon = "👆"; }
-
-                                let actionRawValue = log.command || log.status || log.state || log.action || log.event || log.msg || "알 수 없음";
-                                let actionRaw = String(actionRawValue).toUpperCase(); 
-                                let actionDisp = actionRawValue; 
-                                let actionIcon = "❓";
-                                let statusColor = "#333"; let statusBg = "#fff";
-
-                                if (actionRaw.includes("UNLOCK") || actionRaw.includes("OPEN") || actionRaw === "1" || actionRaw === "TRUE" || actionRaw.includes("SUCCESS")) {
-                                    actionDisp = "문 열림"; actionIcon = "🔓"; statusColor = "#007bff"; statusBg = "#e7f3ff";
-                                } 
-                                else if (actionRaw.includes("LOCK") || actionRaw.includes("CLOSE") || actionRaw === "0" || actionRaw === "FALSE") {
-                                    actionDisp = "문 잠김"; actionIcon = "🔒"; statusColor = "#dc3545"; statusBg = "#ffeef0";
-                                }
-                                else if (actionRaw.includes("WARN") || actionRaw.includes("ALERT") || actionRaw.includes("FAIL")) {
-                                    actionDisp = "경고/실패"; actionIcon = "🚨"; statusColor = "#ffc107"; statusBg = "#fff3cd";
-                                }
-
-                                div.style.backgroundColor = "#fff"; div.style.marginBottom = "12px";
-                                div.style.padding = "12px 16px"; div.style.borderRadius = "12px";
-                                div.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
-                                div.style.borderLeft = `5px solid ${statusColor}`;
-
-                                div.innerHTML = `
-                                    <div style="font-size: 12px; color: #888; margin-bottom: 8px; border-bottom: 1px solid #f0f0f0; padding-bottom: 5px;">
-                                        🕒 ${formatTimestamp(timeValue)}
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                                        <div style="display: flex; gap: 8px; align-items: center;">
-                                            <span style="background: #f5f5f5; padding: 4px 10px; border-radius: 20px; font-size: 13px; font-weight: 600; color: #444;">👤 ${who}</span>
-                                            <span style="background: #f0f7ff; padding: 4px 10px; border-radius: 20px; font-size: 13px; font-weight: 600; color: #0056b3;">${methodIcon} ${methodDisp}</span>
-                                        </div>
-                                        <div style="background: ${statusBg}; padding: 5px 12px; border-radius: 8px; font-weight: bold; font-size: 14px; color: ${statusColor}; display: flex; align-items: center; gap: 5px;">
-                                            ${actionIcon} ${actionDisp}
-                                        </div>
-                                    </div>
-                                `;
-                                dlContainer.appendChild(div);
-                            });
-                        }
+                        div.innerHTML = `
+                            <div class="log-header-row"><span>🕒 ${formatTimestamp(log.timestamp)}</span><span>📱 App</span></div>
+                            <div class="log-body-row"><span style="font-weight:600; color:#333; font-size:15px;">${title}</span></div>
+                            ${detail ? `<div class="log-detail-box">${detail}</div>` : ''}
+                        `;
+                        appContainer.appendChild(div);
                     });
                 }
             });
-        }
 
-        // --- UI Logic ---
-        window.switchLogTab = function(tabName) {
-            document.querySelectorAll('.log-tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('tab-' + tabName).classList.add('active');
-            document.querySelectorAll('.log-section').forEach(s => s.classList.remove('active-tab-content'));
-            if(tabName === 'doorlock') document.getElementById('doorLockLogs').classList.add('active-tab-content');
-            else document.getElementById('appLogs').classList.add('active-tab-content');
-        }
+            // 2. DOORLOCK LOGS
+            let doorlockIds = [];
+            if (user && user.my_doorlocks) { doorlockIds = Object.keys(user.my_doorlocks); }
 
-        // --- Map Logic ---
-        function initMap() {
-            const container = document.getElementById('map');
-            map = new kakao.maps.Map(container, { center: new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG), level: 7 });
-            drawDoorlockZones();
-            if (sessionStorage.getItem('isAdmin') === 'true') loadUserList();
-        }
+            if (doorlockIds.length === 0) {
+                dlContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#dc3545;">연결된 도어락이 없습니다.</div>';
+            } else {
+                const promises = doorlockIds.map(id => database.ref(`doorlocks/${id}/logs`).once('value'));
+                Promise.all(promises).then(snapshots => {
+                    let allLogs = [];
+                    snapshots.forEach(snap => { 
+                        if (snap.exists()) { 
+                            snap.forEach(c => { 
+                                const val = c.val();
+                                allLogs.push(val); 
+                            }); 
+                        } 
+                    });
 
-        function drawDoorlockZones() {
-            if (!map) return;
-            if (doorlockMarker) doorlockMarker.setMap(null);
-            zoneCircles.forEach(c => c.setMap(null)); zoneCircles = [];
-            const pos = new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG);
-            doorlockMarker = new kakao.maps.Marker({ position: pos, map: map, title: "도어락" });
-            [1000, 2000, 3000].forEach((r, i) => {
-                const color = i===0?'#FF0000':(i===1?'#FFA500':'#008000');
-                const circle = new kakao.maps.Circle({ center: pos, radius: r, strokeWeight: 1, strokeColor: color, strokeStyle: 'dashed', fillColor: color, fillOpacity: 0.1 });
-                circle.setMap(map); zoneCircles.push(circle);
-            });
-        }
+                    if (allLogs.length === 0) {
+                        dlContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">기록 없음</div>';
+                    } else {
+                        dlContainer.innerHTML = '';
+                        allLogs.sort((a, b) => {
+                            const timeAStr = a.timestamp || a.time || a.date || a.datetime || a.created_at || 0;
+                            const timeBStr = b.timestamp || b.time || b.date || b.datetime || b.created_at || 0;
+                            const timeA = new Date(timeAStr).getTime() || 0;
+                            const timeB = new Date(timeBStr).getTime() || 0;
+                            return timeB - timeA;
+                        });
 
-        function selectUser(userId) {
-            if (sessionStorage.getItem('isAdmin') === 'true') clearMapAndInfo();
-            selectedUserId = userId;
-            document.getElementById('logBtn').disabled = false;
-            document.getElementById('userInfo').classList.remove('hidden');
-            document.getElementById('infoArea').innerHTML = `
-                <div style="margin-bottom:10px;"><strong>ID:</strong> ${userId}</div>
-                <div class="filter-group">
-                    <button id="btnAll" class="filter-btn active">전체</button>
-                    <button id="btnRange" class="filter-btn">범위 내</button>
-                </div>
-                <div class="log-list" id="miniLogList">로딩 중...</div>
-            `;
-            document.getElementById('btnAll').onclick = () => { 
-                document.getElementById('btnAll').classList.add('active');
-                document.getElementById('btnRange').classList.remove('active');
-                renderLocationLogs(false); 
-            };
-            document.getElementById('btnRange').onclick = () => { 
-                document.getElementById('btnRange').classList.add('active');
-                document.getElementById('btnAll').classList.remove('active');
-                renderLocationLogs(true); 
-            };
-            database.ref(`users/${userId}/location_logs`).once('value').then(snap => {
-                currentUserLocationLogs = [];
-                if(snap.exists()) {
-                    snap.forEach(c => { if(c.val().latitude) currentUserLocationLogs.push(c.val()); });
-                    currentUserLocationLogs.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
-                }
-                renderLocationLogs(false);
-            });
-        }
+                        allLogs.forEach(log => {
+                            const div = document.createElement('div');
+                            let who = log.user || log.userId || log.id || log.who || log.name || "알 수 없음";
+                            let timeValue = log.timestamp || log.time || log.date || log.datetime || log.created_at;
+                            let methodRawValue = log.method || log.auth || log.type || log.category || "unknown";
+                            let methodRaw = String(methodRawValue).toUpperCase(); 
+                            let methodDisp = methodRawValue; 
+                            let methodIcon = "🔑"; 
 
-        function renderLocationLogs(filter) {
-            const listDiv = document.getElementById('miniLogList');
-            listDiv.innerHTML = '';
-            markers.forEach(m => { if(m.customOverlay) m.customOverlay.setMap(null); m.setMap(null); }); markers = [];
-            if(currentPolyline) currentPolyline.setMap(null);
-            if(currentUserLocationLogs.length === 0) { listDiv.innerHTML = '기록 없음'; return; }
-            let path = [];
-            const bounds = new kakao.maps.LatLngBounds();
-            bounds.extend(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
-            currentUserLocationLogs.forEach(pos => {
-                const lat = parseFloat(pos.latitude); const lng = parseFloat(pos.longitude);
-                const dist = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
-                if(filter && dist > MAX_DISTANCE_KM) return;
-                const div = document.createElement('div');
-                div.className = 'log-entry';
-                div.innerHTML = `${formatTimestamp(pos.timestamp)} <br> 거리: <strong>${dist.toFixed(2)}km</strong>`;
-                div.onclick = () => { map.setCenter(new kakao.maps.LatLng(lat, lng)); map.setLevel(4); };
-                listDiv.appendChild(div);
-                if(path.length < 50) { 
-                    const p = new kakao.maps.LatLng(lat, lng); path.push(p); bounds.extend(p);
-                    const dot = document.createElement('div');
-                    dot.style.width='8px'; dot.style.height='8px'; dot.style.background='blue'; dot.style.borderRadius='50%';
-                    const m = new kakao.maps.CustomOverlay({ position: p, content: dot, yAnchor: 0.5 });
-                    m.setMap(map); markers.push(m);
-                }
-            });
-            listDiv.scrollTop = 0;
-            if(path.length > 0) {
-                currentPolyline = new kakao.maps.Polyline({ path: path, strokeWeight: 3, strokeColor: '#0000FF', strokeOpacity: 0.6 });
-                currentPolyline.setMap(map); map.setBounds(bounds);
-            }
-        }
+                            if (methodRaw.includes("PW") || methodRaw.includes("PASS")) { methodDisp = "비밀번호"; methodIcon = "🔢"; } 
+                            else if (methodRaw.includes("RF") || methodRaw.includes("CARD") || methodRaw.includes("TAG")) { methodDisp = "카드키"; methodIcon = "💳"; } 
+                            else if (methodRaw.includes("APP") || methodRaw.includes("BLE") || methodRaw.includes("BLUE") || methodRaw.includes("PHONE")) { methodDisp = "앱(블루투스)"; methodIcon = "📱"; } 
+                            else if (methodRaw.includes("FINGER") || methodRaw.includes("BIO")) { methodDisp = "지문"; methodIcon = "👆"; }
 
-        function clearMapAndInfo() { markers.forEach(m => m.setMap(null)); markers = []; if(currentPolyline) currentPolyline.setMap(null); }
+                            let actionRawValue = log.command || log.status || log.state || log.action || log.event || log.msg || "알 수 없음";
+                            let actionRaw = String(actionRawValue).toUpperCase(); 
+                            let actionDisp = actionRawValue; 
+                            let actionIcon = "❓";
+                            let statusColor = "#333"; let statusBg = "#fff";
 
-        // --- Admin & Navigation ---
-        function loadUserList() {
-            const list = document.getElementById('userList');
-            database.ref('users').once('value').then(snap => {
-                list.innerHTML = '<h2>User List</h2>';
-                snap.forEach(c => {
-                    const div = document.createElement('div');
-                    div.className = 'user'; div.textContent = c.key;
-                    div.onclick = () => loadUserDoorlockAndInit(c.key, () => selectUser(c.key));
-                    list.appendChild(div);
+                            if (actionRaw.includes("UNLOCK") || actionRaw.includes("OPEN") || actionRaw === "1" || actionRaw === "TRUE" || actionRaw.includes("SUCCESS")) {
+                                actionDisp = "문 열림"; actionIcon = "🔓"; statusColor = "#007bff"; statusBg = "#e7f3ff";
+                            } 
+                            else if (actionRaw.includes("LOCK") || actionRaw.includes("CLOSE") || actionRaw === "0" || actionRaw === "FALSE") {
+                                actionDisp = "문 잠김"; actionIcon = "🔒"; statusColor = "#dc3545"; statusBg = "#ffeef0";
+                            }
+                            else if (actionRaw.includes("WARN") || actionRaw.includes("ALERT") || actionRaw.includes("FAIL")) {
+                                actionDisp = "경고/실패"; actionIcon = "🚨"; statusColor = "#ffc107"; statusBg = "#fff3cd";
+                            }
+
+                            div.style.backgroundColor = "#fff"; div.style.marginBottom = "12px";
+                            div.style.padding = "12px 16px"; div.style.borderRadius = "12px";
+                            div.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
+                            div.style.borderLeft = `5px solid ${statusColor}`;
+
+                            div.innerHTML = `
+                                <div style="font-size: 12px; color: #888; margin-bottom: 8px; border-bottom: 1px solid #f0f0f0; padding-bottom: 5px;">
+                                    🕒 ${formatTimestamp(timeValue)}
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <span style="background: #f5f5f5; padding: 4px 10px; border-radius: 20px; font-size: 13px; font-weight: 600; color: #444;">👤 ${who}</span>
+                                        <span style="background: #f0f7ff; padding: 4px 10px; border-radius: 20px; font-size: 13px; font-weight: 600; color: #0056b3;">${methodIcon} ${methodDisp}</span>
+                                    </div>
+                                    <div style="background: ${statusBg}; padding: 5px 12px; border-radius: 8px; font-weight: bold; font-size: 14px; color: ${statusColor}; display: flex; align-items: center; gap: 5px;">
+                                        ${actionIcon} ${actionDisp}
+                                    </div>
+                                </div>
+                            `;
+                            dlContainer.appendChild(div);
+                        });
+                    }
                 });
+            }
+        });
+    }
+
+    // --- UI Logic ---
+    window.switchLogTab = function(tabName) {
+        document.querySelectorAll('.log-tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + tabName).classList.add('active');
+        document.querySelectorAll('.log-section').forEach(s => s.classList.remove('active-tab-content'));
+        if(tabName === 'doorlock') document.getElementById('doorLockLogs').classList.add('active-tab-content');
+        else document.getElementById('appLogs').classList.add('active-tab-content');
+    }
+
+    // --- Map Logic ---
+    function initMap() {
+        const container = document.getElementById('map');
+        map = new kakao.maps.Map(container, { center: new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG), level: 7 });
+        drawDoorlockZones();
+        if (sessionStorage.getItem('isAdmin') === 'true') loadUserList();
+    }
+
+    function drawDoorlockZones() {
+        if (!map) return;
+        if (doorlockMarker) doorlockMarker.setMap(null);
+        zoneCircles.forEach(c => c.setMap(null)); zoneCircles = [];
+        const pos = new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG);
+        doorlockMarker = new kakao.maps.Marker({ position: pos, map: map, title: "도어락" });
+        [1000, 2000, 3000].forEach((r, i) => {
+            const color = i===0?'#FF0000':(i===1?'#FFA500':'#008000');
+            const circle = new kakao.maps.Circle({
+                center: pos,
+                radius: r,
+                strokeWeight: 1,
+                strokeColor: color,
+                strokeStyle: 'dashed',
+                fillColor: color,
+                fillOpacity: 0.1
             });
+            circle.setMap(map); zoneCircles.push(circle);
+        });
+    }
+
+    function selectUser(userId) {
+        if (sessionStorage.getItem('isAdmin') === 'true') clearMapAndInfo();
+        selectedUserId = userId;
+        document.getElementById('logBtn').disabled = false;
+        document.getElementById('userInfo').classList.remove('hidden');
+        document.getElementById('infoArea').innerHTML = `
+            <div style="margin-bottom:10px;"><strong>ID:</strong> ${userId}</div>
+            <div class="filter-group">
+                <button id="btnAll" class="filter-btn active">전체</button>
+                <button id="btnRange" class="filter-btn">범위 내</button>
+            </div>
+            <div class="log-list" id="miniLogList">로딩 중...</div>
+        `;
+        document.getElementById('btnAll').onclick = () => { 
+            document.getElementById('btnAll').classList.add('active');
+            document.getElementById('btnRange').classList.remove('active');
+            renderLocationLogs(false); 
+        };
+        document.getElementById('btnRange').onclick = () => { 
+            document.getElementById('btnRange').classList.add('active');
+            document.getElementById('btnAll').classList.remove('active');
+            renderLocationLogs(true); 
+        };
+        database.ref(`users/${userId}/location_logs`).once('value').then(snap => {
+            currentUserLocationLogs = [];
+            if(snap.exists()) {
+                snap.forEach(c => { if(c.val().latitude) currentUserLocationLogs.push(c.val()); });
+                currentUserLocationLogs.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+            }
+            renderLocationLogs(false);
+        });
+    }
+
+    function renderLocationLogs(filter) {
+        const listDiv = document.getElementById('miniLogList');
+        listDiv.innerHTML = '';
+        markers.forEach(m => { if(m.customOverlay) m.customOverlay.setMap(null); m.setMap(null); }); markers = [];
+        if(currentPolyline) currentPolyline.setMap(null);
+        if(currentUserLocationLogs.length === 0) { listDiv.innerHTML = '기록 없음'; return; }
+        let path = [];
+        const bounds = new kakao.maps.LatLngBounds();
+        bounds.extend(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
+        currentUserLocationLogs.forEach(pos => {
+            const lat = parseFloat(pos.latitude); const lng = parseFloat(pos.longitude);
+            const dist = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
+            if(filter && dist > MAX_DISTANCE_KM) return;
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.innerHTML = `${formatTimestamp(pos.timestamp)} <br> 거리: <strong>${dist.toFixed(2)}km</strong>`;
+            div.onclick = () => { map.setCenter(new kakao.maps.LatLng(lat, lng)); map.setLevel(4); };
+            listDiv.appendChild(div);
+            if(path.length < 50) { 
+                const p = new kakao.maps.LatLng(lat, lng); path.push(p); bounds.extend(p);
+                const dot = document.createElement('div');
+                dot.style.width='8px'; dot.style.height='8px'; dot.style.background='blue'; dot.style.borderRadius='50%';
+                const m = new kakao.maps.CustomOverlay({ position: p, content: dot, yAnchor: 0.5 });
+                m.setMap(map); markers.push(m);
+            }
+        });
+        listDiv.scrollTop = 0;
+        if(path.length > 0) {
+            currentPolyline = new kakao.maps.Polyline({ path: path, strokeWeight: 3, strokeColor: '#0000FF', strokeOpacity: 0.6 });
+            currentPolyline.setMap(map); map.setBounds(bounds);
+        }
+    }
+
+    function clearMapAndInfo() {
+        markers.forEach(m => m.setMap(null));
+        markers = [];
+        if(currentPolyline) currentPolyline.setMap(null);
+    }
+
+    // --- Admin & Navigation ---
+    function loadUserList() {
+        const list = document.getElementById('userList');
+        database.ref('users').once('value').then(snap => {
+            list.innerHTML = '<h2>User List</h2>';
+            snap.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'user'; div.textContent = c.key;
+                div.onclick = () => loadUserDoorlockAndInit(c.key, () => selectUser(c.key));
+                list.appendChild(div);
+            });
+        });
+    }
+
+    // 검색 기능
+    window.searchUser = function() {
+        const input = document.getElementById('search-input');
+        const keyword = input.value.trim();
+        const area = document.getElementById('result-area');
+
+        if (!keyword) {
+            customAlert("검색어를 입력해주세요.");
+            return;
         }
 
-        // 검색 기능
-        window.searchUser = function() {
-            const input = document.getElementById('search-input');
-            const keyword = input.value.trim();
-            const area = document.getElementById('result-area');
+        area.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">검색 중...</div>';
 
-            if (!keyword) {
-                customAlert("검색어를 입력해주세요.");
+        database.ref('users').once('value').then(snap => {
+            if (!snap.exists()) {
+                area.innerHTML = '<div style="padding:20px; text-align:center;">데이터가 없습니다.</div>';
                 return;
             }
 
-            area.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">검색 중...</div>';
+            const allUsers = snap.val();
+            const searchResult = {};
+            let count = 0;
 
-            database.ref('users').once('value').then(snap => {
-                if (!snap.exists()) {
-                    area.innerHTML = '<div style="padding:20px; text-align:center;">데이터가 없습니다.</div>';
-                    return;
+            for (const [userId, userData] of Object.entries(allUsers)) {
+                if (userId.toLowerCase().includes(keyword.toLowerCase())) {
+                    searchResult[userId] = userData;
+                    count++;
                 }
+            }
 
-                const allUsers = snap.val();
-                const searchResult = {};
-                let count = 0;
+            if (count > 0) {
+                renderGrid(searchResult);
+            } else {
+                area.innerHTML = `<div style="padding:20px; text-align:center; color:#dc3545;">
+                    '<strong>${keyword}</strong>' 가 포함된 ID를 찾을 수 없습니다.
+                </div>`;
+            }
 
-                for (const [userId, userData] of Object.entries(allUsers)) {
-                    if (userId.toLowerCase().includes(keyword.toLowerCase())) {
-                        searchResult[userId] = userData;
-                        count++;
-                    }
-                }
+        }).catch(err => {
+            console.error("검색 오류:", err);
+            area.innerHTML = '<div style="padding:20px; text-align:center;">검색 중 오류가 발생했습니다.</div>';
+        });
+    };
 
-                if (count > 0) {
-                    renderGrid(searchResult);
-                } else {
-                    area.innerHTML = `<div style="padding:20px; text-align:center; color:#dc3545;">
-                        '<strong>${keyword}</strong>' 가 포함된 ID를 찾을 수 없습니다.
-                    </div>`;
-                }
+    const searchInputObj = document.getElementById('search-input');
+    if(searchInputObj) {
+        searchInputObj.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                window.searchUser();
+            }
+        });
+    }
 
-            }).catch(err => {
-                console.error("검색 오류:", err);
-                area.innerHTML = '<div style="padding:20px; text-align:center;">검색 중 오류가 발생했습니다.</div>';
-            });
-        };
-
-        const searchInputObj = document.getElementById('search-input');
-        if(searchInputObj) {
-            searchInputObj.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    window.searchUser();
-                }
-            });
-        }
-
-        window.loadAllDBData = function() {
-            const area = document.getElementById('result-area');
-            area.innerHTML = '로딩 중...';
-            database.ref('users').once('value').then(snap => {
-                if(!snap.exists()) { area.innerHTML = '데이터 없음'; return; }
-                renderGrid(snap.val());
-            });
-        }
+    window.loadAllDBData = function() {
+        const area = document.getElementById('result-area');
+        area.innerHTML = '로딩 중...';
+        database.ref('users').once('value').then(snap => {
+            if(!snap.exists()) { area.innerHTML = '데이터 없음'; return; }
+            renderGrid(snap.val());
+        });
+    }
+    
+    // 아코디언 형태로 렌더링
+    function renderGrid(data) {
+        const resultArea = document.getElementById('result-area');
+        let html = '<div class="accordion-container">';
         
-        // 아코디언 형태로 렌더링
-        function renderGrid(data) {
-            const resultArea = document.getElementById('result-area');
-            let html = '<div class="accordion-container">';
-            
-            for(const [userId, userData] of Object.entries(data)) {
-                html += `
-                    <div class="user-accordion-item">
-                        <div class="user-accordion-header" onclick="toggleAccordion(this)">
-                            <span>👤 <strong>${userId}</strong></span>
-                            <span class="icon-arrow">▼</span>
-                        </div>
-                        <div class="user-accordion-body hidden">
-                            <div class="firebase-view">${createTreeView(userData, 0)}</div>
-                        </div>
+        for(const [userId, userData] of Object.entries(data)) {
+            html += `
+                <div class="user-accordion-item">
+                    <div class="user-accordion-header" onclick="toggleAccordion(this)">
+                        <span>👤 <strong>${userId}</strong></span>
+                        <span class="icon-arrow">▼</span>
                     </div>
-                `;
-            }
-            html += '</div>';
-            resultArea.innerHTML = html;
+                    <div class="user-accordion-body hidden">
+                        <div class="firebase-view">${createTreeView(userData, 0)}</div>
+                    </div>
+                </div>
+            `;
         }
+        html += '</div>';
+        resultArea.innerHTML = html;
+    }
 
-        // 아코디언 토글 기능
-        window.toggleAccordion = function(header) {
-            const currentBody = header.nextElementSibling;
-            const isHidden = currentBody.classList.contains('hidden');
+    // 아코디언 토글 기능
+    window.toggleAccordion = function(header) {
+        const currentBody = header.nextElementSibling;
+        const isHidden = currentBody.classList.contains('hidden');
 
-            const allHeaders = document.querySelectorAll('.user-accordion-header');
-            const allBodies = document.querySelectorAll('.user-accordion-body');
-            
-            allHeaders.forEach(h => h.classList.remove('active-header'));
-            allBodies.forEach(b => b.classList.add('hidden')); 
+        const allHeaders = document.querySelectorAll('.user-accordion-header');
+        const allBodies = document.querySelectorAll('.user-accordion-body');
+        
+        allHeaders.forEach(h => h.classList.remove('active-header'));
+        allBodies.forEach(b => b.classList.add('hidden')); 
 
-            if (isHidden) {
-                header.classList.add('active-header');
-                currentBody.classList.remove('hidden');
-            }
-        };
+        if (isHidden) {
+            header.classList.add('active-header');
+            currentBody.classList.remove('hidden');
+        }
+    };
 
-        function createTreeView(data, depth) {
-            let html = '';
-            const indent = '<span style="display:inline-block; width:' + (depth * 15) + 'px;"></span>';
-            if (typeof data === 'object' && data !== null) {
-                for (const [k, v] of Object.entries(data)) {
-                    if (typeof v === 'object' && v !== null) {
-                        html += `<div class="fv-item">${indent}<span class="fv-key" onclick="this.nextElementSibling.classList.toggle('fv-hidden')">▼ ${k}</span><div class="fv-children">${createTreeView(v, depth + 1)}</div></div>`;
-                    } else {
-                        html += `<div class="fv-item">${indent}<span class="fv-key">${k}:</span> <span class="fv-string">${v}</span></div>`;
-                    }
+    function createTreeView(data, depth) {
+        let html = '';
+        const indent = '<span style="display:inline-block; width:' + (depth * 15) + 'px;"></span>';
+        if (typeof data === 'object' && data !== null) {
+            for (const [k, v] of Object.entries(data)) {
+                if (typeof v === 'object' && v !== null) {
+                    html += `<div class="fv-item">${indent}<span class="fv-key" onclick="this.nextElementSibling.classList.toggle('fv-hidden')">▼ ${k}</span><div class="fv-children">${createTreeView(v, depth + 1)}</div></div>`;
+                } else {
+                    html += `<div class="fv-item">${indent}<span class="fv-key">${k}:</span> <span class="fv-string">${v}</span></div>`;
                 }
-            } else {
-                html += `<div class="fv-item">${indent}${data}</div>`;
             }
-            return html;
-        }
-
-        // --- Event Listeners ---
-        document.getElementById('login-form').onsubmit = (e) => {
-            e.preventDefault();
-            const id = document.getElementById('username').value;
-            const pw = document.getElementById('password').value;
-            
-            database.ref('admin_pass').once('value').then(snap => {
-                let isAdmin = false;
-                snap.forEach(c => { if(c.val().adminId===id && c.val().password===pw) isAdmin=true; });
-                if(isAdmin) {
-                    sessionStorage.setItem('isAdmin', 'true');
-                    showMain(true, id);
-                    return;
-                }
-                database.ref('users/' + id).once('value').then(usnap => {
-                    if(usnap.exists() && usnap.val().password === pw) {
-                        sessionStorage.setItem('isAdmin', 'false');
-                        sessionStorage.setItem('userId', id);
-                        showMain(false, id);
-                    } else {
-                        customAlert("로그인 실패");
-                    }
-                });
-            });
-        };
-
-        function showMain(isAdmin, uid) {
-            document.getElementById('login-container').classList.add('hidden'); // 로그인 숨김
-            document.getElementById('header').classList.remove('hidden'); // 헤더 보임
-            document.getElementById('main-content').classList.remove('hidden'); // 메인 보임
-            
-            // 닫기 버튼과 DB조회 버튼 요소 가져오기
-            const closeBtn = document.getElementById('closeUserInfoBtn');
-            const dbBtn = document.getElementById('newBtn'); // [추가됨] DB 조회 버튼
-
-            if(isAdmin) {
-                // --- 관리자 모드 ---
-                document.getElementById('userList').classList.remove('hidden');
-                document.getElementById('userInfo').classList.add('hidden');
-                
-                if(closeBtn) closeBtn.style.display = 'block'; // 닫기 버튼 보임
-                if(dbBtn) dbBtn.style.display = 'inline-block'; // [추가됨] DB 조회 버튼 보임
-
-                if(window.kakao) kakao.maps.load(initMap);
-            } else {
-                // --- 일반 사용자 모드 ---
-                document.getElementById('userList').classList.add('hidden');
-                document.getElementById('userInfo').classList.remove('hidden');
-                
-                if(closeBtn) closeBtn.style.display = 'none'; // 닫기 버튼 숨김
-                if(dbBtn) dbBtn.style.display = 'none'; // [추가됨] DB 조회 버튼 숨김
-
-                if(window.kakao) kakao.maps.load(() => {
-                    initMap();
-                    loadUserDoorlockAndInit(uid, () => selectUser(uid));
-                });
-            }
-            setupNav();
-        }
-
-        function setupNav() {
-            // 로그아웃 버튼
-            document.getElementById('logoutBtn').onclick = () => document.getElementById('logout-confirm-modal').classList.remove('hidden');
-            document.getElementById('confirmLogoutBtn').onclick = () => { sessionStorage.clear(); location.reload(); };
-            document.getElementById('cancelLogoutBtn').onclick = () => document.getElementById('logout-confirm-modal').classList.add('hidden');
-            
-            // 타이틀 클릭 시 초기 화면 이동
-            const headerTitle = document.getElementById('header-title');
-            if(headerTitle) {
-                headerTitle.style.cursor = 'pointer';
-                headerTitle.onclick = () => window.location.reload();
-            }
-
-            document.getElementById('logBtn').onclick = () => {
-                document.getElementById('main-content').classList.add('hidden');
-                document.getElementById('db-content').classList.add('hidden');
-                document.getElementById('log-content').classList.remove('hidden');
-                document.getElementById('mapBtn').disabled = false;
-                document.getElementById('logBtn').disabled = true;
-                document.getElementById('newBtn').disabled = false;
-                if(selectedUserId) loadAllLogs(selectedUserId);
-            };
-            
-            document.getElementById('mapBtn').onclick = () => {
-                document.getElementById('log-content').classList.add('hidden');
-                document.getElementById('db-content').classList.add('hidden');
-                document.getElementById('main-content').classList.remove('hidden');
-                document.getElementById('mapBtn').disabled = true;
-                document.getElementById('logBtn').disabled = false;
-                document.getElementById('newBtn').disabled = false;
-                if(map) map.relayout();
-            };
-
-            document.getElementById('newBtn').onclick = () => {
-                document.getElementById('main-content').classList.add('hidden');
-                document.getElementById('log-content').classList.add('hidden');
-                document.getElementById('db-content').classList.remove('hidden');
-                document.getElementById('mapBtn').disabled = false;
-                document.getElementById('logBtn').disabled = false;
-                document.getElementById('newBtn').disabled = true;
-                loadAllDBData();
-            };
-            
-            document.getElementById('closeUserInfoBtn').onclick = () => {
-                document.getElementById('userInfo').classList.add('hidden');
-                clearMapAndInfo();
-            };
-        }
-
-        // Auto Login Check
-        if (sessionStorage.getItem('isAdmin')) {
-            showMain(sessionStorage.getItem('isAdmin') === 'true', sessionStorage.getItem('userId'));
         } else {
-            document.getElementById('login-container').classList.remove('hidden');
+            html += `<div class="fv-item">${indent}${data}</div>`;
         }
-    });
+        return html;
+    }
+
+    // --- 로그인 처리 (관리자/사용자 구분) ---
+    document.getElementById('login-form').onsubmit = (e) => {
+        e.preventDefault();
+        const id = document.getElementById('username').value;
+        const pw = document.getElementById('password').value;
+        
+        database.ref('admin_pass').once('value').then(snap => {
+            let isAdmin = false;
+            snap.forEach(c => { if(c.val().adminId===id && c.val().password===pw) isAdmin=true; });
+            if(isAdmin) {
+                sessionStorage.setItem('isAdmin', 'true');
+                sessionStorage.removeItem('userId');
+                showMain(true, id);          // 관리자 모드
+                return;
+            }
+            database.ref('users/' + id).once('value').then(usnap => {
+                if(usnap.exists() && usnap.val().password === pw) {
+                    sessionStorage.setItem('isAdmin', 'false');
+                    sessionStorage.setItem('userId', id);
+                    showMain(false, id);     // 일반 사용자 모드
+                } else {
+                    customAlert("로그인 실패");
+                }
+            });
+        });
+    };
+
+    // --- 모드별 화면 전환 (user-mode 클래스 제어 포함) ---
+    function showMain(isAdmin, uid) {
+        const body   = document.body;
+        const login  = document.getElementById('login-container');
+        const header = document.getElementById('header');
+        const main   = document.getElementById('main-content');
+        const userInfo = document.getElementById('userInfo');
+        const userList = document.getElementById('userList');
+        const closeBtn = document.getElementById('closeUserInfoBtn');
+        const dbBtn    = document.getElementById('newBtn');
+
+        // 공통: 로그인 숨기고 메인 보이기
+        login.classList.add('hidden');
+        header.classList.remove('hidden');
+        main.classList.remove('hidden');
+
+        if (isAdmin) {
+            // === 관리자 모드 ===
+            body.classList.remove('user-mode');   // 관리자: user-mode 해제
+
+            userList.classList.remove('hidden');
+            userInfo.classList.add('hidden');
+
+            if (closeBtn) closeBtn.style.display = 'block';
+            if (dbBtn)    dbBtn.style.display    = 'inline-block';
+
+            if (window.kakao) kakao.maps.load(initMap);
+
+        } else {
+            // === 일반 사용자 모드 ===
+            body.classList.add('user-mode');      // 사용자: user-mode 적용
+
+            userList.classList.add('hidden');
+            userInfo.classList.remove('hidden');
+
+            if (closeBtn) closeBtn.style.display = 'none';
+            if (dbBtn)    dbBtn.style.display    = 'none';
+
+            if (window.kakao) kakao.maps.load(() => {
+                initMap();
+                loadUserDoorlockAndInit(uid, () => selectUser(uid));
+            });
+        }
+
+        setupNav();
+    }
+
+    // --- 상단 버튼/로그아웃 등 네비게이션 ---
+    function setupNav() {
+        document.getElementById('logoutBtn').onclick = () =>
+            document.getElementById('logout-confirm-modal').classList.remove('hidden');
+
+        document.getElementById('confirmLogoutBtn').onclick = () => {
+            sessionStorage.clear();
+            location.reload();
+        };
+        document.getElementById('cancelLogoutBtn').onclick = () =>
+            document.getElementById('logout-confirm-modal').classList.add('hidden');
+        
+        const headerTitle = document.getElementById('header-title');
+        if(headerTitle) {
+            headerTitle.style.cursor = 'pointer';
+            headerTitle.onclick = () => window.location.reload();
+        }
+
+        document.getElementById('logBtn').onclick = () => {
+            document.getElementById('main-content').classList.add('hidden');
+            document.getElementById('db-content').classList.add('hidden');
+            document.getElementById('log-content').classList.remove('hidden');
+            document.getElementById('mapBtn').disabled = false;
+            document.getElementById('logBtn').disabled = true;
+            document.getElementById('newBtn').disabled = false;
+            if(selectedUserId) loadAllLogs(selectedUserId);
+        };
+        
+        document.getElementById('mapBtn').onclick = () => {
+            document.getElementById('log-content').classList.add('hidden');
+            document.getElementById('db-content').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+            document.getElementById('mapBtn').disabled = true;
+            document.getElementById('logBtn').disabled = false;
+            document.getElementById('newBtn').disabled = false;
+            if(map) map.relayout();
+        };
+
+        document.getElementById('newBtn').onclick = () => {
+            document.getElementById('main-content').classList.add('hidden');
+            document.getElementById('log-content').classList.add('hidden');
+            document.getElementById('db-content').classList.remove('hidden');
+            document.getElementById('mapBtn').disabled = false;
+            document.getElementById('logBtn').disabled = false;
+            document.getElementById('newBtn').disabled = true;
+            loadAllDBData();
+        };
+        
+        document.getElementById('closeUserInfoBtn').onclick = () => {
+            document.getElementById('userInfo').classList.add('hidden');
+            clearMapAndInfo();
+        };
+    }
+
+    // --- Auto Login Check ---
+    if (sessionStorage.getItem('isAdmin')) {
+        const flag = sessionStorage.getItem('isAdmin') === 'true';
+        const uid  = sessionStorage.getItem('userId');
+        showMain(flag, uid);
+    } else {
+        document.getElementById('login-container').classList.remove('hidden');
+    }
+});
 </script>
 </body>
 </html>
-
