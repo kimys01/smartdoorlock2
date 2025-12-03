@@ -230,10 +230,9 @@ input {
 /* ===== 사용자용 요약 미니 로그 (ID: miniLogList) ===== */
 /* 이 박스 안에서만 스크롤되게 함 */
 #miniLogList.log-list {
-    flex: 1 1 auto;         /* infoArea 안 남은 공간 채움 */
-    min-height: 60px;       /* 최소 한두 줄 보이게 */
-    max-height: 120px;      /* 너무 커지지 않게 제한 (원하는 값으로 조절) */
-    overflow-y: auto;       /* 이 안에서만 스크롤 */
+    flex: 0 0 auto;      /* 남은 전체 말고, 고정 높이만 차지 */
+    height: 120px;       /* 여기 원하는 정확한 높이 지정 */
+    overflow-y: auto;    /* 이 안에서만 스크롤 */
 }
 
 /* 미니 로그 스크롤바 커스터마이즈 */
