@@ -424,6 +424,7 @@
                     m.setMap(map); markers.push(m);
                 }
             });
+            listDiv.scrollTop = 0;
             if(path.length > 0) {
                 currentPolyline = new kakao.maps.Polyline({ path: path, strokeWeight: 3, strokeColor: '#0000FF', strokeOpacity: 0.6 });
                 currentPolyline.setMap(map); map.setBounds(bounds);
@@ -683,4 +684,5 @@
 </script>
 </body>
 </html>
+
 
