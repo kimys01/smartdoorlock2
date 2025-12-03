@@ -607,51 +607,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 모드별 화면 전환 (user-mode 클래스 제어 포함) ---
     function showMain(isAdmin, uid) {
-        const body   = document.body;
-        const login  = document.getElementById('login-container');
-        const header = document.getElementById('header');
-        const main   = document.getElementById('main-content');
-        const userInfo = document.getElementById('userInfo');
-        const userList = document.getElementById('userList');
-        const closeBtn = document.getElementById('closeUserInfoBtn');
-        const dbBtn    = document.getElementById('newBtn');
+    const body     = document.body;
+    const login    = document.getElementById('login-container');
+    const header   = document.getElementById('header');
+    const main     = document.getElementById('main-content');
+    const userInfo = document.getElementById('userInfo');
+    const userList = document.getElementById('userList');
+    const closeBtn = document.getElementById('closeUserInfoBtn');
+    const dbBtn    = document.getElementById('newBtn');
 
-        // 공통: 로그인 숨기고 메인 보이기
-        login.classList.add('hidden');
-        header.classList.remove('hidden');
-        main.classList.remove('hidden');
+    // 공통: 로그인 숨기고 메인 보이기
+    login.classList.add('hidden');
+    header.classList.remove('hidden');
+    main.classList.remove('hidden');
 
-        if (isAdmin) {
-            // === 관리자 모드 ===
-            body.classList.remove('user-mode');   // 관리자: user-mode 해제
+    if (isAdmin) {
+        // === 관리자 모드 ===
+        body.classList.remove('user-mode');   // 관리자: user-mode 사용 안 함
 
-            userList.classList.remove('hidden');
-            userInfo.classList.add('hidden');
+        userList.classList.remove('hidden');
+        userInfo.classList.add('hidden');
 
-            if (closeBtn) closeBtn.style.display = 'block';
-            if (dbBtn)    dbBtn.style.display    = 'inline-block';
+        if (closeBtn) closeBtn.style.display = 'block';
+        if (dbBtn)    dbBtn.style.display    = 'inline-block';
 
-            if (window.kakao) kakao.maps.load(initMap);
+        if (window.kakao) kakao.maps.load(initMap);
 
-        } else {
-            // === 일반 사용자 모드 ===
-            body.classList.add('user-mode');      // 사용자: user-mode 적용
+    } else {
+        // === 일반 사용자 모드 ===
+        body.classList.add('user-mode');      // 사용자: user-mode 적용
 
-            userList.classList.add('hidden');
-            userInfo.classList.remove('hidden');
+        userList.classList.add('hidden');
+        userInfo.classList.remove('hidden');
 
-            if (closeBtn) closeBtn.style.display = 'none';
-            if (dbBtn)    dbBtn.style.display    = 'none';
+        if (closeBtn) closeBtn.style.display = 'none';
+        if (dbBtn)    dbBtn.style.display    = 'none';
 
-            if (window.kakao) kakao.maps.load(() => {
-                initMap();
-                loadUserDoorlockAndInit(uid, () => selectUser(uid));
-            });
-        }
-
-        setupNav();
+        if (window.kakao) kakao.maps.load(() => {
+            initMap();
+            loadUserDoorlockAndInit(uid, () => selectUser(uid));
+        });
     }
 
+    setupNav();
+}
     // --- 상단 버튼/로그아웃 등 네비게이션 ---
     function setupNav() {
         document.getElementById('logoutBtn').onclick = () =>
@@ -718,3 +717,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
