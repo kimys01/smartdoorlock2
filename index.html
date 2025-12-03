@@ -1,217 +1,155 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <meta name="color-scheme" content="light only">
-    <meta name="supported-color-schemes" content="light">
+  <meta charset="UTF-8" />
+  <title>Smart Doorlock Capstone</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light only" />
+  <meta name="supported-color-schemes" content="light" />
 
-    <title>Smart Doorlock Capstone</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-
-    <link rel="stylesheet" href="indexstyle.css?v=3.0">
-
-    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <!-- 외부 CSS (네가 이미 만든 indexstyle.css 사용) -->
+  <link rel="stylesheet" href="indexstyle.css?v=3.0" />
 </head>
 <body>
+  <!-- 로그인 -->
+  <div id="login-container">
+    <h2>SmartDoorLock</h2>
+    <form id="login-form">
+      <div class="input-group">
+        <label for="username">아이디</label>
+        <input type="text" id="username" placeholder="아이디를 입력하세요" required />
+      </div>
+      <div class="input-group">
+        <label for="password">비밀번호</label>
+        <input type="password" id="password" placeholder="비밀번호를 입력하세요" required />
+      </div>
+      <button type="submit">로그인</button>
+    </form>
+  </div>
 
-    <div id="login-container" class="hidden">
-        <h2>SmartDoorLock</h2>
-        <form id="login-form">
-            <div class="input-group">
-                <label for="username">아이디</label>
-                <input type="text" id="username" placeholder="아이디를 입력하세요" required>
-            </div>
-            <div class="input-group">
-                <label for="password">비밀번호</label>
-                <input type="password" id="password" placeholder="비밀번호를 입력하세요" required>
-            </div>
-            <button type="submit">로그인</button>
-        </form>
+  <!-- 헤더 -->
+  <div id="header" class="hidden">
+    <h1 id="header-title" title="초기 화면으로 이동">Smart Doorlock</h1>
+    <div class="button-group">
+      <button id="mapBtn" disabled>지도</button>
+      <button id="logBtn" disabled>로그 보기</button>
+      <button id="newBtn">DB 조회</button>
+      <button id="logoutBtn">로그아웃</button>
+    </div>
+  </div>
+
+  <!-- 메인 화면 -->
+  <div id="main-content" class="hidden">
+    <div id="sidebar">
+      <div id="userInfo" class="hidden">
+        <div class="info-header">
+          <h2>User Info</h2>
+          <button id="closeUserInfoBtn" title="닫기">✕</button>
+        </div>
+        <div id="infoArea">사용자를 선택해주세요.</div>
+      </div>
+      <div id="userList">
+        <h2>User List</h2>
+        <!-- 관리자 모드에서 사용자 목록이 여기 렌더링됨 -->
+      </div>
     </div>
 
-    <div id="header" class="hidden">
-        <h1 id="header-title" title="초기 화면으로 이동">Smart Doorlock</h1> 
-        <div class="button-group">
-            <button id="mapBtn" disabled>지도</button>
-            <button id="logBtn" disabled>로그 보기</button>
-            <button id="newBtn">DB 조회</button>
-            <button id="logoutBtn">로그아웃</button>
-        </div>
+    <div id="mapArea">
+      <h2>Map</h2>
+      <div id="map" style="background:#eee; flex:1;">지도 영역 (임시)</div>
     </div>
+  </div>
 
-    <div id="main-content" class="hidden">
-        <div id="sidebar">
-            <div id="userInfo" class="hidden">
-                <div class="info-header">
-                    <h2>User Info</h2>
-                    <button id="closeUserInfoBtn" title="닫기">✕</button>
-                </div>
-                <div id="infoArea">사용자를 선택해주세요.</div>
-            </div>
-            <div id="userList">
-                <h2>User List</h2>
-            </div>
-        </div>
-        <div id="mapArea">
-            <h2>Map</h2>
-            <div id="map"></div> 
-        </div>
+  <!-- 로그 화면 -->
+  <div id="log-content" class="hidden">
+    <div class="log-header">
+      <h2 id="logUserTitle">전체 로그</h2>
     </div>
-
-    <div id="log-content" class="hidden">
-        <div class="log-header">
-            <h2 id="logUserTitle">전체 로그</h2>
-        </div>
-        <div class="log-tab-buttons">
-            <button id="tab-doorlock" class="log-tab-btn active" onclick="switchLogTab('doorlock')">도어락 로그</button>
-            <button id="tab-app" class="log-tab-btn" onclick="switchLogTab('app')">앱 로그</button>
-        </div>
-        <div class="log-container">
-            <div id="doorLockLogs" class="log-section active-tab-content">
-                <div class="log-entries"></div>
-            </div>
-            <div id="appLogs" class="log-section">
-                <div class="log-entries"></div>
-            </div>
-        </div>
+    <div class="log-tab-buttons">
+      <button id="tab-doorlock" class="log-tab-btn active">도어락 로그</button>
+      <button id="tab-app" class="log-tab-btn">앱 로그</button>
     </div>
-
-    <div id="db-content" class="hidden">
-        <div class="container">
-            <h2>DataBase</h2>
-            <div class="search-container">
-                <input type="text" id="search-input" placeholder="검색할 사용자 ID 입력">
-                <button class="btn-search" onclick="searchUser()">검색</button>
-                <button class="btn-reset" onclick="loadAllDBData()">전체 목록</button>
-            </div>
-            <h3 id="result-title">User List:</h3>
-            <div id="result-area">
-                <div style="padding:20px; text-align:center; color:#666;">데이터를 불러오는 중...</div>
-            </div>
-        </div>
+    <div class="log-container">
+      <div id="doorLockLogs" class="log-section active-tab-content">
+        <div class="log-entries"></div>
+      </div>
+      <div id="appLogs" class="log-section">
+        <div class="log-entries"></div>
+      </div>
     </div>
+  </div>
 
-    <div id="custom-modal" class="hidden">
-        <div class="modal-content">
-            <p id="modal-message"></p>
-            <button onclick="document.getElementById('custom-modal').style.display='none';">확인</button>
-        </div>
+  <!-- DB 화면 -->
+  <div id="db-content" class="hidden">
+    <div class="container">
+      <h2>DataBase</h2>
+      <div class="search-container">
+        <input type="text" id="search-input" placeholder="검색할 사용자 ID 입력" />
+        <button class="btn-search" id="btnSearchDummy">검색</button>
+        <button class="btn-reset" id="btnResetDummy">전체 목록</button>
+      </div>
+      <h3 id="result-title">User List:</h3>
+      <div id="result-area">
+        <div style="padding:20px; text-align:center; color:#666;">데이터를 불러오는 중...</div>
+      </div>
     </div>
+  </div>
 
-    <div id="logout-confirm-modal" class="hidden">
-        <div class="modal-content">
-            <p>로그아웃 하시겠습니까?</p>
-            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
-                <button id="confirmLogoutBtn" style="flex: 1;">확인</button>
-                <button id="cancelLogoutBtn" style="flex: 1; background-color: #aaa;">취소</button>
-            </div>
-        </div>
+  <!-- 모달 -->
+  <div id="custom-modal" class="hidden">
+    <div class="modal-content">
+      <p id="modal-message"></p>
+      <button id="modal-ok-btn">확인</button>
     </div>
+  </div>
 
-    <script>
+  <div id="logout-confirm-modal" class="hidden">
+    <div class="modal-content">
+      <p>로그아웃 하시겠습니까?</p>
+      <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
+        <button id="confirmLogoutBtn" style="flex:1;">확인</button>
+        <button id="cancelLogoutBtn" style="flex:1; background-color:#aaa;">취소</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS -->
+  <script>
     document.addEventListener('DOMContentLoaded', () => {
-    console.log("App initialized.");
+      console.log('Basic App initialized.');
 
-    // --- Global Variables ---
-    let DOORLOCK_LAT = 37.566826;   
-    let DOORLOCK_LNG = 126.9786567;
-    let MAX_DISTANCE_KM = 3.0;
-    let database, map, doorlockMarker, currentPolyline, selectedLogMarker, selectedUserId;
-    let markers = [], zoneCircles = [], currentUserLocationLogs = [];
+      let selectedUserId = null;
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyDr3DxG99ZNyW16Ui0SHCFHRNNC0NkpA_U",
-        authDomain: "smartdoorlock-b4636.web.app", 
-        databaseURL: "https://smartdoorlock-b4636-default-rtdb.firebaseio.com",
-        projectId: "smartdoorlock-b4636",
-        storageBucket: "smartdoorlock-b4636.firebasestorage.app",
-        messagingSenderId: "104489505270",
-        appId: "1:104489505270:web:eb385c8f9c5dfd512077d7",
-        measurementId: "G-4TH9MB9WPM"
-    };
+      function customAlert(msg) {
+        document.getElementById('modal-message').textContent = msg;
+        document.getElementById('custom-modal').classList.remove('hidden');
+      }
+      document.getElementById('modal-ok-btn').onclick = () => {
+        document.getElementById('custom-modal').classList.add('hidden');
+      };
 
-    try {
-        if (typeof firebase === 'undefined' || !firebase.initializeApp) throw new Error("Firebase Load Fail");
-        firebase.initializeApp(firebaseConfig);
-        database = firebase.database();
-    } catch (e) {
-        alert("Firebase 초기화 실패. 새로고침 하세요.");
-        return;
-    }
-
-    // --- Helper Functions (formatTimestamp, getDistanceFromLatLonInKm, customAlert 등)
-    // >>> 이 부분은 네 코드랑 동일하니 그대로 두면 됨 (생략하지 말고 유지)
-
-    function formatTimestamp(ts) { /* ... 네 코드 그대로 ... */ }
-    function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) { /* ... */ }
-    function customAlert(msg) { /* ... */ }
-
-    // --- Core Logic (loadUserDoorlockAndInit, loadAllLogs 등) ---
-    // >>> 이 부분도 네 코드 그대로 사용 (내용 변경 필요 없음)
-
-    function loadUserDoorlockAndInit(userId, callback) { /* ... */ }
-    function loadAllLogs(userId) { /* ... */ }
-
-    // --- UI Logic ---
-    window.switchLogTab = function(tabName) { /* ... */ };
-
-    // --- Map Logic (initMap, drawDoorlockZones, selectUser, renderLocationLogs 등) ---
-    function initMap() { /* ... */ }
-    function drawDoorlockZones() { /* ... */ }
-    function selectUser(userId) { /* ... */ }
-    function renderLocationLogs(filter) { /* ... */ }
-    function clearMapAndInfo() { /* ... */ }
-
-    // --- Admin & Navigation (loadUserList, searchUser, loadAllDBData, renderGrid, toggleAccordion 등) ---
-    function loadUserList() { /* ... */ }
-    window.searchUser = function () { /* ... */ }
-    window.loadAllDBData = function () { /* ... */ }
-    function renderGrid(data) { /* ... */ }
-    window.toggleAccordion = function(header) { /* ... */ }
-    function createTreeView(data, depth) { /* ... */ }
-
-    // --- 로그인 처리 ---
-    document.getElementById('login-form').onsubmit = (e) => {
+      // 로그인 처리 (Firebase 대신 임시 계정 사용)
+      // 관리자: id=admin / pw=1234
+      // 사용자: id=user / pw=1234
+      document.getElementById('login-form').onsubmit = (e) => {
         e.preventDefault();
-        const id = document.getElementById('username').value;
-        const pw = document.getElementById('password').value;
-        
-        database.ref('admin_pass').once('value').then(snap => {
-            let isAdmin = false;
-            snap.forEach(c => { 
-                if (c.val().adminId === id && c.val().password === pw) isAdmin = true; 
-            });
+        const id = document.getElementById('username').value.trim();
+        const pw = document.getElementById('password').value.trim();
 
-            if (isAdmin) {
-                // 관리자 로그인
-                sessionStorage.setItem('isAdmin', 'true');
-                sessionStorage.removeItem('userId');
-                showMain(true, id);
-                return;
-            }
+        if (id === 'admin' && pw === '1234') {
+          sessionStorage.setItem('isAdmin', 'true');
+          sessionStorage.removeItem('userId');
+          showMain(true, id);
+        } else if (id === 'user' && pw === '1234') {
+          sessionStorage.setItem('isAdmin', 'false');
+          sessionStorage.setItem('userId', id);
+          showMain(false, id);
+        } else {
+          customAlert('로그인 실패 (admin/1234, user/1234 테스트용)');
+        }
+      };
 
-            // 일반 사용자 로그인
-            database.ref('users/' + id).once('value').then(usnap => {
-                if (usnap.exists() && usnap.val().password === pw) {
-                    sessionStorage.setItem('isAdmin', 'false');
-                    sessionStorage.setItem('userId', id);
-                    showMain(false, id);
-                } else {
-                    customAlert("로그인 실패");
-                }
-            });
-        });
-    };
-
-    // === 여기부터가 가장 중요한 showMain ===
-    function showMain(isAdmin, uid) {
+      function showMain(isAdmin, uid) {
         const body   = document.body;
         const login  = document.getElementById('login-container');
         const header = document.getElementById('header');
@@ -227,104 +165,143 @@
         main.classList.remove('hidden');
 
         if (isAdmin) {
-            // ===== 관리자 모드 =====
-            body.classList.remove('user-mode');   // 관리자에서는 user-mode 사용 안 함
+          // 관리자 모드
+          body.classList.remove('user-mode');
 
-            userList.classList.remove('hidden');
-            userInfo.classList.add('hidden');
+          userList.classList.remove('hidden');
+          userInfo.classList.add('hidden');
 
-            if (closeBtn) closeBtn.style.display = 'block';
-            if (dbBtn)    dbBtn.style.display    = 'inline-block';
+          if (closeBtn) closeBtn.style.display = 'block';
+          if (dbBtn)    dbBtn.style.display    = 'inline-block';
 
-            if (window.kakao) kakao.maps.load(initMap);
+          // 테스트용 User List 채우기
+          renderDummyUserList();
 
         } else {
-            // ===== 일반 사용자 모드 =====
-            body.classList.add('user-mode');      // 사용자 모드 전용 CSS 활성화
+          // 일반 사용자 모드
+          body.classList.add('user-mode');
 
-            userList.classList.add('hidden');
-            userInfo.classList.remove('hidden');
+          userList.classList.add('hidden');
+          userInfo.classList.remove('hidden');
 
-            if (closeBtn) closeBtn.style.display = 'none';
-            if (dbBtn)    dbBtn.style.display    = 'none';
+          if (closeBtn) closeBtn.style.display = 'none';
+          if (dbBtn)    dbBtn.style.display    = 'none';
 
-            if (window.kakao) kakao.maps.load(() => {
-                initMap();
-                loadUserDoorlockAndInit(uid, () => selectUser(uid));
-            });
+          // 사용자 본인 정보 표시
+          selectUser(uid);
         }
 
         setupNav();
-    }
+      }
 
-    // 네비게이션 버튼 세팅
-    function setupNav() {
-        document.getElementById('logoutBtn').onclick = () => 
-            document.getElementById('logout-confirm-modal').classList.remove('hidden');
+      function setupNav() {
+        // 로그아웃 모달
+        document.getElementById('logoutBtn').onclick = () =>
+          document.getElementById('logout-confirm-modal').classList.remove('hidden');
 
         document.getElementById('confirmLogoutBtn').onclick = () => {
-            sessionStorage.clear();
-            location.reload();
+          sessionStorage.clear();
+          location.reload();
         };
+        document.getElementById('cancelLogoutBtn').onclick = () =>
+          document.getElementById('logout-confirm-modal').classList.add('hidden');
 
-        document.getElementById('cancelLogoutBtn').onclick = () => 
-            document.getElementById('logout-confirm-modal').classList.add('hidden');
-        
+        // 타이틀 클릭 시 새로고침
         const headerTitle = document.getElementById('header-title');
-        if (headerTitle) {
-            headerTitle.style.cursor = 'pointer';
-            headerTitle.onclick = () => window.location.reload();
-        }
+        headerTitle.onclick = () => window.location.reload();
 
+        // 상단 네비 버튼
         document.getElementById('logBtn').onclick = () => {
-            document.getElementById('main-content').classList.add('hidden');
-            document.getElementById('db-content').classList.add('hidden');
-            document.getElementById('log-content').classList.remove('hidden');
-            document.getElementById('mapBtn').disabled = false;
-            document.getElementById('logBtn').disabled = true;
-            document.getElementById('newBtn').disabled = false;
-            if (selectedUserId) loadAllLogs(selectedUserId);
+          document.getElementById('main-content').classList.add('hidden');
+          document.getElementById('db-content').classList.add('hidden');
+          document.getElementById('log-content').classList.remove('hidden');
+          document.getElementById('mapBtn').disabled = false;
+          document.getElementById('logBtn').disabled = true;
+          document.getElementById('newBtn').disabled = false;
         };
-        
+
         document.getElementById('mapBtn').onclick = () => {
-            document.getElementById('log-content').classList.add('hidden');
-            document.getElementById('db-content').classList.add('hidden');
-            document.getElementById('main-content').classList.remove('hidden');
-            document.getElementById('mapBtn').disabled = true;
-            document.getElementById('logBtn').disabled = false;
-            document.getElementById('newBtn').disabled = false;
-            if (map) map.relayout();
+          document.getElementById('log-content').classList.add('hidden');
+          document.getElementById('db-content').classList.add('hidden');
+          document.getElementById('main-content').classList.remove('hidden');
+          document.getElementById('mapBtn').disabled = true;
+          document.getElementById('logBtn').disabled = false;
+          document.getElementById('newBtn').disabled = false;
         };
 
         document.getElementById('newBtn').onclick = () => {
-            document.getElementById('main-content').classList.add('hidden');
-            document.getElementById('log-content').classList.add('hidden');
-            document.getElementById('db-content').classList.remove('hidden');
-            document.getElementById('mapBtn').disabled = false;
-            document.getElementById('logBtn').disabled = false;
-            document.getElementById('newBtn').disabled = true;
-            loadAllDBData();
+          document.getElementById('main-content').classList.add('hidden');
+          document.getElementById('log-content').classList.add('hidden');
+          document.getElementById('db-content').classList.remove('hidden');
+          document.getElementById('mapBtn').disabled = false;
+          document.getElementById('logBtn').disabled = false;
+          document.getElementById('newBtn').disabled = true;
         };
-        
-        document.getElementById('closeUserInfoBtn').onclick = () => {
-            document.getElementById('userInfo').classList.add('hidden');
-            clearMapAndInfo();
-        };
-    }
 
-    // === Auto Login Check ===
-    if (sessionStorage.getItem('isAdmin')) {
+        document.getElementById('closeUserInfoBtn').onclick = () => {
+          document.getElementById('userInfo').classList.add('hidden');
+        };
+      }
+
+      // 관리자 모드에서 테스트용 유저 리스트 렌더링
+      function renderDummyUserList() {
+        const list = document.getElementById('userList');
+        list.innerHTML = '<h2>User List</h2>';
+        ['user1', 'user2', 'user3'].forEach((id) => {
+          const div = document.createElement('div');
+          div.className = 'user';
+          div.textContent = id;
+          div.onclick = () => selectUser(id);
+          list.appendChild(div);
+        });
+      }
+
+      // User Info에 내용 + mini log 리스트 표시
+      function selectUser(userId) {
+        selectedUserId = userId;
+        document.getElementById('logBtn').disabled = false;
+        const userInfo = document.getElementById('userInfo');
+        userInfo.classList.remove('hidden');
+
+        document.getElementById('infoArea').innerHTML = `
+          <div style="margin-bottom:10px;"><strong>ID:</strong> ${userId}</div>
+          <div class="filter-group">
+            <button id="btnAll" class="filter-btn active">전체</button>
+            <button id="btnRange" class="filter-btn">범위 내</button>
+          </div>
+          <div class="log-list" id="miniLogList"></div>
+        `;
+
+        // 테스트용 mini 로그 20개 추가
+        const listDiv = document.getElementById('miniLogList');
+        for (let i = 0; i < 20; i++) {
+          const div = document.createElement('div');
+          div.className = 'log-entry';
+          div.textContent = `로그 ${i + 1} - 테스트`;
+          listDiv.appendChild(div);
+        }
+        listDiv.scrollTop = 0;
+
+        // 필터 버튼은 동작만 흉내
+        document.getElementById('btnAll').onclick = () => {
+          document.getElementById('btnAll').classList.add('active');
+          document.getElementById('btnRange').classList.remove('active');
+        };
+        document.getElementById('btnRange').onclick = () => {
+          document.getElementById('btnRange').classList.add('active');
+          document.getElementById('btnAll').classList.remove('active');
+        };
+      }
+
+      // 자동 로그인 체크
+      if (sessionStorage.getItem('isAdmin')) {
         const flag = sessionStorage.getItem('isAdmin') === 'true';
         const uid  = sessionStorage.getItem('userId');
         showMain(flag, uid);
-    } else {
+      } else {
         document.getElementById('login-container').classList.remove('hidden');
-    }
-});
-</script>
+      }
+    });
+  </script>
 </body>
 </html>
-
-
-
-
