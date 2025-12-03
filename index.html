@@ -539,7 +539,7 @@
                 const allBodies = document.querySelectorAll('.user-accordion-body');
                 
                 allHeaders.forEach(h => h.classList.remove('active-header'));
-                allBodies.forEach(b => b.classList.add('hidden');
+                allBodies.forEach(b => b.classList.add('hidden'));
 
                 // 선택한 아이템 열기
                 if (isHidden) {
@@ -591,32 +591,17 @@
                 });
             };
 
-            // --------------------------------------------------------------------------------
-            // [수정된 부분] 닫기 버튼 로직이 적용된 showMain 함수
-            // --------------------------------------------------------------------------------
             function showMain(isAdmin, uid) {
                 document.getElementById('login-container').classList.add('hidden'); // 로그인 숨김
                 document.getElementById('header').classList.remove('hidden'); // 헤더 보임
                 document.getElementById('main-content').classList.remove('hidden'); // 메인 보임
-                
-                // 닫기 버튼 요소 가져오기
-                const closeBtn = document.getElementById('closeUserInfoBtn');
-
                 if(isAdmin) {
                     document.getElementById('userList').classList.remove('hidden');
                     document.getElementById('userInfo').classList.add('hidden');
-                    
-                    // 관리자는 닫기 버튼 보임
-                    if(closeBtn) closeBtn.style.display = 'block';
-
                     if(window.kakao) kakao.maps.load(initMap);
                 } else {
                     document.getElementById('userList').classList.add('hidden');
                     document.getElementById('userInfo').classList.remove('hidden');
-                    
-                    // 일반 사용자는 닫기 버튼 숨김
-                    if(closeBtn) closeBtn.style.display = 'none';
-
                     if(window.kakao) kakao.maps.load(() => {
                         initMap();
                         loadUserDoorlockAndInit(uid, () => selectUser(uid));
