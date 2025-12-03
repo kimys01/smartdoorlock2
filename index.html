@@ -592,38 +592,46 @@
         };
 
         function showMain(isAdmin, uid) {
-            document.getElementById('login-container').classList.add('hidden'); // 로그인 숨김
-            document.getElementById('header').classList.remove('hidden'); // 헤더 보임
-            document.getElementById('main-content').classList.remove('hidden'); // 메인 보임
-            
-            // 닫기 버튼과 DB조회 버튼 요소 가져오기
-            const closeBtn = document.getElementById('closeUserInfoBtn');
-            const dbBtn = document.getElementById('newBtn'); // [추가됨] DB 조회 버튼
+  const body = document.body;
+  const login = document.getElementById('login-container');
+  const header = document.getElementById('header');
+  const main = document.getElementById('main-content');
+  const userInfo = document.getElementById('userInfo');
+  const userList = document.getElementById('userList');
+  const closeBtn = document.getElementById('closeUserInfoBtn');
+  const dbBtn = document.getElementById('newBtn');
 
-            if(isAdmin) {
-                // --- 관리자 모드 ---
-                document.getElementById('userList').classList.remove('hidden');
-                document.getElementById('userInfo').classList.add('hidden');
-                
-                if(closeBtn) closeBtn.style.display = 'block'; // 닫기 버튼 보임
-                if(dbBtn) dbBtn.style.display = 'inline-block'; // [추가됨] DB 조회 버튼 보임
+  login.classList.add('hidden');
+  header.classList.remove('hidden');
+  main.classList.remove('hidden');
 
-                if(window.kakao) kakao.maps.load(initMap);
-            } else {
-                // --- 일반 사용자 모드 ---
-                document.getElementById('userList').classList.add('hidden');
-                document.getElementById('userInfo').classList.remove('hidden');
-                
-                if(closeBtn) closeBtn.style.display = 'none'; // 닫기 버튼 숨김
-                if(dbBtn) dbBtn.style.display = 'none'; // [추가됨] DB 조회 버튼 숨김
+  if (isAdmin) {
+    body.classList.remove('user-mode');
 
-                if(window.kakao) kakao.maps.load(() => {
-                    initMap();
-                    loadUserDoorlockAndInit(uid, () => selectUser(uid));
-                });
-            }
-            setupNav();
-        }
+    userList.classList.remove('hidden');
+    userInfo.classList.add('hidden');
+
+    if (closeBtn) closeBtn.style.display = 'block';
+    if (dbBtn) dbBtn.style.display = 'inline-block';
+
+    if (window.kakao) kakao.maps.load(initMap);
+  } else {
+    body.classList.add('user-mode');
+
+    userList.classList.add('hidden');
+    userInfo.classList.remove('hidden');
+
+    if (closeBtn) closeBtn.style.display = 'none';
+    if (dbBtn) dbBtn.style.display = 'none';
+
+    if (window.kakao) kakao.maps.load(() => {
+      initMap();
+      loadUserDoorlockAndInit(uid, () => selectUser(uid));
+    });
+  }
+
+  setupNav();
+}
 
         function setupNav() {
             // 로그아웃 버튼
@@ -684,5 +692,6 @@
 </script>
 </body>
 </html>
+
 
 
