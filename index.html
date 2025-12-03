@@ -392,7 +392,7 @@
                 currentUserLocationLogs = [];
                 if(snap.exists()) {
                     snap.forEach(c => { if(c.val().latitude) currentUserLocationLogs.push(c.val()); });
-                    currentUserLocationLogs.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+                    currentUserLocationLogs.sort((a,b) => (a.timestamp||0) - (b.timestamp||0));
                 }
                 renderLocationLogs(false);
             });
@@ -684,5 +684,6 @@
 </script>
 </body>
 </html>
+
 
 
