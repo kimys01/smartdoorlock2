@@ -366,71 +366,78 @@
         }
 
         function selectUser(userId) {
-            if (sessionStorage.getItem('isAdmin') === 'true') clearMapAndInfo();
-            selectedUserId = userId;
-            document.getElementById('logBtn').disabled = false;
-            document.getElementById('userInfo').classList.remove('hidden');
-            document.getElementById('infoArea').innerHTML = `
-                <div style="margin-bottom:10px;"><strong>ID:</strong> ${userId}</div>
-                <div class="filter-group">
-                    <button id="btnAll" class="filter-btn active">전체</button>
-                    <button id="btnRange" class="filter-btn">범위 내</button>
-                </div>
-                <div class="log-list" id="miniLogList">로딩 중...</div>
-            `;
-            document.getElementById('btnAll').onclick = () => { 
-                document.getElementById('btnAll').classList.add('active');
-                document.getElementById('btnRange').classList.remove('active');
-                renderLocationLogs(false); 
-            };
-            document.getElementById('btnRange').onclick = () => { 
-                document.getElementById('btnRange').classList.add('active');
-                document.getElementById('btnAll').classList.remove('active');
-                renderLocationLogs(true); 
-            };
-            database.ref(`users/${userId}/location_logs`).once('value').then(snap => {
-                currentUserLocationLogs = [];
-                if(snap.exists()) {
-                    snap.forEach(c => { if(c.val().latitude) currentUserLocationLogs.push(c.val()); });
-                    currentUserLocationLogs.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
-                }
-                renderLocationLogs(false);
-            });
-        }
+            if (sessionStorage.getItem('isAdmin') === 'true') clearMapAndInfo();
+            selectedUserId = userId;
+            document.getElementById('logBtn').disabled = false;
+            document.getElementById('userInfo').classList.remove('hidden');
+            document.getElementById('infoArea').innerHTML = `
+                <div style="margin-bottom:10px;"><strong>ID:</strong> ${userId}</div>
+                <div class="filter-group">
+                    <button id="btnAll" class="filter-btn active">전체</button>
+                    <button id="btnRange" class="filter-btn">범위 내</button>
+                </div>
+                <div class="log-list" id="miniLogList">로딩 중...</div>
+            `;
+            document.getElementById('btnAll').onclick = () => { 
+                document.getElementById('btnAll').classList.add('active');
+                document.getElementById('btnRange').classList.remove('active');
+                renderLocationLogs(false); 
+            };
+            document.getElementById('btnRange').onclick = () => { 
+                document.getElementById('btnRange').classList.add('active');
+                document.getElementById('btnAll').classList.remove('active');
+                renderLocationLogs(true); 
+            };
+            database.ref(`users/${userId}/location_logs`).once('value').then(snap => {
+                currentUserLocationLogs = [];
+                if(snap.exists()) {
+                    snap.forEach(c => { if(c.val().latitude) currentUserLocationLogs.push(c.val()); });
+                    
+                    // 수정된 부분: 위치 로그를 최신 순으로 정렬 (내림차순)
+                    currentUserLocationLogs.sort((a, b) => {
+                        const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+                        const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+                        return timeB - timeA;
+                    });
+                }
+                renderLocationLogs(false);
+            });
+        }
 
-        function renderLocationLogs(filter) {
-            const listDiv = document.getElementById('miniLogList');
-            listDiv.innerHTML = '';
-            markers.forEach(m => { if(m.customOverlay) m.customOverlay.setMap(null); m.setMap(null); }); markers = [];
-            if(currentPolyline) currentPolyline.setMap(null);
-            if(currentUserLocationLogs.length === 0) { listDiv.innerHTML = '기록 없음'; return; }
-            let path = [];
-            const bounds = new kakao.maps.LatLngBounds();
-            bounds.extend(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
+        function renderLocationLogs(filter) {
+            const listDiv = document.getElementById('miniLogList');
+            listDiv.innerHTML = '';
+            markers.forEach(m => { if(m.customOverlay) m.customOverlay.setMap(null); m.setMap(null); }); markers = [];
+            if(currentPolyline) currentPolyline.setMap(null);
+            if(currentUserLocationLogs.length === 0) { listDiv.innerHTML = '기록 없음'; return; }
+            let path = [];
+            const bounds = new kakao.maps.LatLngBounds();
+            bounds.extend(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
+            
+            // 정렬된 리스트를 순회하며 렌더링
             currentUserLocationLogs.forEach(pos => {
-                const lat = parseFloat(pos.latitude); const lng = parseFloat(pos.longitude);
-                const dist = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
-                if(filter && dist > MAX_DISTANCE_KM) return;
-                const div = document.createElement('div');
-                div.className = 'log-entry';
-                div.innerHTML = `${formatTimestamp(pos.timestamp)} <br> 거리: <strong>${dist.toFixed(2)}km</strong>`;
-                div.onclick = () => { map.setCenter(new kakao.maps.LatLng(lat, lng)); map.setLevel(4); };
-                listDiv.appendChild(div);
-                if(path.length < 50) { 
-                    const p = new kakao.maps.LatLng(lat, lng); path.push(p); bounds.extend(p);
-                    const dot = document.createElement('div');
-                    dot.style.width='8px'; dot.style.height='8px'; dot.style.background='blue'; dot.style.borderRadius='50%';
-                    const m = new kakao.maps.CustomOverlay({ position: p, content: dot, yAnchor: 0.5 });
-                    m.setMap(map); markers.push(m);
-                }
-            });
-            listDiv.scrollTop = 0;
-            if(path.length > 0) {
-                currentPolyline = new kakao.maps.Polyline({ path: path, strokeWeight: 3, strokeColor: '#0000FF', strokeOpacity: 0.6 });
-                currentPolyline.setMap(map); map.setBounds(bounds);
-            }
-        }
-
+                const lat = parseFloat(pos.latitude); const lng = parseFloat(pos.longitude);
+                const dist = getDistanceFromLatLonInKm(DOORLOCK_LAT, DOORLOCK_LNG, lat, lng);
+                if(filter && dist > MAX_DISTANCE_KM) return;
+                const div = document.createElement('div');
+                div.className = 'log-entry';
+                div.innerHTML = `${formatTimestamp(pos.timestamp)} <br> 거리: <strong>${dist.toFixed(2)}km</strong>`;
+                div.onclick = () => { map.setCenter(new kakao.maps.LatLng(lat, lng)); map.setLevel(4); };
+                listDiv.appendChild(div);
+                if(path.length < 50) { 
+                    const p = new kakao.maps.LatLng(lat, lng); path.push(p); bounds.extend(p);
+                    const dot = document.createElement('div');
+                    dot.style.width='8px'; dot.style.height='8px'; dot.style.background='blue'; dot.style.borderRadius='50%';
+                    const m = new kakao.maps.CustomOverlay({ position: p, content: dot, yAnchor: 0.5 });
+                    m.setMap(map); markers.push(m);
+                }
+            });
+            listDiv.scrollTop = 0;
+            if(path.length > 0) {
+                currentPolyline = new kakao.maps.Polyline({ path: path, strokeWeight: 3, strokeColor: '#0000FF', strokeOpacity: 0.6 });
+                currentPolyline.setMap(map); map.setBounds(bounds);
+            }
+        }
         function clearMapAndInfo() { markers.forEach(m => m.setMap(null)); markers = []; if(currentPolyline) currentPolyline.setMap(null); }
 
         // --- Admin & Navigation ---
@@ -684,4 +691,5 @@
 </script>
 </body>
 </html>
+
 
