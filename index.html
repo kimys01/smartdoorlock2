@@ -18,14 +18,10 @@
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=75f5ad508e0e54ef29a0f0dc6e89ef5a&autoload=false"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    
-    <style>
-        .hidden { display: none !important; }
-    </style>
 </head>
 <body>
 
-    <div id="login-container" class="hidden">
+    <div id="login-container">
         <h2>SmartDoorLock</h2>
         <form id="login-form">
             <div class="input-group">
@@ -41,7 +37,7 @@
     </div>
 
     <div id="header" class="hidden">
-        <h1 id="header-title" title="초기 화면으로 이동">Smart Doorlock</h1> 
+        <h1 id="header-title">Smart Doorlock</h1> 
         <div class="button-group">
             <button id="mapBtn" disabled>지도</button>
             <button id="logBtn" disabled>로그 보기</button>
@@ -259,45 +255,35 @@
                         const promises = doorlockIds.map(id => database.ref(`doorlocks/${id}/logs`).once('value'));
                         Promise.all(promises).then(snapshots => {
                             let allLogs = [];
-                            snapshots.forEach(snap => { 
-                                if (snap.exists()) { 
-                                    snap.forEach(c => { 
-                                        const val = c.val();
-                                        allLogs.push(val); 
-                                    }); 
-                                } 
-                            });
+                            snapshots.forEach(snap => { if (snap.exists()) { snap.forEach(c => allLogs.push(c.val())); } });
 
                             if (allLogs.length === 0) {
                                 dlContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">기록 없음</div>';
                             } else {
                                 dlContainer.innerHTML = '';
                                 allLogs.sort((a, b) => {
-                                    const timeAStr = a.timestamp || a.time || a.date || a.datetime || a.created_at || 0;
-                                    const timeBStr = b.timestamp || b.time || b.date || b.datetime || b.created_at || 0;
-                                    const timeA = new Date(timeAStr).getTime() || 0;
-                                    const timeB = new Date(timeBStr).getTime() || 0;
+                                    const timeAStr = a.timestamp || a.time || a.date || a.datetime || 0;
+                                    const timeBStr = b.timestamp || b.time || b.date || b.datetime || 0;
+                                    const timeA = new Date(timeAStr).getTime();
+                                    const timeB = new Date(timeBStr).getTime();
                                     return timeB - timeA;
                                 });
 
                                 allLogs.forEach(log => {
                                     const div = document.createElement('div');
-                                    let who = log.user || log.userId || log.id || log.who || log.name || "알 수 없음";
-                                    let timeValue = log.timestamp || log.time || log.date || log.datetime || log.created_at;
-                                    let methodRawValue = log.method || log.auth || log.type || log.category || "unknown";
-                                    let methodRaw = String(methodRawValue).toUpperCase(); 
-                                    let methodDisp = methodRawValue; 
-                                    let methodIcon = "🔑"; 
+                                    let who = log.user || log.userId || log.id || "알 수 없음";
+                                    let timeValue = log.timestamp || log.time || log.date || log.datetime;
+                                    let methodRaw = String(log.method || "unknown").toUpperCase(); 
+                                    let methodDisp = log.method || "기타"; let methodIcon = "🔑";
 
                                     if (methodRaw.includes("PW") || methodRaw.includes("PASS")) { methodDisp = "비밀번호"; methodIcon = "🔢"; } 
                                     else if (methodRaw.includes("RF") || methodRaw.includes("CARD") || methodRaw.includes("TAG")) { methodDisp = "카드키"; methodIcon = "💳"; } 
                                     else if (methodRaw.includes("APP") || methodRaw.includes("BLE") || methodRaw.includes("BLUE") || methodRaw.includes("PHONE")) { methodDisp = "앱(블루투스)"; methodIcon = "📱"; } 
                                     else if (methodRaw.includes("FINGER") || methodRaw.includes("BIO")) { methodDisp = "지문"; methodIcon = "👆"; }
 
-                                    let actionRawValue = log.command || log.status || log.state || log.action || log.event || log.msg || "알 수 없음";
+                                    let actionRawValue = log.command || log.status || log.state || log.action || log.msg || "알 수 없음";
                                     let actionRaw = String(actionRawValue).toUpperCase(); 
-                                    let actionDisp = actionRawValue; 
-                                    let actionIcon = "❓";
+                                    let actionDisp = actionRawValue; let actionIcon = "❓";
                                     let statusColor = "#333"; let statusBg = "#fff";
 
                                     if (actionRaw.includes("UNLOCK") || actionRaw.includes("OPEN") || actionRaw === "1" || actionRaw === "TRUE" || actionRaw.includes("SUCCESS")) {
@@ -305,9 +291,6 @@
                                     } 
                                     else if (actionRaw.includes("LOCK") || actionRaw.includes("CLOSE") || actionRaw === "0" || actionRaw === "FALSE") {
                                         actionDisp = "문 잠김"; actionIcon = "🔒"; statusColor = "#dc3545"; statusBg = "#ffeef0";
-                                    }
-                                    else if (actionRaw.includes("WARN") || actionRaw.includes("ALERT") || actionRaw.includes("FAIL")) {
-                                        actionDisp = "경고/실패"; actionIcon = "🚨"; statusColor = "#ffc107"; statusBg = "#fff3cd";
                                     }
 
                                     div.style.backgroundColor = "#fff"; div.style.marginBottom = "12px";
@@ -448,45 +431,6 @@
                 });
             }
 
-            // --- [FIX] 검색 기능 추가 ---
-            window.searchUser = function() {
-                const input = document.getElementById('search-input');
-                const keyword = input.value.trim();
-                const area = document.getElementById('result-area');
-
-                if (!keyword) {
-                    customAlert("검색할 사용자 ID를 입력해주세요.");
-                    return;
-                }
-
-                area.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">검색 중...</div>';
-
-                database.ref('users/' + keyword).once('value').then(snap => {
-                    if (snap.exists()) {
-                        const searchResult = {};
-                        searchResult[keyword] = snap.val();
-                        renderGrid(searchResult);
-                    } else {
-                        area.innerHTML = `<div style="padding:20px; text-align:center; color:#dc3545;">
-                            '<strong>${keyword}</strong>' ID를 가진 사용자가 없습니다.
-                        </div>`;
-                    }
-                }).catch(err => {
-                    console.error("검색 오류:", err);
-                    area.innerHTML = '<div style="padding:20px; text-align:center;">검색 중 오류가 발생했습니다.</div>';
-                });
-            };
-
-            // [추가됨] 엔터키 이벤트 리스너
-            const searchInputObj = document.getElementById('search-input');
-            if(searchInputObj) {
-                searchInputObj.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        window.searchUser();
-                    }
-                });
-            }
-
             window.loadAllDBData = function() {
                 const area = document.getElementById('result-area');
                 area.innerHTML = '로딩 중...';
@@ -568,18 +512,10 @@
             }
 
             function setupNav() {
-                // 로그아웃 버튼
                 document.getElementById('logoutBtn').onclick = () => document.getElementById('logout-confirm-modal').classList.remove('hidden');
                 document.getElementById('confirmLogoutBtn').onclick = () => { sessionStorage.clear(); location.reload(); };
                 document.getElementById('cancelLogoutBtn').onclick = () => document.getElementById('logout-confirm-modal').classList.add('hidden');
                 
-                // [기능 추가] 타이틀 클릭 시 초기 화면 이동
-                const headerTitle = document.getElementById('header-title');
-                if(headerTitle) {
-                    headerTitle.style.cursor = 'pointer';
-                    headerTitle.onclick = () => window.location.reload();
-                }
-
                 document.getElementById('logBtn').onclick = () => {
                     document.getElementById('main-content').classList.add('hidden');
                     document.getElementById('db-content').classList.add('hidden');
