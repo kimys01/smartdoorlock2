@@ -1,16 +1,10 @@
 @charset "UTF-8";
 
 /* =========================================
-   1. 기본 설정
+   1. 기본 설정 (Global Reset & Body)
    ========================================= */
 :root { color-scheme: light !important; }
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Poppins', sans-serif;
-    color: #333;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; color: #333; }
 
 body { 
     width: 100%;
@@ -24,7 +18,7 @@ body {
     overflow: hidden; 
 }
 
-/* 화면 숨김 */
+/* 화면 숨김 처리 유틸리티 */
 .hidden { 
     display: none !important; 
     visibility: hidden !important;
@@ -32,103 +26,52 @@ body {
 }
 
 /* =========================================
-   2. 헤더
+   2. 상단 헤더 (Header)
    ========================================= */
 #header {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 70px;
-    padding: 0 30px;
-    background-color: #fff !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 1000;
+    position: fixed; top: 0; left: 0; width: 100%; height: 70px; padding: 0 30px;
+    background-color: #fff !important; box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    display: flex; justify-content: space-between; align-items: center; z-index: 1000;
 }
 #header h1 {
-    font-size: 24px;
-    margin: 0;
-    cursor: pointer;
-    font-weight: 600;
-    background: linear-gradient(135deg, #71b7e6, #9b59b6);
-    -webkit-background-clip: text;
-    color: transparent;
+    font-size: 24px; margin: 0; cursor: pointer; font-weight: 600;
+    background: linear-gradient(135deg, #71b7e6, #9b59b6); -webkit-background-clip: text; color: transparent;
     white-space: nowrap;
 }
 #header .button-group { display: flex; }
 #header button {
-    padding: 10px 20px;
-    border: none;
-    background: #f8f9fa;
-    cursor: pointer;
-    transition: 0.3s;
-    font-size: 14px;
-    white-space: nowrap;
+    padding: 10px 20px; border: none; background: #f8f9fa; cursor: pointer; transition: 0.3s; font-size: 14px; white-space: nowrap;
 }
-#header button:hover:not(:disabled) {
-    background: linear-gradient(135deg, #71b7e6, #9b59b6);
-    color: white;
-}
-#header button:disabled {
-    color: #aaa;
-    cursor: not-allowed;
-}
+#header button:hover:not(:disabled) { background: linear-gradient(135deg, #71b7e6, #9b59b6); color: white; }
+#header button:disabled { color: #aaa; cursor: not-allowed; }
 
 /* =========================================
-   3. 로그인
+   3. 로그인 화면 (Login Container)
    ========================================= */
 #login-container {
-    width: 90%;
-    max-width: 400px;
-    background: #fff;
-    padding: 40px;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    text-align: center; 
-    position: absolute;
-    left: 50%; top: 50%;
-    transform: translate(-50%, -50%); 
+    width: 90%; max-width: 400px; background: #fff; padding: 40px; border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2); text-align: center; 
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); 
     z-index: 2000; 
 }
 .input-group { margin-bottom: 20px; text-align: left; }
-.input-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 14px;
-    color: #555;
-}
-input {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
-}
-#login-container button {
-    width: 100%;
-    padding: 12px;
-    background: linear-gradient(135deg, #71b7e6, #9b59b6);
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 18px;
-}
+.input-group label { display: block; margin-bottom: 8px; font-size: 14px; color: #555; }
+input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
+#login-container button { width: 100%; padding: 12px; background: linear-gradient(135deg, #71b7e6, #9b59b6); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 18px; }
 
 /* =========================================
-   4. 메인 화면 레이아웃
+   4. 메인 화면 (Main Content)
    ========================================= */
 #main-content { 
     display: flex; 
     padding: 10px; 
     gap: 20px; 
     width: 100%; 
-    height: calc(100vh - 70px); /* 헤더 제외 */
-    overflow: hidden;
+    height: calc(100vh - 70px); /* 전체 높이에서 헤더 뺌 */
+    overflow: hidden; /* 메인 화면 밖으로 나가는 것 차단 */
 }
 
-/* ----- 사이드바 ----- */
+/* 사이드바 */
 #sidebar { 
     width: 250px; 
     min-width: 200px; 
@@ -136,12 +79,12 @@ input {
     flex-direction: column; 
     gap: 15px; 
     height: 100%;
-    min-height: 0;          /* 내부 스크롤 허용 */
+    min-height: 0;            /* 내부 스크롤을 위한 필수 설정 */
 }
 
-/* User Info: 사용자 모드에서 맵과 같은 높이로 꽉 차는 영역 */
+/* [중요] User Info: sidebar 세로 전체를 사용 */
 #userInfo { 
-    flex: 1 1 auto;         /* 세로 전체를 채우도록 */
+    flex: 1 1 auto;               /* 맵과 높이를 맞추도록 세로를 꽉 채움 */
     display: flex; 
     flex-direction: column; 
     background: #fff; 
@@ -149,10 +92,10 @@ input {
     border-radius: 8px; 
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     overflow: hidden; 
-    min-height: 0;          /* 자식 스크롤 허용 */
+    min-height: 0; 
 }
 
-/* User List: 관리자 모드에서만 사용되는 리스트 */
+/* 유저 리스트 (관리자 모드용) */
 #userList { 
     flex: 1 1 auto; 
     overflow-y: auto; 
@@ -171,7 +114,7 @@ input {
     padding-bottom: 10px;            
     border-bottom: 1px solid #eee;
     gap: 10px;   
-    flex-shrink: 0;
+    flex-shrink: 0; /* 헤더는 스크롤과 무관하게 고정 */
 }
 .info-header h2 { 
     margin: 0; 
@@ -181,25 +124,20 @@ input {
     color: #333; 
 } 
 #closeUserInfoBtn {
-    background: transparent;
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
-    color: #888;
-    padding: 5px;
-    line-height: 1;
+    background: transparent; border: none; font-size: 18px; cursor: pointer; color: #888; padding: 5px; line-height: 1;
 }
 
-/* User Info 내부: ID + 필터 버튼 + 미니 로그 */
+/* [핵심] User Info 내부 컨텐츠 영역 */
 #infoArea { 
-    flex: 1 1 auto;          /* User Info 안의 나머지 공간 채움 */
+    flex: 1 1 auto;                 /* User Info 안 남은 공간을 사용 */
     display: flex; 
     flex-direction: column; 
-    gap: 8px;
-    min-height: 0;
+    gap: 8px; 
+    min-height: 0; 
+    padding-bottom: 32px;           /* User Info 바닥과 miniLog 사이 여백 */
 }
 
-/* 필터 버튼 그룹 */
+/* 필터 버튼 */
 .filter-group { 
     display: flex; 
     gap: 5px; 
@@ -220,22 +158,20 @@ input {
     border-color: #adb5bd; 
 }
 
-/* 공통 로그 리스트 박스 스타일 */
-.log-list {
-    background: #f8f9fa;
-    border-radius: 6px;
-    padding: 6px;
+/* mini 로그 박스 공통 스타일 */
+.log-list { 
+    background: #f8f9fa; 
+    border-radius: 6px; 
+    padding: 6px; 
 }
 
-/* ===== 사용자용 요약 미니 로그 (ID: miniLogList) ===== */
-/* 이 박스 안에서만 스크롤되게 함 */
-/* miniLogList: 높이는 유동적, 내용 많아지면 안에서만 스크롤 */
-#miniLogList.log-list {
-    max-height: 200px;     /* 너무 길어지지만 않게, 원하는 만큼만 제한 (없애고 싶으면 주석처리해도 됨) */
-    overflow-y: auto;      /* 이 안에서만 스크롤 */
+/* [핵심] 실제 위치 로그 미니 리스트 (User Info 안) */
+#miniLogList.log-list { 
+    overflow-y: auto; 
+    max-height: calc(100% - 32px);  /* infoArea 높이 - 여백(32px). User Info를 넘지 않음 */
 }
 
-/* 스크롤바 스타일(선택) */
+/* 스크롤바 커스터마이즈 */
 #miniLogList.log-list::-webkit-scrollbar {
     width: 8px;
 }
@@ -245,25 +181,20 @@ input {
     min-height: 30px;
 }
 
-/* 개별 로그 항목 */
-.log-entry {
-    padding: 8px;
-    border-bottom: 1px solid #eee;
-    font-size: 13px;
-    cursor: pointer;
+/* 개별 mini 로그 항목 */
+.log-entry { 
+    padding: 8px; 
+    border-bottom: 1px solid #eee; 
+    font-size: 13px; 
+    cursor: pointer; 
 }
 .log-entry:hover { background: #f8f9fa; }
 
-/* 사용자/유저 리스트 항목 */
-.user {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer;
-    transition: 0.2s;
-}
+/* 유저 리스트 항목 */
+.user { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; }
 .user:hover { background: #f0f0f0; }
 
-/* ----- 맵 영역 ----- */
+/* 맵 영역 */
 #mapArea { 
     flex-grow: 1; 
     background: #fff; 
@@ -274,14 +205,10 @@ input {
     height: 100%;
     overflow: hidden;
 }
-#map { 
-    width: 100%; 
-    flex-grow: 1; 
-    border-radius: 4px; 
-}
+#map { width: 100%; flex-grow: 1; border-radius: 4px; }
 
 /* =========================================
-   5. 로그 전체 화면
+   5. 로그 상세 화면 (Log Content)
    ========================================= */
 #log-content {
     width: 100%;
@@ -300,130 +227,52 @@ input {
     isolation: isolate;
 }
 
-.log-header {
-    background: #fff;
-    padding: 15px;
-    border-radius: 8px;
-    flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
+.log-header { background: #fff; padding: 15px; border-radius: 8px; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
 /* 탭 버튼 */
 .log-tab-buttons {
-    display: flex;
-    width: 100%;
-    background: #fff;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    flex-shrink: 0;
+    display: flex; width: 100%; background: #fff; border-radius: 8px; overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); flex-shrink: 0;
 }
 .log-tab-btn {
-    flex: 1;
-    padding: 15px;
-    border: none;
-    background: transparent;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    border-bottom: 3px solid transparent;
-    transition: 0.3s;
+    flex: 1; padding: 15px; border: none; background: transparent; font-size: 16px; font-weight: 500; cursor: pointer;
+    border-bottom: 3px solid transparent; transition: 0.3s;
 }
-.log-tab-btn.active {
-    color: #71b7e6;
-    font-weight: bold;
-    border-bottom: 3px solid #71b7e6;
-    background: #f8f9fa;
-}
+.log-tab-btn.active { color: #71b7e6; font-weight: bold; border-bottom: 3px solid #71b7e6; background: #f8f9fa; }
 
-.log-container {
-    flex-grow: 1;
-    position: relative;
-    overflow: hidden;
-}
+.log-container { flex-grow: 1; position: relative; overflow: hidden; }
 
 /* 로그 섹션 */
 .log-section {
-    display: none;
-    flex-direction: column;
-    height: 100%;
-    background: #f1f3f5;
-    padding: 10px;
-    border-radius: 8px; 
+    display: none; flex-direction: column; height: 100%;
+    background: #f1f3f5; padding: 10px; border-radius: 8px; 
 }
 .log-section.active-tab-content { display: flex; }
+.log-entries { flex-grow: 1; overflow-y: auto; padding-right: 5px; }
 
-.log-entries {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding-right: 5px;
-}
-
-/* 카드형 로그 */
+/* 카드형 로그 디자인 */
 .log-card {
-    background: white;
-    border-radius: 8px;
-    padding: 12px 15px;
-    margin-bottom: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    border-left: 5px solid #ccc;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    transition: transform 0.2s;
+    background: white; border-radius: 8px; padding: 12px 15px; margin-bottom: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid #ccc;
+    display: flex; flex-direction: column; gap: 6px; transition: transform 0.2s;
 }
-.log-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
+.log-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
 .log-card.status-open { border-left-color: #007bff; }
 .log-card.status-close { border-left-color: #dc3545; }
 .log-card.status-app { border-left-color: #28a745; }
 
-.log-header-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 12px;
-    color: #888;
-}
-.log-body-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 15px;
-}
-.badge {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-right: 5px;
-}
+.log-header-row { display: flex; justify-content: space-between; font-size: 12px; color: #888; }
+.log-body-row { display: flex; align-items: center; justify-content: space-between; font-size: 15px; }
+.badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; margin-right: 5px; }
 .badge.user { background: #e9ecef; color: #495057; }
 .badge.method { background: #fff3cd; color: #856404; }
-.status-text {
-    font-weight: bold;
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
+.status-text { font-weight: bold; font-size: 16px; display: flex; align-items: center; gap: 5px; }
 .text-blue { color: #007bff; }
 .text-red { color: #dc3545; }
-.log-detail-box {
-    font-size: 13px;
-    color: #555;
-    background: #f8f9fa;
-    padding: 8px;
-    border-radius: 4px;
-    margin-top: 5px;
-}
+.log-detail-box { font-size: 13px; color: #555; background: #f8f9fa; padding: 8px; border-radius: 4px; margin-top: 5px; }
 
 /* =========================================
-   6. DB 화면
+   6. DB 조회 화면 (DB Content)
    ========================================= */
 #db-content {
     width: 100%;
@@ -442,84 +291,96 @@ input {
 }
 
 .container {
-    max-width: 1200px;
-    width: 100%;
-    margin: 0 auto;
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+    max-width: 1200px; width: 100%; margin: 0 auto; background: #fff; padding: 20px;
+    border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: 
+    flex; flex-direction: column; height: 100%;
 }
-.search-container {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
+.search-container { display: flex; gap: 10px; margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; flex-wrap: wrap; }
+.search-container input { flex: 1; min-width: 200px; }
+.btn-search { background: linear-gradient(135deg, #71b7e6, #9b59b6); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+.btn-reset { background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+#result-area { flex-grow: 1; overflow: auto; border: 1px solid #eee; padding: 10px; }
+
+/* DB 조회 아코디언 리스트 스타일 */
+.user-accordion-item {
+    border: 1px solid #ddd;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.user-accordion-header {
+    background-color: #f8f9fa;
     padding: 15px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    flex-wrap: wrap;
-}
-.search-container input {
-    flex: 1;
-    min-width: 200px;
-}
-.btn-search {
-    background: linear-gradient(135deg, #71b7e6, #9b59b6);
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
     cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s, color 0.2s;
 }
-.btn-reset {
-    background: #6c757d;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
-    cursor: pointer;
+.user-accordion-header:hover { background-color: #e2e6ea; }
+.active-header {
+    background-color: #e7f3ff;
+    color: #0056b3;
+    border-bottom: 1px solid #dae0e5;
 }
-#result-area {
-    flex-grow: 1;
-    overflow: auto;
-    border: 1px solid #eee;
-    padding: 10px;
+.user-accordion-body {
+    padding: 15px;
+    background-color: #fff;
+    overflow-x: auto; 
+    animation: slideDown 0.3s ease-out;
 }
+.icon-arrow {
+    transition: transform 0.3s;
+    font-size: 12px;
+}
+.active-header .icon-arrow { transform: rotate(180deg); }
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Firebase Tree View */
+.fv-item { margin: 2px 0; }
+.fv-key { color: #000080; font-weight: bold; cursor: pointer; margin-right: 5px; }
+.fv-string { color: #a31515; } .fv-number { color: #098658; } .fv-boolean { color: #0000ff; }
+.fv-children { margin-left: 20px; border-left: 1px solid #eee; padding-left: 5px; display: block; }
+.fv-hidden { display: none; }
+.btn-edit-mini, .btn-delete-mini {
+    border: none; background: none; cursor: pointer; font-size: 16px; color: #adb5bd; margin-left: 5px;
+    opacity: 0; visibility: hidden; transition: 0.2s;
+}
+.fv-item:hover > .fv-item-content .btn-edit-mini,
+.fv-item:hover > .fv-item-content .btn-delete-mini,
+.mobile-active .btn-edit-mini, .mobile-active .btn-delete-mini {
+    opacity: 1; visibility: visible;
+}
+.btn-edit-mini:hover { color: #007bff; transform: scale(1.2); }
+.btn-delete-mini:hover { color: #dc3545; transform: scale(1.2); }
 
 /* =========================================
-   7. 모달 & 반응형
+   7. 모달 & 유틸 & 반응형
    ========================================= */
-#custom-modal,
-#logout-confirm-modal {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 3000;
+#custom-modal, #logout-confirm-modal {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5);
+    display: flex; justify-content: center; align-items: center; z-index: 3000;
 }
-.modal-content {
-    background: #fff;
-    padding: 30px;
-    border-radius: 10px;
-    text-align: center;
-    min-width: 300px;
-}
+.modal-content { background: #fff; padding: 30px; border-radius: 10px; text-align: center; min-width: 300px; }
 
+/* 로그아웃 모달 */
 #logout-confirm-modal button {
     border: none !important;
-    outline: none;
-    padding: 10px 0;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 500;
-    color: white;
-    cursor: pointer;
-    transition: 0.2s;
+    outline: none;                      
+    padding: 10px 0;                    
+    border-radius: 8px;                 
+    font-size: 16px;                    
+    font-weight: 500;                   
+    color: white;                       
+    cursor: pointer;                    
+    transition: 0.2s;                   
     box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
 }
 #confirmLogoutBtn {
@@ -529,33 +390,18 @@ input {
     background: #6c757d !important; 
 }
 #logout-confirm-modal button:hover {
-    transform: translateY(-2px);
-    opacity: 0.9;
+    transform: translateY(-2px);    
+    opacity: 0.9;                   
 }
 #logout-confirm-modal button:active {
-    transform: translateY(0);
+    transform: translateY(0);       
 }
 
-/* 반응형 */
+/* 모바일 반응형 */
 @media (max-width: 768px) {
-    #header {
-        flex-direction: column;
-        height: auto;
-        padding: 10px;
-    }
+    #header { flex-direction: column; height: auto; padding: 10px; }
     body { padding-top: 110px; }
-    #main-content {
-        flex-direction: column;
-        height: auto;
-    }
-    #sidebar,
-    #mapArea {
-        width: 100%;
-        height: 400px;
-    }
-    #log-content,
-    #db-content {
-        top: 110px;
-        height: calc(100vh - 110px);
-    }
+    #main-content { flex-direction: column; height: auto; }
+    #sidebar, #mapArea { width: 100%; height: 400px; }
+    #log-content, #db-content { top: 110px; height: calc(100vh - 110px); }
 }
