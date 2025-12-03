@@ -327,7 +327,8 @@
                     level: 7
                 });
                 drawDoorlockZones();
-                if (sessionStorage.getItem('isAdmin') === 'true') loadUserList();
+                const role = sessionStorage.getItem('role');
+                if (role === 'ADMIN') loadUserList();
             }
 
             function drawDoorlockZones() {
@@ -348,11 +349,11 @@
             }
 
             function selectUser(userId) {
-                if (sessionStorage.getItem('isAdmin') === 'true') clearMapAndInfo();
+                const role = sessionStorage.getItem('role'); // 'ADMIN' | 'USER'
                 selectedUserId = userId;
-                document.getElementById('logBtn').disabled = false;
-                document.getElementById('userInfo').classList.remove('hidden');
 
+                // 공통: 지도/로그에 선택된 사용자 반영
+                document.getElementById('userInfo').classList.remove('hidden');
                 document.getElementById('infoArea').innerHTML = `
             <div style="margin-bottom:10px;"><strong>ID:</strong> ${userId}</div>
             <div class="filter-group">
@@ -361,6 +362,11 @@
             </div>
             <div class="log-list" id="miniLogList">로딩 중...</div>
         `;
+
+                // 사용자 모드에서만: logBtn 활성화 (관리자는 전체 로그 버튼 항상 사용)
+                if (role === 'USER') {
+                    document.getElementById('logBtn').disabled = false;
+                }
 
                 document.getElementById('btnAll').onclick = () => {
                     document.getElementById('btnAll').classList.add('active');
@@ -380,6 +386,11 @@
                         currentUserLocationLogs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                     }
                     renderLocationLogs(false);
+                    // 선택 후 지도 센터/줌 재정렬
+                    if (map) {
+                        map.relayout();
+                        map.setCenter(new kakao.maps.LatLng(DOORLOCK_LAT, DOORLOCK_LNG));
+                    }
                 });
             }
 
@@ -460,12 +471,6 @@
                 });
             }
 
-            window.searchUser = function () { /* ... DB 검색 로직 (생략 없이 기존 그대로 유지) ... */ };
-            window.loadAllDBData = function () { /* ... DB 전체 로딩 (기존 그대로) ... */ };
-            window.toggleAccordion = function (header) { /* ... */ };
-            function renderGrid(data) { /* ... */ }
-            function createTreeView(data, depth) { /* ... */ }
-
             // --- 로그인 처리 ---
             document.getElementById('login-form').onsubmit = (e) => {
                 e.preventDefault();
@@ -477,17 +482,19 @@
                     snap.forEach(c => {
                         if (c.val().adminId === id && c.val().password === pw) isAdmin = true;
                     });
+
                     if (isAdmin) {
-                        sessionStorage.setItem('isAdmin', 'true');
-                        sessionStorage.removeItem('userId');
-                        showMain(true, id);
+                        sessionStorage.setItem('role', 'ADMIN');
+                        sessionStorage.setItem('userId', id);
+                        showMain('ADMIN', id);
                         return;
                     }
+
                     database.ref('users/' + id).once('value').then(usnap => {
                         if (usnap.exists() && usnap.val().password === pw) {
-                            sessionStorage.setItem('isAdmin', 'false');
+                            sessionStorage.setItem('role', 'USER');
                             sessionStorage.setItem('userId', id);
-                            showMain(false, id);
+                            showMain('USER', id);
                         } else {
                             customAlert("로그인 실패");
                         }
@@ -495,8 +502,8 @@
                 });
             };
 
-            // === 여기: user-mode 제어 포함 모드 전환 ===
-            function showMain(isAdmin, uid) {
+            // === 역할 기반 메인 화면 전환 ===
+            function showMain(role, uid) {
                 const body = document.body;
                 const login = document.getElementById('login-container');
                 const header = document.getElementById('header');
@@ -510,7 +517,7 @@
                 header.classList.remove('hidden');
                 main.classList.remove('hidden');
 
-                if (isAdmin) {
+                if (role === 'ADMIN') {
                     // 관리자 모드
                     body.classList.remove('user-mode');
 
@@ -521,6 +528,11 @@
                     if (dbBtn) dbBtn.style.display = 'inline-block';
 
                     if (window.kakao) kakao.maps.load(initMap);
+
+                    // 관리자: logBtn/mapBtn/newBtn 기본 상태
+                    document.getElementById('mapBtn').disabled = true;
+                    document.getElementById('logBtn').disabled = true;
+                    document.getElementById('newBtn').disabled = false;
 
                 } else {
                     // 사용자 모드
@@ -536,6 +548,11 @@
                         initMap();
                         loadUserDoorlockAndInit(uid, () => selectUser(uid));
                     });
+
+                    // 사용자: 지도 먼저, 로그 버튼은 선택 후 활성화
+                    document.getElementById('mapBtn').disabled = true;
+                    document.getElementById('logBtn').disabled = true;
+                    document.getElementById('newBtn').disabled = true;
                 }
 
                 setupNav();
@@ -593,10 +610,10 @@
             }
 
             // --- Auto Login ---
-            if (sessionStorage.getItem('isAdmin')) {
-                const flag = sessionStorage.getItem('isAdmin') === 'true';
-                const uid = sessionStorage.getItem('userId');
-                showMain(flag, uid);
+            const savedRole = sessionStorage.getItem('role'); // 'ADMIN' | 'USER' | null
+            const savedUid = sessionStorage.getItem('userId');
+            if (savedRole && savedUid) {
+                showMain(savedRole, savedUid);
             } else {
                 document.getElementById('login-container').classList.remove('hidden');
             }
