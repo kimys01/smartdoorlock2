@@ -366,15 +366,8 @@
         }
 
         function selectUser(userId) {
-            if (sessionStorage.getItem('isAdmin') === 'true'){
-                clearMapAndInfo();
+            if (sessionStorage.getItem('isAdmin') === 'true') clearMapAndInfo();
 
-                onst userList = document.getElementById('userList');
-                if (userList) userList.classList.remove('hidden');
-
-                const closeBtn = document.getElementById('closeUserInfoBtn');
-                if (closeBtn) closeBtn.style.display = 'block';
-            }
             selectedUserId = userId;
             document.getElementById('logBtn').disabled = false;
             document.getElementById('userInfo').classList.remove('hidden');
@@ -695,6 +688,7 @@
 </script>
 </body>
 </html>
+
 
 
 
