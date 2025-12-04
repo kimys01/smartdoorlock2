@@ -687,4 +687,15 @@ input {
    .log-entries {
         overflow-y: auto !important; 
     }
+    
+    /* 기존 코드 유지: .log-container 스크롤 숨김 해제 및 높이 상속 강제 */
+    .log-container {
+        overflow: visible !important; 
+        height: 100% !important;     
+    }
+    
+    /* 💡 [추가] 로그 섹션 높이 상속 강제 적용 */
+    .log-section {
+        height: 100% !important;
+    }
 }
