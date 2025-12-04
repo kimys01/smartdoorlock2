@@ -683,4 +683,8 @@ input {
     #mapArea {
         height: 60vh !important; /* 모바일에서 맵 영역을 400px 대신 뷰포트 높이의 60%로 늘림 */
     }
+
+   .log-entries {
+        overflow-y: auto !important; 
+    }
 }
