@@ -148,7 +148,7 @@ input {
     padding: 15px; 
     border-radius: 8px; 
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    overflow: hidden; 
+    overflow-y: auto; 
     min-height: 0;          /* 자식 스크롤 허용 */
 }
 
