@@ -3,7 +3,10 @@
 /* =========================================
    1. 기본 설정
    ========================================= */
-:root { color-scheme: light !important; }
+:root {
+    color-scheme: light !important;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -12,21 +15,21 @@
     color: #333;
 }
 
-body { 
+body {
     width: 100%;
-    height: 100vh; 
-    background-color: #71b7e6 !important; 
+    height: 100vh;
+    background-color: #71b7e6 !important;
     background-image: linear-gradient(135deg, #71b7e6, #9b59b6) !important;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    padding-top: 70px; 
-    overflow: hidden; 
+    padding-top: 70px;
+    overflow: hidden;
 }
 
 /* 화면 숨김 */
-.hidden { 
-    display: none !important; 
+.hidden {
+    display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
 }
@@ -36,16 +39,19 @@ body {
    ========================================= */
 #header {
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 70px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 70px;
     padding: 0 30px;
     background-color: #fff !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
     display: flex;
     justify-content: space-between;
     align-items: center;
     z-index: 1000;
 }
+
 #header h1 {
     font-size: 24px;
     margin: 0;
@@ -56,7 +62,11 @@ body {
     color: transparent;
     white-space: nowrap;
 }
-#header .button-group { display: flex; }
+
+#header .button-group {
+    display: flex;
+}
+
 #header button {
     padding: 10px 20px;
     border: none;
@@ -66,10 +76,12 @@ body {
     font-size: 14px;
     white-space: nowrap;
 }
+
 #header button:hover:not(:disabled) {
     background: linear-gradient(135deg, #71b7e6, #9b59b6);
     color: white;
 }
+
 #header button:disabled {
     color: #aaa;
     cursor: not-allowed;
@@ -84,20 +96,27 @@ body {
     background: #fff;
     padding: 40px;
     border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    text-align: center; 
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    text-align: center;
     position: absolute;
-    left: 50%; top: 50%;
-    transform: translate(-50%, -50%); 
-    z-index: 2000; 
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2000;
 }
-.input-group { margin-bottom: 20px; text-align: left; }
+
+.input-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
 .input-group label {
     display: block;
     margin-bottom: 8px;
     font-size: 14px;
     color: #555;
 }
+
 input {
     width: 100%;
     padding: 12px;
@@ -105,6 +124,7 @@ input {
     border-radius: 5px;
     font-size: 16px;
 }
+
 #login-container button {
     width: 100%;
     padding: 12px;
@@ -119,74 +139,85 @@ input {
 /* =========================================
    4. 메인 화면 레이아웃
    ========================================= */
-#main-content { 
-    display: flex; 
-    padding: 10px; 
-    gap: 20px; 
-    width: 100%; 
-    height: calc(100vh - 70px); /* 헤더 제외 */
+#main-content {
+    display: flex;
+    padding: 10px;
+    gap: 20px;
+    width: 100%;
+    height: calc(100vh - 70px);
+    /* 헤더 제외 */
     overflow: hidden;
 }
 
 /* ----- 사이드바 ----- */
-#sidebar { 
-    width: 250px; 
-    min-width: 200px; 
-    display: flex; 
-    flex-direction: column; 
-    gap: 15px; 
+#sidebar {
+    width: 250px;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
     height: 100%;
-    min-height: 0;          /* 내부 스크롤 허용 */
+    min-height: 0;
+    /* 내부 스크롤 허용 */
 }
 
 /* indexstyle.css 파일 수정: 기존 #userInfo 및 #userList 블록을 아래 내용으로 교체 */
 
 /* 1. 일반 스타일 (모든 모드에서 공유되는 기본 디자인 속성) */
-#userInfo, #userList {
-    display: flex; 
-    flex-direction: column; 
-    background: #fff; 
-    padding: 15px; 
-    border-radius: 8px; 
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    min-height: 0;          /* 자식 스크롤 허용 */
+#userInfo,
+#userList {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    min-height: 0;
+    /* 자식 스크롤 허용 */
 }
 
 /* 2. 사용자 모드 (user-mode): User List 숨김 시 전체 공간 차지 */
 #userInfo.user-mode {
-    flex: 1 1 auto;         /* 사이드바 전체 공간을 꽉 채움 */
-    overflow-y: auto;       /* 내용이 넘치면 스크롤 허용 */
+    flex: 1 1 auto;
+    /* 사이드바 전체 공간을 꽉 채움 */
+    overflow-y: auto;
+    /* 내용이 넘치면 스크롤 허용 */
 }
 
 /* 3. 관리자 모드 (admin-mode): User Info 2, User List 1 비율로 분리 */
-#userInfo.admin-mode { 
-    flex: 1 1 0;         /* 💡 User Info가 2배 공간 차지 (2/3) */
-    overflow-y: auto;       /* 내용이 넘치면 스크롤 허용 */
+#userInfo.admin-mode {
+    flex: 1 1 0;
+    /* 💡 User Info가 2배 공간 차지 (2/3) */
+    overflow-y: auto;
+    /* 내용이 넘치면 스크롤 허용 */
 }
 
 /* 4. User List (관리자 모드에서만 보이며, User Info와 공간 나눔) */
-#userList { 
-    flex: 1 1 0;         /* 💡 User List가 1배 공간 차지 (1/3) */
-    overflow-y: auto; 
+#userList {
+    flex: 1 1 0;
+    /* 💡 User List가 1배 공간 차지 (1/3) */
+    overflow-y: auto;
 }
 
 /* User Info 헤더 */
 .info-header {
-    display: flex;                  
-    align-items: center;            
-    margin-bottom: 10px;            
-    padding-bottom: 10px;            
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
     border-bottom: 1px solid #eee;
-    gap: 10px;   
+    gap: 10px;
     flex-shrink: 0;
 }
-.info-header h2 { 
-    margin: 0; 
-    font-size: 20px; 
-    font-weight: 700; 
-    flex-grow: 1; 
-    color: #333; 
-} 
+
+.info-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    flex-grow: 1;
+    color: #333;
+}
+
 #closeUserInfoBtn {
     background: transparent;
     border: none;
@@ -198,33 +229,36 @@ input {
 }
 
 /* User Info 내부: ID + 필터 버튼 + 미니 로그 */
-#infoArea { 
-    flex: 1 1 auto;          /* User Info 안의 나머지 공간 채움 */
-    display: flex; 
-    flex-direction: column; 
+#infoArea {
+    flex: 1 1 auto;
+    /* User Info 안의 나머지 공간 채움 */
+    display: flex;
+    flex-direction: column;
     gap: 8px;
     min-height: 0;
 }
 
 /* 필터 버튼 그룹 */
-.filter-group { 
-    display: flex; 
-    gap: 5px; 
-    margin-bottom: 5px; 
-    flex-shrink: 0; 
+.filter-group {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 5px;
+    flex-shrink: 0;
 }
-.filter-btn { 
-    flex: 1; 
-    padding: 6px; 
-    border: 1px solid #ddd; 
-    background: #fff; 
-    cursor: pointer; 
-    border-radius: 4px; 
+
+.filter-btn {
+    flex: 1;
+    padding: 6px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    border-radius: 4px;
 }
-.filter-btn.active { 
-    background: #e2e8f0; 
-    font-weight: bold; 
-    border-color: #adb5bd; 
+
+.filter-btn.active {
+    background: #e2e8f0;
+    font-weight: bold;
+    border-color: #adb5bd;
 }
 
 /* 공통 로그 리스트 박스 스타일 */
@@ -237,19 +271,24 @@ input {
 /* ===== 사용자용 요약 미니 로그 (ID: miniLogList) ===== */
 /* 이 박스 안에서만 스크롤되게 함 */
 #miniLogList.log-list {
-    flex: 1 1 auto;      /* 남은 전체 말고, 고정 높이만 차지 */
-    height: auto;       /* 여기 원하는 정확한 높이 지정 */
-    overflow-y: auto;    /* 이 안에서만 스크롤 */
+    flex: 1 1 auto;
+    /* 남은 전체 말고, 고정 높이만 차지 */
+    height: auto;
+    /* 여기 원하는 정확한 높이 지정 */
+    overflow-y: auto;
+    /* 이 안에서만 스크롤 */
 }
 
 /* 미니 로그 스크롤바 커스터마이즈 */
 #miniLogList.log-list::-webkit-scrollbar {
     width: 8px;
 }
+
 #miniLogList.log-list::-webkit-scrollbar-thumb {
     background: #bbb;
     border-radius: 4px;
-    min-height: 30px;       /* 막대 최소 길이 */
+    min-height: 30px;
+    /* 막대 최소 길이 */
 }
 
 /* 개별 로그 항목 */
@@ -259,7 +298,10 @@ input {
     font-size: 13px;
     cursor: pointer;
 }
-.log-entry:hover { background: #f8f9fa; }
+
+.log-entry:hover {
+    background: #f8f9fa;
+}
 
 /* 사용자/유저 리스트 항목 */
 .user {
@@ -268,23 +310,27 @@ input {
     cursor: pointer;
     transition: 0.2s;
 }
-.user:hover { background: #f0f0f0; }
+
+.user:hover {
+    background: #f0f0f0;
+}
 
 /* ----- 맵 영역 ----- */
-#mapArea { 
-    flex-grow: 1; 
-    background: #fff; 
-    padding: 15px; 
-    border-radius: 8px; 
-    display: flex; 
-    flex-direction: column; 
+#mapArea {
+    flex-grow: 1;
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
     height: 100%;
     overflow: hidden;
 }
-#map { 
-    width: 100%; 
-    flex-grow: 1; 
-    border-radius: 4px; 
+
+#map {
+    width: 100%;
+    flex-grow: 1;
+    border-radius: 4px;
 }
 
 /* =========================================
@@ -312,7 +358,7 @@ input {
     padding: 15px;
     border-radius: 8px;
     flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 /* 탭 버튼 */
@@ -322,9 +368,10 @@ input {
     background: #fff;
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     flex-shrink: 0;
 }
+
 .log-tab-btn {
     flex: 1;
     padding: 15px;
@@ -336,6 +383,7 @@ input {
     border-bottom: 3px solid transparent;
     transition: 0.3s;
 }
+
 .log-tab-btn.active {
     color: #71b7e6;
     font-weight: bold;
@@ -356,9 +404,12 @@ input {
     height: 100%;
     background: #f1f3f5;
     padding: 10px;
-    border-radius: 8px; 
+    border-radius: 8px;
 }
-.log-section.active-tab-content { display: flex; }
+
+.log-section.active-tab-content {
+    display: flex;
+}
 
 .log-entries {
     flex-grow: 1;
@@ -372,20 +423,30 @@ input {
     border-radius: 8px;
     padding: 12px 15px;
     margin-bottom: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     border-left: 5px solid #ccc;
     display: flex;
     flex-direction: column;
     gap: 6px;
     transition: transform 0.2s;
 }
+
 .log-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
-.log-card.status-open { border-left-color: #007bff; }
-.log-card.status-close { border-left-color: #dc3545; }
-.log-card.status-app { border-left-color: #28a745; }
+
+.log-card.status-open {
+    border-left-color: #007bff;
+}
+
+.log-card.status-close {
+    border-left-color: #dc3545;
+}
+
+.log-card.status-app {
+    border-left-color: #28a745;
+}
 
 .log-header-row {
     display: flex;
@@ -393,12 +454,14 @@ input {
     font-size: 12px;
     color: #888;
 }
+
 .log-body-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
     font-size: 15px;
 }
+
 .badge {
     padding: 4px 8px;
     border-radius: 12px;
@@ -409,8 +472,17 @@ input {
     gap: 4px;
     margin-right: 5px;
 }
-.badge.user { background: #e9ecef; color: #495057; }
-.badge.method { background: #fff3cd; color: #856404; }
+
+.badge.user {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.badge.method {
+    background: #fff3cd;
+    color: #856404;
+}
+
 .status-text {
     font-weight: bold;
     font-size: 16px;
@@ -418,8 +490,15 @@ input {
     align-items: center;
     gap: 5px;
 }
-.text-blue { color: #007bff; }
-.text-red { color: #dc3545; }
+
+.text-blue {
+    color: #007bff;
+}
+
+.text-red {
+    color: #dc3545;
+}
+
 .log-detail-box {
     font-size: 13px;
     color: #555;
@@ -455,11 +534,12 @@ input {
     background: #fff;
     padding: 20px;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
     height: 100%;
 }
+
 .search-container {
     display: flex;
     gap: 10px;
@@ -469,10 +549,12 @@ input {
     border-radius: 8px;
     flex-wrap: wrap;
 }
+
 .search-container input {
     flex: 1;
     min-width: 200px;
 }
+
 .btn-search {
     background: linear-gradient(135deg, #71b7e6, #9b59b6);
     color: white;
@@ -481,6 +563,7 @@ input {
     border-radius: 4px;
     cursor: pointer;
 }
+
 .btn-reset {
     background: #6c757d;
     color: white;
@@ -489,6 +572,7 @@ input {
     border-radius: 4px;
     cursor: pointer;
 }
+
 #result-area {
     flex-grow: 1;
     overflow: auto;
@@ -502,13 +586,17 @@ input {
 #custom-modal,
 #logout-confirm-modal {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 3000;
 }
+
 .modal-content {
     background: #fff;
     padding: 30px;
@@ -527,18 +615,22 @@ input {
     color: white;
     cursor: pointer;
     transition: 0.2s;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+
 #confirmLogoutBtn {
     background: linear-gradient(135deg, #71b7e6, #9b59b6);
 }
+
 #cancelLogoutBtn {
-    background: #6c757d !important; 
+    background: #6c757d !important;
 }
+
 #logout-confirm-modal button:hover {
     transform: translateY(-2px);
     opacity: 0.9;
 }
+
 #logout-confirm-modal button:active {
     transform: translateY(0);
 }
@@ -550,19 +642,46 @@ input {
         height: auto;
         padding: 10px;
     }
-    body { padding-top: 110px; }
+
+    body {
+        padding-top: 110px;
+    }
+
     #main-content {
         flex-direction: column;
         height: auto;
     }
+
     #sidebar,
     #mapArea {
         width: 100%;
         height: 400px;
     }
+
     #log-content,
     #db-content {
         top: 110px;
         height: calc(100vh - 110px);
+    }
+}
+
+body {
+    /* 기존 height: 100vh; 및 overflow: hidden; 설정을 덮어쓰고 스크롤 가능하게 함 */
+    height: auto !important;
+    overflow: auto !important;
+}
+
+/* === 2. 반응형 모바일 뷰포트 설정 덮어쓰기 === */
+@media (max-width: 768px) {
+
+    /* 모바일에서 body의 스크롤 속성 강제 활성화 */
+    body {
+        overflow: auto !important;
+    }
+
+    /* 모바일 맵 영역의 고정 높이를 덮어써서 더 많은 화면을 차지하도록 함 */
+    #mapArea {
+        height: 60vh !important;
+        /* 400px 대신 뷰포트 높이의 60% 사용 (조절 가능) */
     }
 }
