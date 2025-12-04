@@ -593,41 +593,46 @@
         };
 
         function showMain(isAdmin, uid) {
-            document.getElementById('login-container').classList.add('hidden'); // 로그인 숨김
-            document.getElementById('header').classList.remove('hidden'); // 헤더 보임
-            document.getElementById('main-content').classList.remove('hidden'); // 메인 보임
-            
-            // 닫기 버튼과 DB조회 버튼 요소 가져오기
-            const closeBtn = document.getElementById('closeUserInfoBtn');
-            const dbBtn = document.getElementById('newBtn'); // [추가됨] DB 조회 버튼
+    document.getElementById('login-container').classList.add('hidden'); // 로그인 숨김
+    document.getElementById('header').classList.remove('hidden'); // 헤더 보임
+    document.getElementById('main-content').classList.remove('hidden'); // 메인 보임
+    
+    // 닫기 버튼과 DB조회 버튼 요소 가져오기
+    const closeBtn = document.getElementById('closeUserInfoBtn');
+    const dbBtn = document.getElementById('newBtn'); 
+    
+    // 💡 기능적 분리 핵심: 모드 클래스 할당
+    const userInfo = document.getElementById('userInfo');
+    userInfo.classList.remove('admin-mode', 'user-mode'); // 기존 클래스 제거
+    
+    // **전역 도어락 좌표 초기화 (이전 문제 해결 포함)**
+    DOORLOCK_LAT = 36.3308358;
+    DOORLOCK_LNG = 127.3364818;
 
-            DOORLOCK_LAT = 36.3308358;
-            DOORLOCK_LNG = 127.3364818;
-            
-            if(isAdmin) {
-                // --- 관리자 모드 ---
-                document.getElementById('userList').classList.remove('hidden');
-                document.getElementById('userInfo').classList.add('hidden');
-                
-                if(closeBtn) closeBtn.style.display = 'block'; // 닫기 버튼 보임
-                if(dbBtn) dbBtn.style.display = 'inline-block'; // [추가됨] DB 조회 버튼 보임
+    if(isAdmin) {
+        // --- 관리자 모드 ---
+        userInfo.classList.add('admin-mode'); // 관리자 전용 클래스 추가
+        document.getElementById('userList').classList.remove('hidden');
+        
+        if(closeBtn) closeBtn.style.display = 'block'; // 닫기 버튼 보임
+        if(dbBtn) dbBtn.style.display = 'inline-block'; // DB 조회 버튼 보임
 
-                if(window.kakao) kakao.maps.load(initMap);
-            } else {
-                // --- 일반 사용자 모드 ---
-                document.getElementById('userList').classList.add('hidden');
-                document.getElementById('userInfo').classList.remove('hidden');
-                
-                if(closeBtn) closeBtn.style.display = 'none'; // 닫기 버튼 숨김
-                if(dbBtn) dbBtn.style.display = 'none'; // [추가됨] DB 조회 버튼 숨김
+        if(window.kakao) kakao.maps.load(initMap);
+    } else {
+        // --- 일반 사용자 모드 ---
+        userInfo.classList.add('user-mode'); // 사용자 전용 클래스 추가
+        document.getElementById('userList').classList.add('hidden');
+        
+        if(closeBtn) closeBtn.style.display = 'none'; // 닫기 버튼 숨김
+        if(dbBtn) dbBtn.style.display = 'none'; // DB 조회 버튼 숨김
 
-                if(window.kakao) kakao.maps.load(() => {
-                    initMap();
-                    loadUserDoorlockAndInit(uid, () => selectUser(uid));
-                });
-            }
-            setupNav();
-        }
+        if(window.kakao) kakao.maps.load(() => {
+            initMap();
+            loadUserDoorlockAndInit(uid, () => selectUser(uid));
+        });
+    }
+    setupNav();
+}
 
         function setupNav() {
             // 로그아웃 버튼
@@ -688,6 +693,7 @@
 </script>
 </body>
 </html>
+
 
 
 
