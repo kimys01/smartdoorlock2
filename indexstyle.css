@@ -668,41 +668,26 @@ input {
 /* === 모바일 뷰 전용 오버라이드 (Desktop 영향 없음) === */
 @media (max-width: 768px) {
     /* 1. Body 스크롤 활성화: Desktop의 height: 100vh; 및 overflow: hidden; 설정을 덮어씀 */
-   body {
+    body {
         height: auto !important;        
         overflow: auto !important;      
-   }
+    }
 
     /* 2. Main Content 스크롤 활성화: Desktop의 고정 높이/스크롤 숨김 설정을 덮어씀 */
     #main-content {
         height: auto !important;        /* Desktop의 height: calc(...) 덮어쓰기 */
-        overflow: auto !important;   /* Desktop의 overflow: hidden; 덮어쓰기 */
+        overflow: visible !important;   /* Desktop의 overflow: hidden; 덮어쓰기 */
     }
     
     /* 3. 모바일 맵 영역 높이 재조정 */
     #mapArea {
         height: 60vh !important; /* 모바일에서 맵 영역을 400px 대신 뷰포트 높이의 60%로 늘림 */
     }
-
-   #userInfo.user-mode {
-      height: auto !important;
-      overflow: auto !important;
-   }
-   
-   #userInfo.admin-mode {
-      height: auto !important;
-      overflow: auto !important;
-   }
    #userInfo {
-        height: 60px !important; 
+        height: 60vh !important; /* 모바일에서 맵 영역을 400px 대신 뷰포트 높이의 60%로 늘림 */
     }
-   #db-content {
-       height: auto !important;
-       overflow: auto !important;
-   }
 
    #log-content {
-      overflow-y: auto !important; /* 창 전체가 스크롤되도록 강제 적용 */
-      overflow: auto !important;
-   }
+        overflow-y: auto !important; /* 창 전체가 스크롤되도록 강제 적용 */
+    }
 }
