@@ -689,9 +689,4 @@ input {
         overflow-y: auto !important; /* 창 전체가 스크롤되도록 강제 적용 */
     }
     
-    /* 💡 [추가] #log-content 내부 컨테이너의 스크롤 숨김 속성 해제 */
-    /* .log-container가 기본적으로 가진 overflow: hidden;을 덮어써서 스크롤을 막지 않도록 함 */
-    .log-container {
-        overflow: visible !important;
-    }
 }
