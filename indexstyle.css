@@ -665,23 +665,36 @@ input {
     }
 }
 
+/* indexstyle.css 파일의 모든 내용이 끝난 후, 이 코드를 추가합니다. */
+
+/* === 1. 전체 페이지 (body) 스크롤 활성화 === */
 body {
-    /* 기존 height: 100vh; 및 overflow: hidden; 설정을 덮어쓰고 스크롤 가능하게 함 */
-    height: auto !important;
-    overflow: auto !important;
+    /* 기존 height: 100vh; 및 overflow: hidden; 설정을 덮어씀 */
+    height: auto !important; 
+    overflow: auto !important; 
 }
 
-/* === 2. 반응형 모바일 뷰포트 설정 덮어쓰기 === */
-@media (max-width: 768px) {
+/* === 2. 메인 콘텐츠 (#main-content) 스크롤 활성화 === */
+#main-content {
+    /* 기존 height: calc(...) 및 overflow: hidden; 설정을 덮어씀 */
+    height: auto !important;
+    overflow: visible !important; /* 콘텐츠가 넘쳐도 숨기지 않도록 설정 */
+}
 
-    /* 모바일에서 body의 스크롤 속성 강제 활성화 */
+/* === 3. 반응형 모바일 뷰포트 설정 덮어쓰기 === */
+@media (max-width: 768px) {
+    /* 모바일에서 body 스크롤 강제 활성화 */
     body {
         overflow: auto !important;
     }
+    
+    /* 모바일 환경에서 메인 콘텐츠 높이를 유연하게 설정 */
+    #main-content {
+        height: auto !important;
+    }
 
-    /* 모바일 맵 영역의 고정 높이를 덮어써서 더 많은 화면을 차지하도록 함 */
+    /* 모바일 맵 영역의 고정 높이를 덮어써서 더 많은 화면을 차지하도록 설정 */
     #mapArea {
-        height: 60vh !important;
-        /* 400px 대신 뷰포트 높이의 60% 사용 (조절 가능) */
+        height: 60vh !important; /* 뷰포트 높이의 60%를 맵에 할당 (조절 가능) */
     }
 }
