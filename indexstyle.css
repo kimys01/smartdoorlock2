@@ -160,13 +160,13 @@ input {
 
 /* 3. 관리자 모드 (admin-mode): User Info 2, User List 1 비율로 분리 */
 #userInfo.admin-mode { 
-    flex: 1 1 auto;         /* 💡 User Info가 2배 공간 차지 (2/3) */
+    flex: 1 1 0;         /* 💡 User Info가 2배 공간 차지 (2/3) */
     overflow-y: auto;       /* 내용이 넘치면 스크롤 허용 */
 }
 
 /* 4. User List (관리자 모드에서만 보이며, User Info와 공간 나눔) */
 #userList { 
-    flex: 1 1 auto;         /* 💡 User List가 1배 공간 차지 (1/3) */
+    flex: 1 1 0;         /* 💡 User List가 1배 공간 차지 (1/3) */
     overflow-y: auto; 
 }
 
