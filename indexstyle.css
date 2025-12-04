@@ -672,16 +672,24 @@ input {
         height: auto !important;        
         overflow: auto !important;      
     }
-
-    /* 2. Main Content 스크롤 활성화: Desktop의 고정 높이/스크롤 숨김 설정을 덮어씀 */
+   
     #main-content {
-        height: auto !important;        /* Desktop의 height: calc(...) 덮어쓰기 */
-        overflow: visible !important;   /* Desktop의 overflow: hidden; 덮어쓰기 */
+        height: auto !important;
+        overflow: visible !important;
     }
     
-    /* 3. 모바일 맵 영역 높이 재조정 */
+    #log-content {
+       height: auto !important;
+       overflow: visible !important;
+    }  
+    
+    #db-content {
+       height: auto !important;
+       overflow: visible !important;
+    }
+    
     #mapArea {
-        height: 60vh !important; /* 모바일에서 맵 영역을 400px 대신 뷰포트 높이의 60%로 늘림 */
+        height: 60vh !important;
     }
 
    .log-entries {
