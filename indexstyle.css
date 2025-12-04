@@ -694,4 +694,20 @@ input {
         /* NEW FIX: 기존 20px 패딩을 40px로 늘려, 스크롤 시 마지막 항목이 잘리지 않도록 밀어 올림 */
         padding-bottom: 40px !important; 
     }
+   /* 💡 [핵심 수정] 관리자 모드(admin-mode)에서 User Info가 User List보다 훨씬 많은 공간을 차지하도록 비율 조정 */
+    /* 데스크톱이나 사용자 모드에는 영향 없음 */
+    #userInfo.admin-mode {
+        /* User List (flex: 1 1 0) 대비 3배 공간 차지 (예: 400px 중 약 300px) */
+        flex: 3 1 0 !important; 
+    }
+
+    /* User List는 남은 공간을 차지하도록 flex-grow를 1로 유지 */
+    #userList {
+        flex: 1 1 0 !important;
+    }
+
+    /* 로그 리스트 박스 자체의 최소 높이를 보장하여 내용이 과도하게 축소되는 것을 방지 */
+    #miniLogList.log-list {
+        min-height: 120px !important; 
+    }
 }
