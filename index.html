@@ -600,6 +600,9 @@
             const closeBtn = document.getElementById('closeUserInfoBtn');
             const dbBtn = document.getElementById('newBtn'); // [추가됨] DB 조회 버튼
 
+            DOORLOCK_LAT = 36.3308358;
+            DOORLOCK_LNG = 127.3364818;
+            
             if(isAdmin) {
                 // --- 관리자 모드 ---
                 document.getElementById('userList').classList.remove('hidden');
@@ -684,4 +687,5 @@
 </script>
 </body>
 </html>
+
 
