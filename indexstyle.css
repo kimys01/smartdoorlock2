@@ -139,28 +139,35 @@ input {
     min-height: 0;          /* 내부 스크롤 허용 */
 }
 
-/* User Info: 사용자 모드에서 맵과 같은 높이로 꽉 차는 영역 */
-#userInfo { 
-    flex: 2 1 auto;         /* 세로 전체를 채우도록 */
+/* indexstyle.css 파일 수정: 기존 #userInfo 및 #userList 블록을 아래 내용으로 교체 */
+
+/* 1. 일반 스타일 (모든 모드에서 공유되는 기본 디자인 속성) */
+#userInfo, #userList {
     display: flex; 
     flex-direction: column; 
     background: #fff; 
     padding: 15px; 
     border-radius: 8px; 
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    overflow-y: auto; 
     min-height: 0;          /* 자식 스크롤 허용 */
 }
 
-/* User List: 관리자 모드에서만 사용되는 리스트 */
+/* 2. 사용자 모드 (user-mode): User List 숨김 시 전체 공간 차지 */
+#userInfo.user-mode {
+    flex: 1 1 auto;         /* 사이드바 전체 공간을 꽉 채움 */
+    overflow-y: auto;       /* 내용이 넘치면 스크롤 허용 */
+}
+
+/* 3. 관리자 모드 (admin-mode): User Info 2, User List 1 비율로 분리 */
+#userInfo.admin-mode { 
+    flex: 2 1 auto;         /* 💡 User Info가 2배 공간 차지 (2/3) */
+    overflow-y: auto;       /* 내용이 넘치면 스크롤 허용 */
+}
+
+/* 4. User List (관리자 모드에서만 보이며, User Info와 공간 나눔) */
 #userList { 
-    flex: 1 1 auto; 
+    flex: 1 1 auto;         /* 💡 User List가 1배 공간 차지 (1/3) */
     overflow-y: auto; 
-    background: #fff; 
-    padding: 15px; 
-    border-radius: 8px; 
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    min-height: 0;
 }
 
 /* User Info 헤더 */
