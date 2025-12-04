@@ -665,28 +665,33 @@ input {
     }
 }
 
+/* indexstyle.css 파일의 가장 마지막에 있는 @media 블록을 아래 코드로 전체 교체합니다. */
+
 /* === 모바일 뷰 전용 오버라이드 (Desktop 영향 없음) === */
 @media (max-width: 768px) {
-    /* 1. Body 스크롤 활성화 (유지) */
+    /* 1. Body 스크롤 활성화 */
     body {
         height: auto !important; 
         overflow: auto !important; 
     }
 
-    /* 2. Main Content 스크롤 활성화 (유지) */
+    /* 2. Main Content 스크롤 활성화 */
     #main-content {
         height: auto !important; 
         overflow: visible !important; 
     }
     
-    /* 3. 모바일 맵 영역 높이 재조정 (유지) */
+    /* 3. 모바일 맵 영역 높이 재조정 */
     #mapArea {
         height: 60vh !important; 
     }
 
-    /* 💡 [핵심 수정] 로그 보기 창 (#log-content) 자체에 스크롤 적용 */
-    #log-content {
-        overflow-y: auto !important; /* 창 전체가 스크롤되도록 강제 적용 */
+    /* 💡 [핵심 수정] 로그/DB 보기 창 전체 스크롤 및 하단 패딩 수정 */
+    #log-content, 
+    #db-content {
+        overflow-y: auto !important; 
+        
+        /* NEW FIX: 기존 20px 패딩을 40px로 늘려, 스크롤 시 마지막 항목이 잘리지 않도록 밀어 올림 */
+        padding-bottom: 40px !important; 
     }
-    
 }
