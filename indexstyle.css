@@ -635,36 +635,6 @@ input {
     transform: translateY(0);
 }
 
-/* 반응형 */
-@media (max-width: 768px) {
-    #header {
-        flex-direction: column;
-        height: auto;
-        padding: 10px;
-    }
-
-    body {
-        padding-top: 110px;
-    }
-
-    #main-content {
-        flex-direction: column;
-        height: auto;
-    }
-
-    #sidebar,
-    #mapArea {
-        width: 100%;
-        height: 400px;
-    }
-
-    #log-content,
-    #db-content {
-        top: 110px;
-        height: calc(100vh - 110px);
-    }
-}
-
 /* indexstyle.css 파일의 가장 마지막에 있는 @media 블록을 아래 코드로 전체 교체합니다. */
 
 /* === 모바일 뷰 전용 오버라이드 (Desktop 영향 없음) === */
