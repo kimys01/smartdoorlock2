@@ -667,27 +667,31 @@ input {
 
 /* === 모바일 뷰 전용 오버라이드 (Desktop 영향 없음) === */
 @media (max-width: 768px) {
-    /* 1. Body 스크롤 활성화: Desktop의 height: 100vh; 및 overflow: hidden; 설정을 덮어씀 */
+    /* 1. Body 스크롤 활성화 (유지) */
     body {
-        height: auto !important;        
-        overflow: auto !important;      
+        height: auto !important; 
+        overflow: auto !important; 
     }
 
-    /* 2. Main Content 스크롤 활성화: Desktop의 고정 높이/스크롤 숨김 설정을 덮어씀 */
+    /* 2. Main Content 스크롤 활성화 (유지) */
     #main-content {
-        height: auto !important;        /* Desktop의 height: calc(...) 덮어쓰기 */
-        overflow: visible !important;   /* Desktop의 overflow: hidden; 덮어쓰기 */
+        height: auto !important; 
+        overflow: visible !important; 
     }
     
-    /* 3. 모바일 맵 영역 높이 재조정 */
+    /* 3. 모바일 맵 영역 높이 재조정 (유지) */
     #mapArea {
-        height: 60vh !important; /* 모바일에서 맵 영역을 400px 대신 뷰포트 높이의 60%로 늘림 */
-    }
-   #userInfo {
-        height: 60vh !important; /* 모바일에서 맵 영역을 400px 대신 뷰포트 높이의 60%로 늘림 */
+        height: 60vh !important; 
     }
 
-   #log-content {
+    /* 💡 [핵심 수정] 로그 보기 창 (#log-content) 자체에 스크롤 적용 */
+    #log-content {
         overflow-y: auto !important; /* 창 전체가 스크롤되도록 강제 적용 */
+    }
+    
+    /* 💡 [추가] #log-content 내부 컨테이너의 스크롤 숨김 속성 해제 */
+    /* .log-container가 기본적으로 가진 overflow: hidden;을 덮어써서 스크롤을 막지 않도록 함 */
+    .log-container {
+        overflow: visible !important;
     }
 }
